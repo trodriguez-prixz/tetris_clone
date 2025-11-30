@@ -104,7 +104,7 @@ export const SCORE_DATA = {
 // Initial drop speed (milliseconds)
 export const INITIAL_DROP_SPEED = 1000;
 
-// Fast drop speed (30% of normal)
+// Fast drop speed (30% of normal time, i.e., 300ms = 30% of 1000ms)
 export const FAST_DROP_SPEED = 300;
 
 // Speed multiplier per level (75% of previous)

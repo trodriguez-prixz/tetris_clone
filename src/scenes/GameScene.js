@@ -158,7 +158,8 @@ export default class GameScene extends Phaser.Scene {
     this.previewBlocks = [];
     
     const previewAreaWidth = SIDEBAR_WIDTH - PADDING;
-    const previewCenterX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
+    // Preview area is centered in sidebar, so its left edge is at SIDEBAR_X + PADDING/2
+    const previewAreaLeft = SIDEBAR_X + PADDING / 2;
     const previewStartY = SIDEBAR_Y + PADDING;
     const segmentHeight = (PREVIEW_AREA_HEIGHT - PADDING * 2) / 3;
     const cellSize = 20; // Smaller cells for preview
@@ -179,12 +180,14 @@ export default class GameScene extends Phaser.Scene {
       
       const shapeWidth = (maxX - minX + 1) * cellSize;
       const shapeHeight = (maxY - minY + 1) * cellSize;
+      // Center the shape horizontally within the preview area
       const offsetX = (previewAreaWidth - shapeWidth) / 2;
       const offsetY = (segmentHeight - shapeHeight) / 2;
       
       // Center each shape in its segment
       tetraminoData.blocks.forEach(relativePos => {
-        const x = previewCenterX + offsetX + ((relativePos.x - minX) * cellSize) + (cellSize / 2);
+        // Calculate position relative to the left edge of preview area
+        const x = previewAreaLeft + offsetX + ((relativePos.x - minX) * cellSize) + (cellSize / 2);
         const y = segmentCenterY + offsetY + ((relativePos.y - minY) * cellSize) + (cellSize / 2);
         
         const block = this.add.rectangle(x, y, cellSize - 2, cellSize - 2, color);
@@ -207,14 +210,39 @@ export default class GameScene extends Phaser.Scene {
   }
 
   handleFastDrop() {
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
+    // Escenario 1: Pulsación Inicial (Activación de la Aceleración)
+    // Verificación explícita: if not self.down_pressed (equivalente a !this.isFastDrop)
+    // Esto asegura que la lógica solo se ejecute una vez por ciclo de pulsación/liberación
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.down) && !this.isFastDrop) {
+      // Movimiento inmediato: La pieza se mueve inmediatamente al presionar la tecla
+      if (this.currentTetramino) {
+        if (this.currentTetramino.nextMoveVerticalCollide(this.fieldData)) {
+          this.landTetramino();
+        } else {
+          this.currentTetramino.moveDown();
+        }
+      }
+      
+      // Cambio de Velocidad: Actualiza el temporizador a velocidad acelerada
+      this.dropSpeed = FAST_DROP_SPEED; // 30% del tiempo normal (300ms = 30% de 1000ms)
+      this.startVerticalTimer(); // Reinicia temporizador con nueva velocidad
+      
+      // Cambio de Estado: down_pressed de falso a verdadero
       this.isFastDrop = true;
-      this.dropSpeed = FAST_DROP_SPEED;
-      this.startVerticalTimer();
-    } else if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
-      this.isFastDrop = false;
+    } 
+    // Escenario 2: Pulsación Sostenida (Control de Repetición)
+    // Mientras la tecla está presionada, la condición !this.isFastDrop es falsa
+    // Por lo tanto, la lógica de actualización NO se ejecuta en fotogramas subsiguientes
+    // La velocidad permanece en FAST_DROP_SPEED y el estado permanece en true
+    
+    // Escenario 3: Liberación de la Tecla (Reversión a Velocidad Normal)
+    else if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
+      // Reversión de Velocidad: Revierte al valor de velocidad normal
       this.dropSpeed = this.baseDropSpeed;
-      this.startVerticalTimer();
+      this.startVerticalTimer(); // Reinicia temporizador con velocidad normal
+      
+      // Restablecimiento de Estado: down_pressed de verdadero a falso
+      this.isFastDrop = false;
     }
   }
 
