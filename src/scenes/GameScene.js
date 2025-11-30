@@ -74,6 +74,7 @@ export default class GameScene extends Phaser.Scene {
     this.dropSpeed = INITIAL_DROP_SPEED;
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.isFastDrop = false;
+    this.gameOver = false;
     
     // Initialize field data (20x10 grid)
     this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
@@ -197,6 +198,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update() {
+    // Don't process input if game is over
+    if (this.gameOver) return;
+    
     if (!this.currentTetramino) return;
     
     // Handle horizontal input with throttling
@@ -465,9 +469,43 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
+  // Check if a tetramino can be placed at its initial spawn position
+  canSpawnTetramino(shapeType) {
+    const tetraminoData = TETRAMINOS[shapeType];
+    const startX = Math.floor(GRID_COLS / 2) - 1;
+    const startY = 0;
+    
+    // Check if all blocks of the tetramino can be placed at initial position
+    for (const relativePos of tetraminoData.blocks) {
+      const logicalX = startX + relativePos.x;
+      const logicalY = startY + relativePos.y;
+      
+      // Check bounds
+      if (logicalX < 0 || logicalX >= GRID_COLS || logicalY < 0 || logicalY >= GRID_ROWS) {
+        return false;
+      }
+      
+      // Check if position is already occupied
+      if (this.fieldData[logicalY] && this.fieldData[logicalY][logicalX] !== null) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
   spawnTetramino() {
     // Get next shape from queue
     const nextType = this.nextShapes.shift();
+    
+    // Check if the tetramino can be placed at its initial position
+    if (!this.canSpawnTetramino(nextType)) {
+      // Game Over: Cannot spawn new tetramino
+      this.triggerGameOver();
+      return;
+    }
+    
+    // Create the tetramino
     this.currentTetramino = new Tetramino(this, nextType);
     
     // Add new shape to queue
@@ -475,6 +513,149 @@ export default class GameScene extends Phaser.Scene {
     
     // Update preview
     this.renderPreview();
+  }
+
+  triggerGameOver() {
+    // Set game over state
+    this.gameOver = true;
+    
+    // Stop all timers
+    if (this.verticalTimer) {
+      this.verticalTimer.remove();
+      this.verticalTimer = null;
+    }
+    if (this.horizontalMoveTimer) {
+      this.horizontalMoveTimer.remove();
+      this.horizontalMoveTimer = null;
+    }
+    if (this.rotateTimer) {
+      this.rotateTimer.remove();
+      this.rotateTimer = null;
+    }
+    
+    // Create Game Over UI
+    this.showGameOver();
+  }
+
+  showGameOver() {
+    // Create semi-transparent overlay
+    const overlay = this.add.rectangle(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2,
+      CANVAS_WIDTH,
+      CANVAS_HEIGHT,
+      0x000000,
+      0.7
+    );
+    
+    // Game Over text
+    const gameOverText = this.add.text(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 - 60,
+      'GAME OVER',
+      {
+        fontSize: '48px',
+        fill: '#e74c3c',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
+    // Final score text
+    const finalScoreText = this.add.text(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2,
+      `Final Score: ${this.score.getScore()}`,
+      {
+        fontSize: '24px',
+        fill: '#ecf0f1',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
+    // Restart instruction
+    const restartText = this.add.text(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 + 60,
+      'Press R to Restart',
+      {
+        fontSize: '20px',
+        fill: '#95a5a6',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
+    // Store UI elements for cleanup
+    this.gameOverUI = {
+      overlay,
+      gameOverText,
+      finalScoreText,
+      restartText
+    };
+    
+    // Listen for restart key
+    this.restartKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+    this.restartKey.on('down', () => {
+      this.restartGame();
+    });
+  }
+
+  restartGame() {
+    // Clean up current game
+    if (this.currentTetramino) {
+      this.currentTetramino.destroy();
+      this.currentTetramino = null;
+    }
+    
+    // Clear all blocks from field
+    for (let row = 0; row < GRID_ROWS; row++) {
+      for (let col = 0; col < GRID_COLS; col++) {
+        if (this.fieldData[row][col] !== null) {
+          this.fieldData[row][col].destroy();
+          this.fieldData[row][col] = null;
+        }
+      }
+    }
+    
+    // Clean up Game Over UI
+    if (this.gameOverUI) {
+      this.gameOverUI.overlay.destroy();
+      this.gameOverUI.gameOverText.destroy();
+      this.gameOverUI.finalScoreText.destroy();
+      this.gameOverUI.restartText.destroy();
+      this.gameOverUI = null;
+    }
+    
+    // Remove restart key listener
+    if (this.restartKey) {
+      this.restartKey.removeAllListeners();
+      this.restartKey = null;
+    }
+    
+    // Reset game state
+    this.gameOver = false;
+    this.dropSpeed = INITIAL_DROP_SPEED;
+    this.baseDropSpeed = INITIAL_DROP_SPEED;
+    this.isFastDrop = false;
+    
+    // Reset score
+    this.score = new Score();
+    
+    // Reset next shapes queue
+    this.nextShapes = [];
+    for (let i = 0; i < 3; i++) {
+      this.nextShapes.push(this.getRandomShapeType());
+    }
+    
+    // Update UI
+    this.updateUI();
+    this.renderPreview();
+    
+    // Spawn new tetramino
+    this.spawnTetramino();
+    
+    // Start vertical timer
+    this.startVerticalTimer();
   }
 
   drawArea(centerX, centerY, width, height, fillColor, strokeColor) {
