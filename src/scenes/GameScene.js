@@ -21,6 +21,7 @@ import {
 } from '../config/settings.js';
 import Tetramino from '../classes/Tetramino.js';
 import Score from '../classes/Score.js';
+import { RetroMusic } from '../utils/retroMusic.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -102,6 +103,28 @@ export default class GameScene extends Phaser.Scene {
     // Create preview
     this.createPreview();
     
+    // Initialize retro music (optional, won't break game if it fails)
+    this.musicMuted = false; // Estado de silencio de la música
+    try {
+      this.retroMusic = new RetroMusic(this);
+      if (this.retroMusic.init()) {
+        this.musicStarted = false;
+        // Start music on first user interaction
+        this.startMusicOnInteraction();
+      } else {
+        this.retroMusic = null;
+      }
+    } catch (error) {
+      console.warn('No se pudo inicializar la música:', error);
+      this.retroMusic = null;
+    }
+    
+    // Setup mute toggle key (M key)
+    this.muteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+    this.muteKey.on('down', () => {
+      this.toggleMusic();
+    });
+    
     // Create first tetramino
     this.spawnTetramino();
     
@@ -138,12 +161,64 @@ export default class GameScene extends Phaser.Scene {
       fill: '#ecf0f1',
       align: 'center'
     }).setOrigin(0.5);
+    
+    // Music indicator (mute/unmute)
+    this.musicIndicator = this.add.text(uiX, scoreAreaY + 40, '🔊 Música: ON', {
+      fontSize: '16px',
+      fill: '#95a5a6',
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Mute instruction
+    this.muteInstruction = this.add.text(uiX, scoreAreaY + 65, 'Presiona M para silenciar', {
+      fontSize: '12px',
+      fill: '#7f8c8d',
+      align: 'center'
+    }).setOrigin(0.5);
   }
 
   updateUI() {
     this.scoreText.setText(`Score: ${this.score.getScore()}`);
     this.levelText.setText(`Level: ${this.score.getLevel()}`);
     this.linesText.setText(`Lines: ${this.score.getLinesCleared()}`);
+    this.updateMusicIndicator();
+  }
+
+  updateMusicIndicator() {
+    if (this.musicIndicator) {
+      if (this.musicMuted) {
+        this.musicIndicator.setText('🔇 Música: OFF');
+        this.musicIndicator.setFill('#e74c3c');
+      } else {
+        this.musicIndicator.setText('🔊 Música: ON');
+        this.musicIndicator.setFill('#2ecc71');
+      }
+    }
+  }
+
+  toggleMusic() {
+    this.musicMuted = !this.musicMuted;
+    
+    try {
+      if (this.retroMusic) {
+        if (this.musicMuted) {
+          // Silenciar música
+          this.retroMusic.stop();
+          this.musicStarted = false;
+        } else {
+          // Activar música si no está iniciada
+          if (!this.musicStarted) {
+            this.retroMusic.play();
+            this.musicStarted = true;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Error al cambiar estado de música:', error);
+    }
+    
+    // Actualizar indicador visual
+    this.updateMusicIndicator();
   }
 
   createPreview() {
@@ -195,6 +270,51 @@ export default class GameScene extends Phaser.Scene {
         this.previewBlocks.push(block);
       });
     });
+  }
+
+  startMusicOnInteraction() {
+    // Only set up if music is available and not muted
+    if (!this.retroMusic || this.musicMuted) return;
+    
+    // Remove any existing listeners first
+    if (this.musicStartHandler) {
+      try {
+        this.input.keyboard.off('keydown', this.musicStartHandler);
+        this.input.off('pointerdown', this.musicStartHandler);
+      } catch (error) {
+        // Ignore errors when removing listeners
+      }
+    }
+    
+    // Start music when user presses any key for the first time
+    this.musicStartHandler = () => {
+      try {
+        // Solo iniciar si no está silenciada
+        if (!this.musicStarted && this.retroMusic && !this.musicMuted) {
+          this.retroMusic.play();
+          this.musicStarted = true;
+          this.updateMusicIndicator();
+          // Remove listeners after music starts
+          if (this.musicStartHandler) {
+            this.input.keyboard.off('keydown', this.musicStartHandler);
+            this.input.off('pointerdown', this.musicStartHandler);
+            this.musicStartHandler = null;
+          }
+        }
+      } catch (error) {
+        console.warn('Error al iniciar la música:', error);
+        this.retroMusic = null;
+      }
+    };
+    
+    // Listen for keyboard or mouse interaction
+    try {
+      this.input.keyboard.on('keydown', this.musicStartHandler);
+      this.input.on('pointerdown', this.musicStartHandler);
+    } catch (error) {
+      console.warn('Error al configurar listeners de música:', error);
+      this.retroMusic = null;
+    }
   }
 
   update() {
@@ -519,6 +639,15 @@ export default class GameScene extends Phaser.Scene {
     // Set game over state
     this.gameOver = true;
     
+    // Stop retro music (safely)
+    try {
+      if (this.retroMusic) {
+        this.retroMusic.stop();
+      }
+    } catch (error) {
+      console.warn('Error al detener la música:', error);
+    }
+    
     // Stop all timers
     if (this.verticalTimer) {
       this.verticalTimer.remove();
@@ -650,6 +779,24 @@ export default class GameScene extends Phaser.Scene {
     // Update UI
     this.updateUI();
     this.renderPreview();
+    
+    // Restart retro music (safely) - respetar estado de mute
+    try {
+      if (this.retroMusic) {
+        this.retroMusic.stop();
+        this.musicStarted = false;
+        // Solo iniciar música si no está silenciada
+        if (!this.musicMuted) {
+          this.startMusicOnInteraction();
+        }
+      }
+    } catch (error) {
+      console.warn('Error al reiniciar la música:', error);
+      this.retroMusic = null;
+    }
+    
+    // Actualizar indicador de música
+    this.updateMusicIndicator();
     
     // Spawn new tetramino
     this.spawnTetramino();
