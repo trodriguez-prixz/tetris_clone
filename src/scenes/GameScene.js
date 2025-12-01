@@ -24,6 +24,7 @@ import Tetramino from '../classes/Tetramino.js';
 import Score from '../classes/Score.js';
 import { RetroMusic } from '../utils/retroMusic.js';
 import { SoundEffects } from '../utils/soundEffects.js';
+import { StorageManager } from '../utils/storage.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -49,6 +50,9 @@ export default class GameScene extends Phaser.Scene {
       0x2c3e50,
       0xecf0f1
     );
+
+    // Draw grid lines
+    this.drawGridLines();
 
     // Draw Preview Area (in sidebar)
     const previewAreaY = SIDEBAR_Y + PREVIEW_AREA_HEIGHT / 2;
@@ -202,6 +206,36 @@ export default class GameScene extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5);
     
+    // High score text
+    const bestScore = StorageManager.getBestScore();
+    this.highScoreText = this.add.text(uiX, scoreAreaTop + 130, `Best: ${this.formatNumber(bestScore)}`, {
+      fontSize: '16px',
+      fill: '#f39c12',
+      fontStyle: 'bold',
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Time text
+    this.timeText = this.add.text(uiX, scoreAreaTop + 155, 'Time: 0:00', {
+      fontSize: '16px',
+      fill: '#95a5a6',
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Pieces placed text
+    this.piecesText = this.add.text(uiX, scoreAreaTop + 180, 'Pieces: 0', {
+      fontSize: '16px',
+      fill: '#95a5a6',
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Tetrises text
+    this.tetrisesText = this.add.text(uiX, scoreAreaTop + 205, 'Tetrises: 0', {
+      fontSize: '16px',
+      fill: '#95a5a6',
+      align: 'center'
+    }).setOrigin(0.5);
+    
     // Calculate bottom of sidebar for positioning AUDIO section at the bottom
     const sidebarBottom = CANVAS_HEIGHT - PADDING;
     
@@ -271,6 +305,34 @@ export default class GameScene extends Phaser.Scene {
         this.animateTextUpdate(this.linesText);
       }
       this.lastLines = newLines;
+    }
+    
+    // Update high score if current score is higher
+    if (this.highScoreText) {
+      const bestScore = StorageManager.getBestScore();
+      const currentBest = Math.max(bestScore, newScore);
+      this.highScoreText.setText(`Best: ${this.formatNumber(currentBest)}`);
+      if (newScore > bestScore) {
+        this.highScoreText.setFill('#e74c3c'); // Red when new record
+      } else {
+        this.highScoreText.setFill('#f39c12'); // Orange otherwise
+      }
+    }
+    
+    // Update time
+    if (this.timeText) {
+      const gameTime = this.score.getGameTime();
+      this.timeText.setText(`Time: ${this.score.formatTime(gameTime)}`);
+    }
+    
+    // Update pieces placed
+    if (this.piecesText) {
+      this.piecesText.setText(`Pieces: ${this.score.getPiecesPlaced()}`);
+    }
+    
+    // Update tetrises
+    if (this.tetrisesText) {
+      this.tetrisesText.setText(`Tetrises: ${this.score.getTetrises()}`);
     }
     
     this.updateMusicIndicator();
@@ -573,6 +635,11 @@ export default class GameScene extends Phaser.Scene {
   update() {
     if (!this.gameStarted || this.gameOver) return;
     
+    // Update game time
+    if (!this.isPaused) {
+      this.score.updateGameTime();
+    }
+    
     // Handle pause input (prevents auto-pause when starting with Space)
     if (this.justStarted) {
       if (this.time.now > (this.startTime || 0) + 200) {
@@ -734,6 +801,10 @@ export default class GameScene extends Phaser.Scene {
     this.isPaused = false;
     this.justStarted = true; // Set flag to prevent pause on first frame
     this.startTime = this.time.now; // Record start time for delay check
+    
+    // Start game timer
+    this.score.startTimer();
+    
     this.createPreview();
     
     if (this.retroMusic && !this.musicMuted) {
@@ -891,6 +962,9 @@ export default class GameScene extends Phaser.Scene {
   landTetramino() {
     if (!this.currentTetramino) return;
     
+    // Track piece placed
+    this.score.incrementPiecesPlaced();
+    
     // Store blocks in field_data
     const positions = this.currentTetramino.getBlockPositions();
     positions.forEach(pos => {
@@ -982,6 +1056,21 @@ export default class GameScene extends Phaser.Scene {
   triggerGameOver() {
     this.gameOver = true;
     
+    // Update final game time
+    this.score.updateGameTime();
+    
+    // Save high score if applicable
+    const currentScore = this.score.getScore();
+    const bestScore = StorageManager.getBestScore();
+    if (currentScore > bestScore) {
+      const stats = this.score.getAllStats();
+      StorageManager.saveHighScore(stats);
+    }
+    
+    // Update lifetime statistics
+    const gameStats = this.score.getAllStats();
+    StorageManager.updateStatistics(gameStats);
+    
     // Play game over sound
     if (this.soundEffects) {
       this.soundEffects.playGameOver();
@@ -1036,21 +1125,52 @@ export default class GameScene extends Phaser.Scene {
     ).setOrigin(0.5);
     
     // Final score text
+    const finalScore = this.score.getScore();
+    const bestScore = StorageManager.getBestScore();
+    const isNewRecord = finalScore > bestScore;
+    
     const finalScoreText = this.add.text(
       CANVAS_WIDTH / 2,
       CANVAS_HEIGHT / 2,
-      `Final Score: ${this.score.getScore()}`,
+      `Final Score: ${this.formatNumber(finalScore)}`,
       {
         fontSize: '24px',
-        fill: '#ecf0f1',
+        fill: isNewRecord ? '#e74c3c' : '#ecf0f1',
+        fontStyle: 'bold',
         align: 'center'
       }
     ).setOrigin(0.5);
     
+    let newRecordText = null;
+    // Show "NEW RECORD!" if applicable
+    if (isNewRecord) {
+      newRecordText = this.add.text(
+        CANVAS_WIDTH / 2,
+        CANVAS_HEIGHT / 2 + 35,
+        'NEW RECORD!',
+        {
+          fontSize: '28px',
+          fill: '#f39c12',
+          fontStyle: 'bold',
+          align: 'center'
+        }
+      ).setOrigin(0.5);
+      
+      // Pulse animation for new record
+      this.tweens.add({
+        targets: newRecordText,
+        scaleX: 1.2,
+        scaleY: 1.2,
+        duration: 300,
+        yoyo: true,
+        repeat: -1
+      });
+    }
+    
     // Restart instruction
     const restartText = this.add.text(
       CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2 + 60,
+      CANVAS_HEIGHT / 2 + (isNewRecord ? 90 : 60),
       'Press R to Restart',
       {
         fontSize: '20px',
@@ -1064,7 +1184,8 @@ export default class GameScene extends Phaser.Scene {
       overlay,
       gameOverText,
       finalScoreText,
-      restartText
+      restartText,
+      newRecordText
     };
     
     // Listen for restart key
@@ -1096,6 +1217,9 @@ export default class GameScene extends Phaser.Scene {
       this.gameOverUI.overlay.destroy();
       this.gameOverUI.gameOverText.destroy();
       this.gameOverUI.finalScoreText.destroy();
+      if (this.gameOverUI.newRecordText) {
+        this.gameOverUI.newRecordText.destroy();
+      }
       this.gameOverUI.restartText.destroy();
       this.gameOverUI = null;
     }
@@ -1169,6 +1293,31 @@ export default class GameScene extends Phaser.Scene {
       width,
       height
     );
+  }
+
+  drawGridLines() {
+    const graphics = this.add.graphics();
+    const gridLineColor = 0x34495e; // Subtle dark blue-gray color
+    const gridLineAlpha = 0.3; // Semi-transparent
+    const gridLineWidth = 1;
+
+    graphics.lineStyle(gridLineWidth, gridLineColor, gridLineAlpha);
+
+    // Draw vertical lines (GRID_COLS + 1 lines)
+    for (let col = 0; col <= GRID_COLS; col++) {
+      const x = GAME_AREA_X + (col * CELL_SIZE);
+      graphics.moveTo(x, GAME_AREA_Y);
+      graphics.lineTo(x, GAME_AREA_Y + GAME_AREA_HEIGHT);
+    }
+
+    // Draw horizontal lines (GRID_ROWS + 1 lines)
+    for (let row = 0; row <= GRID_ROWS; row++) {
+      const y = GAME_AREA_Y + (row * CELL_SIZE);
+      graphics.moveTo(GAME_AREA_X, y);
+      graphics.lineTo(GAME_AREA_X + GAME_AREA_WIDTH, y);
+    }
+
+    graphics.strokePath();
   }
 
   initParticleSystem() {
