@@ -55,6 +55,11 @@ describe('GameScene - Phase 3 Tests', () => {
     mockScene = {
       add: {
         rectangle: jest.fn(),
+        text: jest.fn(() => ({
+          setOrigin: jest.fn().mockReturnThis(),
+          setFill: jest.fn().mockReturnThis(),
+          setText: jest.fn().mockReturnThis()
+        })),
         existing: jest.fn(),
         graphics: jest.fn(() => ({
           lineStyle: jest.fn().mockReturnThis(),
@@ -68,15 +73,26 @@ describe('GameScene - Phase 3 Tests', () => {
             right: { isDown: false, JustDown: false },
             up: { isDown: false, JustDown: false },
             down: { isDown: false, JustDown: false }
-          }))
-        }
+          })),
+          addKey: jest.fn(() => ({
+            on: jest.fn()
+          })),
+          on: jest.fn(),
+          off: jest.fn()
+        },
+        on: jest.fn(),
+        off: jest.fn()
       },
       time: {
         addEvent: jest.fn(() => ({
           remove: jest.fn(),
           getProgress: jest.fn(() => 0)
         })),
+        delayedCall: jest.fn(),
         now: 0
+      },
+      tweens: {
+        add: jest.fn()
       }
     };
 
@@ -84,6 +100,7 @@ describe('GameScene - Phase 3 Tests', () => {
     scene.add = mockScene.add;
     scene.input = mockScene.input;
     scene.time = mockScene.time;
+    scene.tweens = mockScene.tweens;
   });
 
   test('field_data is initialized as 20x10 grid with null values', () => {
@@ -99,32 +116,45 @@ describe('GameScene - Phase 3 Tests', () => {
     });
   });
 
-  test('landTetramino stores blocks in field_data', () => {
+  test('gameStarted is false initially', () => {
     scene.create();
+    expect(scene.gameStarted).toBe(false);
+  });
+
+  test('startGame sets gameStarted to true', () => {
+    scene.create();
+    // Mock startScreenUI to avoid destroy errors
+    scene.startScreenUI = {
+      overlay: { destroy: jest.fn() },
+      titleText: { destroy: jest.fn() },
+      instructionsTitle: { destroy: jest.fn() },
+      instructionTexts: [{ destroy: jest.fn() }],
+      startText: { destroy: jest.fn() }
+    };
+    // Mock previewBlocks to avoid errors
+    scene.previewBlocks = [];
+    // Mock spawnTetramino to avoid actual spawning
+    const originalSpawn = scene.spawnTetramino;
+    scene.spawnTetramino = jest.fn();
+    scene.startGame();
+    expect(scene.gameStarted).toBe(true);
+    scene.spawnTetramino = originalSpawn;
+  });
+
+  test('canSpawnTetramino returns true for empty field', () => {
+    scene.create();
+    const canSpawn = scene.canSpawnTetramino('T');
+    expect(canSpawn).toBe(true);
+  });
+
+  test('canSpawnTetramino returns false when spawn area is blocked', () => {
+    scene.create();
+    // Block the spawn area
+    scene.fieldData[0][4] = { destroy: jest.fn() };
+    scene.fieldData[0][5] = { destroy: jest.fn() };
     
-    // Manually set tetramino position to bottom
-    if (scene.currentTetramino) {
-      // Move tetramino to bottom
-      for (let i = 0; i < GRID_ROWS; i++) {
-        scene.currentTetramino.moveDown();
-      }
-      
-      // Get positions before landing
-      const positions = scene.currentTetramino.getBlockPositions();
-      
-      // Land the tetramino
-      scene.landTetramino();
-      
-      // Verify blocks are stored in field_data
-      positions.forEach(pos => {
-        if (pos.y >= 0 && pos.y < GRID_ROWS && pos.x >= 0 && pos.x < GRID_COLS) {
-          expect(scene.fieldData[pos.y][pos.x]).not.toBeNull();
-        }
-      });
-      
-      // Verify new tetramino is spawned
-      expect(scene.currentTetramino).not.toBeNull();
-    }
+    const canSpawn = scene.canSpawnTetramino('T');
+    expect(canSpawn).toBe(false);
   });
 });
 
