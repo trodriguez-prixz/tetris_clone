@@ -42,8 +42,15 @@ describe('Block', () => {
     expect(block.y).toBe(expectedY);
   });
 
-  test('getLogicalPosition returns a clone of logical position', () => {
+  test('getLogicalPosition returns logical position reference', () => {
     const pos = block.getLogicalPosition();
+    expect(pos.x).toBe(5);
+    expect(pos.y).toBe(10);
+    expect(pos).toBe(block.logicalPos); // Returns reference for performance
+  });
+
+  test('getLogicalPositionCopy returns a clone of logical position', () => {
+    const pos = block.getLogicalPositionCopy();
     expect(pos.x).toBe(5);
     expect(pos.y).toBe(10);
     expect(pos).not.toBe(block.logicalPos); // Should be a clone

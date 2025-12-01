@@ -41,7 +41,10 @@ describe('Tetramino', () => {
 
   test('moveDown increments Y position by 1 for all blocks', () => {
     tetramino = new Tetramino(scene, 'O');
-    const initialPositions = tetramino.blocks.map(block => block.getLogicalPosition());
+    const initialPositions = tetramino.blocks.map(block => {
+      const pos = block.getLogicalPosition();
+      return { x: pos.x, y: pos.y };
+    });
     
     tetramino.moveDown();
     
@@ -54,7 +57,10 @@ describe('Tetramino', () => {
 
   test('moveLeft decrements X position by 1 for all blocks', () => {
     tetramino = new Tetramino(scene, 'O');
-    const initialPositions = tetramino.blocks.map(block => block.getLogicalPosition());
+    const initialPositions = tetramino.blocks.map(block => {
+      const pos = block.getLogicalPosition();
+      return { x: pos.x, y: pos.y };
+    });
     
     tetramino.moveLeft();
     
@@ -67,7 +73,10 @@ describe('Tetramino', () => {
 
   test('moveRight increments X position by 1 for all blocks', () => {
     tetramino = new Tetramino(scene, 'O');
-    const initialPositions = tetramino.blocks.map(block => block.getLogicalPosition());
+    const initialPositions = tetramino.blocks.map(block => {
+      const pos = block.getLogicalPosition();
+      return { x: pos.x, y: pos.y };
+    });
     
     tetramino.moveRight();
     
@@ -140,11 +149,11 @@ describe('Tetramino', () => {
 
   test('rotate changes block positions correctly', () => {
     tetramino = new Tetramino(scene, 'T');
-    const initialPositions = tetramino.getBlockPositions();
+    const initialPositions = tetramino.getBlockPositions().map(pos => ({ x: pos.x, y: pos.y }));
     
     tetramino.rotate();
     
-    const newPositions = tetramino.getBlockPositions();
+    const newPositions = tetramino.getBlockPositions().map(pos => ({ x: pos.x, y: pos.y }));
     // After rotation, positions should be different
     expect(newPositions).not.toEqual(initialPositions);
     // But should still have 4 blocks

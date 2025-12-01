@@ -86,6 +86,13 @@ export default class GameScene extends Phaser.Scene {
     this.isPaused = false;
     this.justStarted = false; // Flag to prevent pause on first frame after start
     
+    // Performance optimizations
+    this.uiUpdateThrottle = 0; // Throttle UI updates
+    this.uiUpdateInterval = 100; // Update UI every 100ms instead of every frame
+    this.timeUpdateThrottle = 0; // Throttle time updates
+    this.timeUpdateInterval = 1000; // Update time every second
+    this.formatNumberCache = new Map(); // Cache formatted numbers
+    
     // Initialize field data (20x10 grid)
     this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
     
@@ -134,7 +141,7 @@ export default class GameScene extends Phaser.Scene {
     
     // Create UI (after initializing sound effects so indicator shows correct state)
     this.createUI();
-    this.updateUI();
+    this.updateUI(); // Initial UI update
     
     // Initialize particle system
     this.initParticleSystem();
@@ -266,22 +273,50 @@ export default class GameScene extends Phaser.Scene {
   }
 
   formatNumber(num) {
-    // Format number with thousand separators
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // Cache formatted numbers for performance
+    if (this.formatNumberCache.has(num)) {
+      return this.formatNumberCache.get(num);
+    }
+    const formatted = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // Cache up to 1000 entries to prevent memory bloat
+    if (this.formatNumberCache.size < 1000) {
+      this.formatNumberCache.set(num, formatted);
+    }
+    return formatted;
   }
 
-  updateUI() {
+  updateUI(force = false) {
+    // Only update if forced or if values changed (performance optimization)
+    const newScore = this.score.getScore();
+    const newLevel = this.score.getLevel();
+    const newLines = this.score.getLinesCleared();
+    const newPieces = this.score.getPiecesPlaced();
+    const newTetrises = this.score.getTetrises();
+    
     // Store old values for animation detection
     if (!this.lastScore) this.lastScore = 0;
     if (!this.lastLevel) this.lastLevel = 1;
     if (!this.lastLines) this.lastLines = 0;
+    if (!this.lastPieces) this.lastPieces = 0;
+    if (!this.lastTetrises) this.lastTetrises = 0;
     
-    const newScore = this.score.getScore();
-    const newLevel = this.score.getLevel();
-    const newLines = this.score.getLinesCleared();
+    // Early exit if nothing changed (unless forced)
+    if (!force && 
+        newScore === this.lastScore && 
+        newLevel === this.lastLevel && 
+        newLines === this.lastLines &&
+        newPieces === this.lastPieces &&
+        newTetrises === this.lastTetrises) {
+      // Still update time as it changes frequently
+      if (this.timeText) {
+        const gameTime = this.score.getGameTime();
+        this.timeText.setText(`Time: ${this.score.formatTime(gameTime)}`);
+      }
+      return;
+    }
     
     // Update score with animation if changed
-    if (this.scoreText) {
+    if (this.scoreText && (force || newScore !== this.lastScore)) {
       this.scoreText.setText(`Score: ${this.formatNumber(newScore)}`);
       if (newScore > this.lastScore) {
         this.animateTextUpdate(this.scoreText);
@@ -290,7 +325,7 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Update level with animation if changed
-    if (this.levelText) {
+    if (this.levelText && (force || newLevel !== this.lastLevel)) {
       this.levelText.setText(`Level: ${newLevel}`);
       if (newLevel > this.lastLevel) {
         this.animateLevelUp(this.levelText);
@@ -299,7 +334,7 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Update lines with animation if changed
-    if (this.linesText) {
+    if (this.linesText && (force || newLines !== this.lastLines)) {
       this.linesText.setText(`Lines: ${this.formatNumber(newLines)}`);
       if (newLines > this.lastLines) {
         this.animateTextUpdate(this.linesText);
@@ -308,7 +343,7 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Update high score if current score is higher
-    if (this.highScoreText) {
+    if (this.highScoreText && (force || newScore !== this.lastScore)) {
       const bestScore = StorageManager.getBestScore();
       const currentBest = Math.max(bestScore, newScore);
       this.highScoreText.setText(`Best: ${this.formatNumber(currentBest)}`);
@@ -326,13 +361,15 @@ export default class GameScene extends Phaser.Scene {
     }
     
     // Update pieces placed
-    if (this.piecesText) {
-      this.piecesText.setText(`Pieces: ${this.score.getPiecesPlaced()}`);
+    if (this.piecesText && (force || newPieces !== this.lastPieces)) {
+      this.piecesText.setText(`Pieces: ${newPieces}`);
+      this.lastPieces = newPieces;
     }
     
     // Update tetrises
-    if (this.tetrisesText) {
-      this.tetrisesText.setText(`Tetrises: ${this.score.getTetrises()}`);
+    if (this.tetrisesText && (force || newTetrises !== this.lastTetrises)) {
+      this.tetrisesText.setText(`Tetrises: ${newTetrises}`);
+      this.lastTetrises = newTetrises;
     }
     
     this.updateMusicIndicator();
@@ -635,14 +672,23 @@ export default class GameScene extends Phaser.Scene {
   update() {
     if (!this.gameStarted || this.gameOver) return;
     
-    // Update game time
-    if (!this.isPaused) {
+    const now = this.time.now;
+    
+    // Update game time (throttled to once per second)
+    if (!this.isPaused && now - this.timeUpdateThrottle >= this.timeUpdateInterval) {
       this.score.updateGameTime();
+      this.timeUpdateThrottle = now;
+    }
+    
+    // Update UI (throttled to reduce updates)
+    if (now - this.uiUpdateThrottle >= this.uiUpdateInterval) {
+      this.updateUI();
+      this.uiUpdateThrottle = now;
     }
     
     // Handle pause input (prevents auto-pause when starting with Space)
     if (this.justStarted) {
-      if (this.time.now > (this.startTime || 0) + 200) {
+      if (now > (this.startTime || 0) + 200) {
         this.justStarted = false;
       }
     } else {
@@ -965,18 +1011,14 @@ export default class GameScene extends Phaser.Scene {
     // Track piece placed
     this.score.incrementPiecesPlaced();
     
-    // Store blocks in field_data
+    // Store blocks in field_data (optimized: use positions directly)
     const positions = this.currentTetramino.getBlockPositions();
-    positions.forEach(pos => {
+    for (let i = 0; i < positions.length; i++) {
+      const pos = positions[i];
       if (pos.y >= 0 && pos.y < GRID_ROWS && pos.x >= 0 && pos.x < GRID_COLS) {
-        this.fieldData[pos.y][pos.x] = this.currentTetramino.blocks.find(
-          block => {
-            const blockPos = block.getLogicalPosition();
-            return blockPos.x === pos.x && blockPos.y === pos.y;
-          }
-        );
+        this.fieldData[pos.y][pos.x] = this.currentTetramino.blocks[i];
       }
-    });
+    }
     
     // Destroy current tetramino (blocks are now in field_data)
     this.currentTetramino.blocks = [];
@@ -992,11 +1034,14 @@ export default class GameScene extends Phaser.Scene {
   checkFinishedRows() {
     const rowsToClear = [];
     
-    // Identify complete rows
-    for (let row = 0; row < GRID_ROWS; row++) {
+    // Identify complete rows (optimized: check from bottom to top)
+    // Start from bottom as completed rows are more likely there
+    for (let row = GRID_ROWS - 1; row >= 0; row--) {
       let isComplete = true;
+      // Use a simple loop without function calls for better performance
+      const rowData = this.fieldData[row];
       for (let col = 0; col < GRID_COLS; col++) {
-        if (this.fieldData[row][col] === null) {
+        if (rowData[col] === null) {
           isComplete = false;
           break;
         }
@@ -1251,8 +1296,8 @@ export default class GameScene extends Phaser.Scene {
       this.nextShapes.push(this.getRandomShapeType());
     }
     
-    // Update UI
-    this.updateUI();
+    // Update UI (force update after score changes)
+    this.updateUI(true);
     this.renderPreview();
     
     // Restart retro music (safely) - respetar estado de mute

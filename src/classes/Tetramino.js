@@ -60,7 +60,7 @@ export default class Tetramino {
     this.pivot.x += 1;
   }
 
-  // Get all logical positions of blocks
+  // Get all logical positions of blocks (returns references for performance)
   getBlockPositions() {
     return this.blocks.map(block => block.getLogicalPosition());
   }

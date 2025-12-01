@@ -28,8 +28,13 @@ export default class Block extends Phaser.GameObjects.Rectangle {
     this.updatePixelPosition();
   }
 
-  // Get logical position
+  // Get logical position (returns reference for performance, use getLogicalPositionCopy() if you need a copy)
   getLogicalPosition() {
+    return this.logicalPos;
+  }
+
+  // Get a copy of logical position (use only when you need to modify the position)
+  getLogicalPositionCopy() {
     return this.logicalPos.clone();
   }
 }
