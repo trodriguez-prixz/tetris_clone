@@ -81,7 +81,6 @@ export default class GameScene extends Phaser.Scene {
     this.gameStarted = false;
     this.isPaused = false;
     this.justStarted = false; // Flag to prevent pause on first frame after start
-    this.isPaused = false;
     
     // Initialize field data (20x10 grid)
     this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
@@ -166,7 +165,6 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createUI() {
-    const scoreAreaY = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING + SCORE_AREA_HEIGHT / 2;
     const uiX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
     
     // Calculate the top of the score area to ensure proper spacing
@@ -208,29 +206,23 @@ export default class GameScene extends Phaser.Scene {
     const sidebarBottom = CANVAS_HEIGHT - PADDING;
     
     // Audio section positioned at the bottom of the sidebar
-    // Start from bottom and work upwards
-    // Mute instruction - at the very bottom with margin
     this.muteInstruction = this.add.text(uiX, sidebarBottom - 20, 'M: Música | S: Sonidos', {
       fontSize: '12px',
       fill: '#7f8c8d',
       align: 'center'
     }).setOrigin(0.5);
     
-    // Sound effects indicator - above instruction
     this.soundEffectsIndicator = this.add.text(uiX, sidebarBottom - 50, '🔊 Sonidos: ON', {
       fontSize: '16px',
       fill: '#95a5a6',
       align: 'center'
     }).setOrigin(0.5);
     
-    // Music indicator - above sound effects
     this.musicIndicator = this.add.text(uiX, sidebarBottom - 75, '🔊 Música: ON', {
       fontSize: '16px',
       fill: '#95a5a6',
       align: 'center'
     }).setOrigin(0.5);
-    
-    // Audio controls section title - above music indicator
     this.add.text(uiX, sidebarBottom - 100, 'AUDIO', {
       fontSize: '14px',
       fill: '#95a5a6',
@@ -581,11 +573,8 @@ export default class GameScene extends Phaser.Scene {
   update() {
     if (!this.gameStarted || this.gameOver) return;
     
-    // Handle pause (works even when paused to resume)
-    // Space can start game, but once started it pauses/resumes
-    // Don't pause on the first few frames after starting (prevents auto-pause when starting with Space)
+    // Handle pause input (prevents auto-pause when starting with Space)
     if (this.justStarted) {
-      // Clear the flag after a few frames to allow pause
       if (this.time.now > (this.startTime || 0) + 200) {
         this.justStarted = false;
       }
