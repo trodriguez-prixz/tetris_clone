@@ -22,6 +22,7 @@ import {
 import Tetramino from '../classes/Tetramino.js';
 import Score from '../classes/Score.js';
 import { RetroMusic } from '../utils/retroMusic.js';
+import { SoundEffects } from '../utils/soundEffects.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -118,11 +119,38 @@ export default class GameScene extends Phaser.Scene {
       this.retroMusic = null;
     }
     
+    // Initialize sound effects
+    try {
+      this.soundEffects = new SoundEffects(this);
+      if (!this.soundEffects.init()) {
+        this.soundEffects = null;
+      }
+    } catch (error) {
+      console.warn('No se pudo inicializar los efectos de sonido:', error);
+      this.soundEffects = null;
+    }
+    
     // Setup mute toggle key (M key)
     this.muteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
     this.muteKey.on('down', () => {
       if (this.gameStarted) {
         this.toggleMusic();
+      }
+    });
+    
+    // Setup sound effects toggle key (S key)
+    this.soundEffectsKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    this.soundEffectsKey.on('down', () => {
+      if (this.gameStarted) {
+        this.toggleSoundEffects();
+      }
+    });
+    
+    // Setup sound effects toggle key (S key)
+    this.soundEffectsKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    this.soundEffectsKey.on('down', () => {
+      if (this.gameStarted) {
+        this.toggleSoundEffects();
       }
     });
     
@@ -167,8 +195,15 @@ export default class GameScene extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5);
     
+    // Sound effects indicator
+    this.soundEffectsIndicator = this.add.text(uiX, scoreAreaY + 60, '🔊 Sonidos: ON', {
+      fontSize: '14px',
+      fill: '#95a5a6',
+      align: 'center'
+    }).setOrigin(0.5);
+    
     // Mute instruction
-    this.muteInstruction = this.add.text(uiX, scoreAreaY + 65, 'Presiona M para silenciar', {
+    this.muteInstruction = this.add.text(uiX, scoreAreaY + 85, 'M: Música | S: Sonidos', {
       fontSize: '12px',
       fill: '#7f8c8d',
       align: 'center'
@@ -180,6 +215,7 @@ export default class GameScene extends Phaser.Scene {
     this.levelText.setText(`Level: ${this.score.getLevel()}`);
     this.linesText.setText(`Lines: ${this.score.getLinesCleared()}`);
     this.updateMusicIndicator();
+    this.updateSoundEffectsIndicator();
   }
 
   updateMusicIndicator() {
@@ -190,6 +226,29 @@ export default class GameScene extends Phaser.Scene {
       } else {
         this.musicIndicator.setText('🔊 Música: ON');
         this.musicIndicator.setFill('#2ecc71');
+      }
+    }
+  }
+
+  updateSoundEffectsIndicator() {
+    if (this.soundEffectsIndicator) {
+      if (!this.soundEffects || !this.soundEffects.isEnabled()) {
+        this.soundEffectsIndicator.setText('🔇 Sonidos: OFF');
+        this.soundEffectsIndicator.setFill('#e74c3c');
+      } else {
+        this.soundEffectsIndicator.setText('🔊 Sonidos: ON');
+        this.soundEffectsIndicator.setFill('#2ecc71');
+      }
+    }
+  }
+
+  toggleSoundEffects() {
+    if (this.soundEffects) {
+      const enabled = this.soundEffects.toggle();
+      this.updateSoundEffectsIndicator();
+      // Play a test sound when enabling
+      if (enabled) {
+        this.soundEffects.playMove();
       }
     }
   }
@@ -357,7 +416,8 @@ export default class GameScene extends Phaser.Scene {
       '← → : Mover pieza',
       '↑ : Rotar pieza',
       '↓ : Acelerar caída',
-      'M : Silenciar música'
+      'M : Silenciar música',
+      'S : Silenciar sonidos'
     ];
     
     const instructionTexts = [];
@@ -441,13 +501,17 @@ export default class GameScene extends Phaser.Scene {
 
   handleFastDrop() {
       if (Phaser.Input.Keyboard.JustDown(this.cursors.down) && !this.isFastDrop) {
-        if (this.currentTetramino) {
-          if (this.currentTetramino.nextMoveVerticalCollide(this.fieldData)) {
-            this.landTetramino();
-          } else {
-            this.currentTetramino.moveDown();
+      if (this.currentTetramino) {
+        if (this.currentTetramino.nextMoveVerticalCollide(this.fieldData)) {
+          this.landTetramino();
+        } else {
+          this.currentTetramino.moveDown();
+          // Play move sound for automatic drop
+          if (this.soundEffects && !this.isFastDrop) {
+            // Only play soft sound for automatic drops, not for fast drop
           }
         }
+      }
         
         this.dropSpeed = FAST_DROP_SPEED;
         this.startVerticalTimer();
@@ -508,6 +572,10 @@ export default class GameScene extends Phaser.Scene {
       } else {
         this.currentTetramino.moveRight();
       }
+      // Play move sound
+      if (this.soundEffects) {
+        this.soundEffects.playMove();
+      }
     }
   }
 
@@ -527,6 +595,11 @@ export default class GameScene extends Phaser.Scene {
     
     if (this.currentTetramino.canRotate(this.fieldData)) {
       this.currentTetramino.rotate();
+      
+      // Play rotate sound
+      if (this.soundEffects) {
+        this.soundEffects.playRotate();
+      }
       
       // Start rotation timer
       if (this.rotateTimer) {
@@ -607,11 +680,20 @@ export default class GameScene extends Phaser.Scene {
     
     if (rowsToClear.length === 0) return;
     
+    // Play line clear sound
+    if (this.soundEffects) {
+      this.soundEffects.playLineClear(rowsToClear.length);
+    }
+    
     // Add score
     const levelIncreased = this.score.addScore(rowsToClear.length);
     
     // Update speed if level increased
     if (levelIncreased) {
+      // Play level up sound
+      if (this.soundEffects) {
+        this.soundEffects.playLevelUp();
+      }
       this.baseDropSpeed = Math.max(50, this.baseDropSpeed * LEVEL_SPEED_MULTIPLIER);
       if (!this.isFastDrop) {
         this.dropSpeed = this.baseDropSpeed;
@@ -715,6 +797,11 @@ export default class GameScene extends Phaser.Scene {
 
   triggerGameOver() {
     this.gameOver = true;
+    
+    // Play game over sound
+    if (this.soundEffects) {
+      this.soundEffects.playGameOver();
+    }
     
     try {
       if (this.retroMusic) {
