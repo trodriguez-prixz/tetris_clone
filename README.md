@@ -16,6 +16,8 @@ Un clon completo del juego Tetris implementado con JavaScript y Phaser 3.
 - ✅ Sistema de Game Over
 - ✅ Música retro de fondo (Korobeiniki - Tema de Tetris)
 - ✅ Control de volumen de música (silenciar/activar)
+- ✅ Efectos de sonido retro (movimiento, rotación, líneas eliminadas, game over)
+- ✅ Control independiente de efectos de sonido
 
 ## Requisitos
 
@@ -93,6 +95,7 @@ Esto generará un archivo `.AppImage` en `dist-electron/`
 - **Flecha Arriba (↑)**: Rotar pieza
 - **Flecha Abajo (↓)**: Acelerar caída (mueve la pieza inmediatamente y luego acelera)
 - **M**: Silenciar/activar música
+- **S**: Silenciar/activar efectos de sonido
 - **R**: Reiniciar juego (solo en Game Over)
 - **Cualquier tecla o clic**: Comenzar juego (en pantalla de inicio)
 
@@ -119,12 +122,22 @@ Esto generará un archivo `.AppImage` en `dist-electron/`
 
 El juego termina cuando una nueva pieza no puede ser generada en la parte superior de la cuadrícula porque el espacio está ocupado por bloques previamente asentados.
 
-### Música
+### Música y Sonidos
 
-- Música retro de fondo (Korobeiniki - Tema clásico de Tetris)
-- Volumen bajo para no interferir con el juego
-- Control de silencio con la tecla M
-- La música se inicia automáticamente cuando comienza el juego
+- **Música retro de fondo**: Korobeiniki (Tema clásico de Tetris)
+  - Volumen bajo para no interferir con el juego
+  - Control de silencio con la tecla M
+  - La música se inicia automáticamente cuando comienza el juego
+
+- **Efectos de sonido retro**:
+  - Sonido de movimiento al mover piezas
+  - Sonido característico al rotar piezas
+  - Sonidos diferentes según número de líneas eliminadas (1-4 líneas)
+  - Sonido especial para Tetris (4 líneas)
+  - Sonido de subida de nivel
+  - Sonido de Game Over
+  - Control independiente con la tecla S
+  - Volumen ajustado para no interferir con la música
 
 ## Estructura del Proyecto
 
@@ -141,7 +154,8 @@ tetris_clone/
 │   │   └── GameScene.js        # Escena principal del juego
 │   ├── utils/
 │   │   ├── timer.js            # Utilidades de temporizadores
-│   │   └── retroMusic.js       # Generador de música retro
+│   │   ├── retroMusic.js       # Generador de música retro
+│   │   └── soundEffects.js     # Generador de efectos de sonido
 │   ├── main.js                 # Punto de entrada
 │   └── index.html              # HTML base
 ├── tests/                      # Tests unitarios
@@ -175,6 +189,7 @@ tetris_clone/
 - **Score**: Gestiona la puntuación, niveles y líneas eliminadas
 - **GameScene**: Escena principal que maneja toda la lógica del juego
 - **RetroMusic**: Generador de música retro usando Web Audio API
+- **SoundEffects**: Generador de efectos de sonido usando Web Audio API
 
 ### Flujo del Juego
 
