@@ -76,7 +76,7 @@ export default class GameScene extends Phaser.Scene {
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.isFastDrop = false;
     this.gameOver = false;
-    this.gameStarted = false; // Controla si el juego ha comenzado
+    this.gameStarted = false;
     
     // Initialize field data (20x10 grid)
     this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
@@ -93,19 +93,17 @@ export default class GameScene extends Phaser.Scene {
     // Input handling
     this.cursors = this.input.keyboard.createCursorKeys();
     this.horizontalMoveTimer = null;
-    this.horizontalMoveDelay = 200; // 200ms throttling
+    this.horizontalMoveDelay = 200;
     this.rotateTimer = null;
-    this.rotateDelay = 150; // 150ms throttling for rotation
+    this.rotateDelay = 150;
     
     // Create UI
     this.createUI();
     this.updateUI();
     
-    // Don't create preview until game starts
-    // Preview will be created in startGame()
     
     // Initialize retro music (optional, won't break game if it fails)
-    this.musicMuted = false; // Estado de silencio de la música
+    this.musicMuted = false;
     try {
       this.retroMusic = new RetroMusic(this);
       if (this.retroMusic.init()) {
@@ -273,28 +271,21 @@ export default class GameScene extends Phaser.Scene {
   }
 
   startMusicOnInteraction() {
-    // Only set up if music is available and not muted
     if (!this.retroMusic || this.musicMuted) return;
     
-    // Remove any existing listeners first
     if (this.musicStartHandler) {
       try {
         this.input.keyboard.off('keydown', this.musicStartHandler);
         this.input.off('pointerdown', this.musicStartHandler);
-      } catch (error) {
-        // Ignore errors when removing listeners
-      }
+      } catch (error) {}
     }
     
-    // Start music when user presses any key for the first time (only after game starts)
     this.musicStartHandler = () => {
       try {
-        // Solo iniciar si el juego ha comenzado, no está silenciada y no se ha iniciado ya
         if (this.gameStarted && !this.musicStarted && this.retroMusic && !this.musicMuted) {
           this.retroMusic.play();
           this.musicStarted = true;
           this.updateMusicIndicator();
-          // Remove listeners after music starts
           if (this.musicStartHandler) {
             this.input.keyboard.off('keydown', this.musicStartHandler);
             this.input.off('pointerdown', this.musicStartHandler);
@@ -307,7 +298,6 @@ export default class GameScene extends Phaser.Scene {
       }
     };
     
-    // Listen for keyboard or mouse interaction
     try {
       this.input.keyboard.on('keydown', this.musicStartHandler);
       this.input.on('pointerdown', this.musicStartHandler);
@@ -318,18 +308,10 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update() {
-    // Don't process input if game hasn't started or is over
-    if (!this.gameStarted || this.gameOver) return;
+    if (!this.gameStarted || this.gameOver || !this.currentTetramino) return;
     
-    if (!this.currentTetramino) return;
-    
-    // Handle horizontal input with throttling
     this.handleHorizontalInput();
-    
-    // Handle rotation input
     this.handleRotationInput();
-    
-    // Handle fast drop (K_DOWN)
     this.handleFastDrop();
   }
 
@@ -437,7 +419,6 @@ export default class GameScene extends Phaser.Scene {
   }
 
   startGame() {
-    // Clean up start screen UI
     if (this.startScreenUI) {
       this.startScreenUI.overlay.destroy();
       this.startScreenUI.titleText.destroy();
@@ -447,59 +428,35 @@ export default class GameScene extends Phaser.Scene {
       this.startScreenUI = null;
     }
     
-    // Mark game as started
     this.gameStarted = true;
-    
-    // Create preview now that game has started
     this.createPreview();
     
-    // Start music on first interaction (now that game has started)
     if (this.retroMusic && !this.musicMuted) {
       this.startMusicOnInteraction();
     }
     
-    // Create first tetramino
     this.spawnTetramino();
-    
-    // Start vertical timer
     this.startVerticalTimer();
   }
 
   handleFastDrop() {
-    // Escenario 1: Pulsación Inicial (Activación de la Aceleración)
-    // Verificación explícita: if not self.down_pressed (equivalente a !this.isFastDrop)
-    // Esto asegura que la lógica solo se ejecute una vez por ciclo de pulsación/liberación
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.down) && !this.isFastDrop) {
-      // Movimiento inmediato: La pieza se mueve inmediatamente al presionar la tecla
-      if (this.currentTetramino) {
-        if (this.currentTetramino.nextMoveVerticalCollide(this.fieldData)) {
-          this.landTetramino();
-        } else {
-          this.currentTetramino.moveDown();
+      if (Phaser.Input.Keyboard.JustDown(this.cursors.down) && !this.isFastDrop) {
+        if (this.currentTetramino) {
+          if (this.currentTetramino.nextMoveVerticalCollide(this.fieldData)) {
+            this.landTetramino();
+          } else {
+            this.currentTetramino.moveDown();
+          }
         }
+        
+        this.dropSpeed = FAST_DROP_SPEED;
+        this.startVerticalTimer();
+        this.isFastDrop = true;
+      } else if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
+        this.dropSpeed = this.baseDropSpeed;
+        this.startVerticalTimer();
+        this.isFastDrop = false;
       }
-      
-      // Cambio de Velocidad: Actualiza el temporizador a velocidad acelerada
-      this.dropSpeed = FAST_DROP_SPEED; // 30% del tiempo normal (300ms = 30% de 1000ms)
-      this.startVerticalTimer(); // Reinicia temporizador con nueva velocidad
-      
-      // Cambio de Estado: down_pressed de falso a verdadero
-      this.isFastDrop = true;
-    } 
-    // Escenario 2: Pulsación Sostenida (Control de Repetición)
-    // Mientras la tecla está presionada, la condición !this.isFastDrop es falsa
-    // Por lo tanto, la lógica de actualización NO se ejecuta en fotogramas subsiguientes
-    // La velocidad permanece en FAST_DROP_SPEED y el estado permanece en true
-    
-    // Escenario 3: Liberación de la Tecla (Reversión a Velocidad Normal)
-    else if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
-      // Reversión de Velocidad: Revierte al valor de velocidad normal
-      this.dropSpeed = this.baseDropSpeed;
-      this.startVerticalTimer(); // Reinicia temporizador con velocidad normal
-      
-      // Restablecimiento de Estado: down_pressed de verdadero a falso
-      this.isFastDrop = false;
-    }
   }
 
   handleHorizontalInput() {
@@ -727,17 +684,14 @@ export default class GameScene extends Phaser.Scene {
     const startX = Math.floor(GRID_COLS / 2) - 1;
     const startY = 0;
     
-    // Check if all blocks of the tetramino can be placed at initial position
     for (const relativePos of tetraminoData.blocks) {
       const logicalX = startX + relativePos.x;
       const logicalY = startY + relativePos.y;
       
-      // Check bounds
       if (logicalX < 0 || logicalX >= GRID_COLS || logicalY < 0 || logicalY >= GRID_ROWS) {
         return false;
       }
       
-      // Check if position is already occupied
       if (this.fieldData[logicalY] && this.fieldData[logicalY][logicalX] !== null) {
         return false;
       }
@@ -747,31 +701,21 @@ export default class GameScene extends Phaser.Scene {
   }
 
   spawnTetramino() {
-    // Get next shape from queue
     const nextType = this.nextShapes.shift();
     
-    // Check if the tetramino can be placed at its initial position
     if (!this.canSpawnTetramino(nextType)) {
-      // Game Over: Cannot spawn new tetramino
       this.triggerGameOver();
       return;
     }
     
-    // Create the tetramino
     this.currentTetramino = new Tetramino(this, nextType);
-    
-    // Add new shape to queue
     this.nextShapes.push(this.getRandomShapeType());
-    
-    // Update preview
     this.renderPreview();
   }
 
   triggerGameOver() {
-    // Set game over state
     this.gameOver = true;
     
-    // Stop retro music (safely)
     try {
       if (this.retroMusic) {
         this.retroMusic.stop();
@@ -780,7 +724,6 @@ export default class GameScene extends Phaser.Scene {
       console.warn('Error al detener la música:', error);
     }
     
-    // Stop all timers
     if (this.verticalTimer) {
       this.verticalTimer.remove();
       this.verticalTimer = null;
@@ -794,7 +737,6 @@ export default class GameScene extends Phaser.Scene {
       this.rotateTimer = null;
     }
     
-    // Create Game Over UI
     this.showGameOver();
   }
 

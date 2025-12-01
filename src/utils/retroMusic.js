@@ -11,7 +11,6 @@ export class RetroMusic {
     this.isPlaying = false;
     this.currentSongIndex = 0;
     this.currentNoteIndex = 0;
-    this.songStartTime = 0;
     this.masterGain = null;
     
     // Playlist de canciones
@@ -21,12 +20,10 @@ export class RetroMusic {
     // Duración de cada canción en segundos (calculada)
     this.songDurations = this.calculateSongDurations();
     
-    // Tiempo de transición entre canciones (en segundos) - más largo para transición más suave
     this.transitionTime = 2.5;
   }
 
   createSongs() {
-    // Solo la canción original de Korobeiniki en loop infinito
     const korobeinikiMelody = [
       // Frase 1
       [440, 0.25], [493.88, 0.25], [523.25, 0.25], [493.88, 0.25],
@@ -60,7 +57,7 @@ export class RetroMusic {
         name: 'Korobeiniki (Tetris Theme)',
         melody: korobeinikiMelody,
         bassLine: korobeinikiBass,
-        loops: 1 // Solo una canción, se repite infinitamente
+        loops: 1
       }
     ];
   }
@@ -75,12 +72,9 @@ export class RetroMusic {
 
   init() {
     try {
-      // Crear AudioContext (compatible con navegadores modernos)
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       this.audioContext = new AudioContextClass();
       
-      // Crear master gain node para control de volumen y transiciones
-      // Volumen más bajo para música de fondo (0.15 = 15% del volumen máximo)
       this.masterGain = this.audioContext.createGain();
       this.masterGain.gain.setValueAtTime(0.15, this.audioContext.currentTime);
       this.masterGain.connect(this.audioContext.destination);
@@ -102,23 +96,16 @@ export class RetroMusic {
         }
       }
       
-      // Si el contexto está suspendido (requiere interacción del usuario), intentar reanudarlo
       if (this.audioContext && this.audioContext.state === 'suspended') {
-        this.audioContext.resume().catch(() => {
-          return;
-        });
+        this.audioContext.resume().catch(() => {});
       }
       
-      if (!this.audioContext) {
-        return;
-      }
+      if (!this.audioContext) return;
       
       this.isPlaying = true;
       this.currentNoteIndex = 0;
-      this.songStartTime = this.audioContext.currentTime;
       this.currentSong = this.songs[this.currentSongIndex];
       
-      // Establecer volumen inicial (música de fondo)
       const now = this.audioContext.currentTime;
       this.masterGain.gain.setValueAtTime(0.15, now);
       
@@ -134,16 +121,13 @@ export class RetroMusic {
   scheduleNextSong() {
     if (!this.isPlaying || !this.scene || !this.scene.time) return;
     
-    // Si solo hay una canción, no programar cambios, solo reiniciar cuando termine
     if (this.songs.length === 1) {
       const currentDuration = this.songDurations[0];
       if (this.scene && this.scene.time) {
         this.scene.time.delayedCall(currentDuration * 1000, () => {
           if (this.isPlaying) {
-            // Reiniciar la misma canción sin fade
             this.currentNoteIndex = 0;
-            this.songStartTime = this.audioContext.currentTime;
-            this.scheduleNextSong(); // Programar el siguiente ciclo
+            this.scheduleNextSong();
           }
         });
       }
@@ -151,11 +135,8 @@ export class RetroMusic {
     }
     
     const currentDuration = this.songDurations[this.currentSongIndex];
-    // Esperar a que termine completamente la canción antes de hacer fade out
-    // El fade out comienza justo antes del final para una transición más suave
     const transitionStart = Math.max(0, currentDuration - this.transitionTime);
     
-    // Programar fade out suave antes del cambio de canción
     if (this.scene && this.scene.time) {
       this.scene.time.delayedCall(transitionStart * 1000, () => {
         if (this.isPlaying) {
@@ -163,7 +144,6 @@ export class RetroMusic {
         }
       });
       
-      // Programar cambio de canción después de que termine completamente
       this.scene.time.delayedCall(currentDuration * 1000, () => {
         if (this.isPlaying) {
           this.nextSong();
@@ -176,11 +156,9 @@ export class RetroMusic {
     if (!this.masterGain || !this.audioContext) return;
     
     const now = this.audioContext.currentTime;
-    // Fade out más suave y gradual usando curva exponencial
     const currentGain = this.masterGain.gain.value;
     this.masterGain.gain.cancelScheduledValues(now);
     this.masterGain.gain.setValueAtTime(currentGain, now);
-    // Usar exponentialRamp para un fade más natural
     this.masterGain.gain.exponentialRampToValueAtTime(0.01, now + this.transitionTime);
   }
 
@@ -188,10 +166,8 @@ export class RetroMusic {
     if (!this.masterGain || !this.audioContext) return;
     
     const now = this.audioContext.currentTime;
-    // Fade in suave desde casi silencio
     this.masterGain.gain.cancelScheduledValues(now);
     this.masterGain.gain.setValueAtTime(0.01, now);
-    // Usar exponentialRamp para un fade más natural (volumen de fondo)
     this.masterGain.gain.exponentialRampToValueAtTime(0.15, now + this.transitionTime);
   }
 
@@ -201,9 +177,7 @@ export class RetroMusic {
     // Si solo hay una canción, simplemente reiniciarla sin fade
     if (this.songs.length === 1) {
       this.currentNoteIndex = 0;
-      this.songStartTime = this.audioContext.currentTime;
       this.currentSong = this.songs[0];
-      // Continuar reproduciendo sin interrupción
       return;
     }
     
@@ -225,7 +199,6 @@ export class RetroMusic {
     // Cambiar a la siguiente canción
     this.currentSongIndex = (this.currentSongIndex + 1) % this.songs.length;
     this.currentNoteIndex = 0;
-    this.songStartTime = this.audioContext.currentTime;
     this.currentSong = this.songs[this.currentSongIndex];
     
     // Fade in de la nueva canción
