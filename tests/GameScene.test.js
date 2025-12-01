@@ -58,12 +58,16 @@ describe('GameScene - Phase 3 Tests', () => {
         text: jest.fn(() => ({
           setOrigin: jest.fn().mockReturnThis(),
           setFill: jest.fn().mockReturnThis(),
-          setText: jest.fn().mockReturnThis()
+          setText: jest.fn().mockReturnThis(),
+          setStroke: jest.fn().mockReturnThis()
         })),
         existing: jest.fn(),
         graphics: jest.fn(() => ({
           lineStyle: jest.fn().mockReturnThis(),
-          strokeRect: jest.fn()
+          strokeRect: jest.fn(),
+          moveTo: jest.fn().mockReturnThis(),
+          lineTo: jest.fn().mockReturnThis(),
+          strokePath: jest.fn().mockReturnThis()
         }))
       },
       input: {

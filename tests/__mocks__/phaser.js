@@ -49,6 +49,9 @@ export default {
         this.fillStyle = jest.fn().mockReturnThis();
         this.strokeRect = jest.fn().mockReturnThis();
         this.fillRect = jest.fn().mockReturnThis();
+        this.moveTo = jest.fn().mockReturnThis();
+        this.lineTo = jest.fn().mockReturnThis();
+        this.strokePath = jest.fn().mockReturnThis();
         this.destroy = jest.fn();
       }
     }

@@ -23,7 +23,7 @@ export const SIDEBAR_Y = PADDING;
 
 // Preview area dimensions (within sidebar)
 export const PREVIEW_AREA_HEIGHT = 200;
-export const SCORE_AREA_HEIGHT = 150;
+export const SCORE_AREA_HEIGHT = 200;
 
 // Tetraminos definitions
 // Each tetramino is defined by relative positions from a pivot point (0, 0)

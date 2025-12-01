@@ -169,55 +169,154 @@ export default class GameScene extends Phaser.Scene {
     const scoreAreaY = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING + SCORE_AREA_HEIGHT / 2;
     const uiX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
     
-    // Score text
-    this.scoreText = this.add.text(uiX, scoreAreaY - 50, 'Score: 0', {
-      fontSize: '20px',
-      fill: '#ecf0f1',
+    // Calculate the top of the score area to ensure proper spacing
+    const scoreAreaTop = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING;
+    
+    // Title for score section - more space from top border
+    this.add.text(uiX, scoreAreaTop + 15, 'STATS', {
+      fontSize: '18px',
+      fill: '#bdc3c7',
+      fontStyle: 'bold',
       align: 'center'
     }).setOrigin(0.5);
     
-    // Level text
-    this.levelText = this.add.text(uiX, scoreAreaY - 20, 'Level: 1', {
+    // Score text - better spacing from title
+    this.scoreText = this.add.text(uiX, scoreAreaTop + 45, 'Score: 0', {
       fontSize: '20px',
       fill: '#ecf0f1',
+      fontStyle: 'bold',
       align: 'center'
     }).setOrigin(0.5);
     
-    // Lines text
-    this.linesText = this.add.text(uiX, scoreAreaY + 10, 'Lines: 0', {
+    // Level text - better spacing
+    this.levelText = this.add.text(uiX, scoreAreaTop + 75, 'Level: 1', {
       fontSize: '20px',
       fill: '#ecf0f1',
+      fontStyle: 'bold',
       align: 'center'
     }).setOrigin(0.5);
     
-    // Music indicator (mute/unmute)
-    this.musicIndicator = this.add.text(uiX, scoreAreaY + 40, '🔊 Música: ON', {
+    // Lines text - better spacing
+    this.linesText = this.add.text(uiX, scoreAreaTop + 100, 'Lines: 0', {
+      fontSize: '20px',
+      fill: '#ecf0f1',
+      fontStyle: 'bold',
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Calculate bottom of sidebar for positioning AUDIO section at the bottom
+    const sidebarBottom = CANVAS_HEIGHT - PADDING;
+    
+    // Audio section positioned at the bottom of the sidebar
+    // Start from bottom and work upwards
+    // Mute instruction - at the very bottom with margin
+    this.muteInstruction = this.add.text(uiX, sidebarBottom - 20, 'M: Música | S: Sonidos', {
+      fontSize: '12px',
+      fill: '#7f8c8d',
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Sound effects indicator - above instruction
+    this.soundEffectsIndicator = this.add.text(uiX, sidebarBottom - 50, '🔊 Sonidos: ON', {
       fontSize: '16px',
       fill: '#95a5a6',
       align: 'center'
     }).setOrigin(0.5);
     
-    // Sound effects indicator
-    this.soundEffectsIndicator = this.add.text(uiX, scoreAreaY + 60, '🔊 Sonidos: ON', {
-      fontSize: '14px',
+    // Music indicator - above sound effects
+    this.musicIndicator = this.add.text(uiX, sidebarBottom - 75, '🔊 Música: ON', {
+      fontSize: '16px',
       fill: '#95a5a6',
       align: 'center'
     }).setOrigin(0.5);
     
-    // Mute instruction
-    this.muteInstruction = this.add.text(uiX, scoreAreaY + 85, 'M: Música | S: Sonidos', {
-      fontSize: '12px',
-      fill: '#7f8c8d',
+    // Audio controls section title - above music indicator
+    this.add.text(uiX, sidebarBottom - 100, 'AUDIO', {
+      fontSize: '14px',
+      fill: '#95a5a6',
+      fontStyle: 'bold',
       align: 'center'
     }).setOrigin(0.5);
   }
 
+  formatNumber(num) {
+    // Format number with thousand separators
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
   updateUI() {
-    this.scoreText.setText(`Score: ${this.score.getScore()}`);
-    this.levelText.setText(`Level: ${this.score.getLevel()}`);
-    this.linesText.setText(`Lines: ${this.score.getLinesCleared()}`);
+    // Store old values for animation detection
+    if (!this.lastScore) this.lastScore = 0;
+    if (!this.lastLevel) this.lastLevel = 1;
+    if (!this.lastLines) this.lastLines = 0;
+    
+    const newScore = this.score.getScore();
+    const newLevel = this.score.getLevel();
+    const newLines = this.score.getLinesCleared();
+    
+    // Update score with animation if changed
+    if (this.scoreText) {
+      this.scoreText.setText(`Score: ${this.formatNumber(newScore)}`);
+      if (newScore > this.lastScore) {
+        this.animateTextUpdate(this.scoreText);
+      }
+      this.lastScore = newScore;
+    }
+    
+    // Update level with animation if changed
+    if (this.levelText) {
+      this.levelText.setText(`Level: ${newLevel}`);
+      if (newLevel > this.lastLevel) {
+        this.animateLevelUp(this.levelText);
+      }
+      this.lastLevel = newLevel;
+    }
+    
+    // Update lines with animation if changed
+    if (this.linesText) {
+      this.linesText.setText(`Lines: ${this.formatNumber(newLines)}`);
+      if (newLines > this.lastLines) {
+        this.animateTextUpdate(this.linesText);
+      }
+      this.lastLines = newLines;
+    }
+    
     this.updateMusicIndicator();
     this.updateSoundEffectsIndicator();
+  }
+
+  animateTextUpdate(textObject) {
+    // Subtle pulse animation when value changes
+    this.tweens.add({
+      targets: textObject,
+      scaleX: 1.15,
+      scaleY: 1.15,
+      duration: 150,
+      yoyo: true,
+      ease: 'Power2'
+    });
+  }
+
+  animateLevelUp(textObject) {
+    // Special animation for level up
+    this.tweens.add({
+      targets: textObject,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      duration: 200,
+      yoyo: true,
+      ease: 'Power2',
+      onComplete: () => {
+        // Flash effect
+        this.tweens.add({
+          targets: textObject,
+          alpha: 0.3,
+          duration: 100,
+          yoyo: true,
+          ease: 'Power2'
+        });
+      }
+    });
   }
 
   updateMusicIndicator() {
