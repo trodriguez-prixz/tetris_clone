@@ -107,27 +107,13 @@ export default class Tetramino {
     return false;
   }
 
-  // Rotate 90 degrees clockwise around pivot
+  // Rotate 90 degrees clockwise around pivot (legacy method, uses rotateWithOffset)
   rotate() {
-    // Rotate relative positions 90 degrees clockwise
-    // Formula: (x, y) -> (y, -x)
-    this.relativePositions = this.relativePositions.map(pos => ({
-      x: pos.y,
-      y: -pos.x
-    }));
-    
-    // Update block positions based on new relative positions
-    this.relativePositions.forEach((relativePos, index) => {
-      const logicalX = Math.round(this.pivot.x + relativePos.x);
-      const logicalY = Math.round(this.pivot.y + relativePos.y);
-      this.blocks[index].setLogicalPosition(logicalX, logicalY);
-    });
-    
-    this.rotation = (this.rotation + 90) % 360;
+    this.rotateWithOffset(0, 0);
   }
 
-  // Check if rotation would cause collision
-  canRotate(fieldData = null) {
+  // Check if rotation would cause collision (with optional offset for wall kicks)
+  canRotate(fieldData = null, offsetX = 0, offsetY = 0) {
     // Calculate rotated positions
     const rotatedPositions = this.relativePositions.map(pos => ({
       x: pos.y,
@@ -141,10 +127,10 @@ export default class Tetramino {
       currentPositions.add(`${pos.x},${pos.y}`);
     });
     
-    // Check each rotated position
+    // Check each rotated position with offset
     for (const relativePos of rotatedPositions) {
-      const newX = Math.round(this.pivot.x + relativePos.x);
-      const newY = Math.round(this.pivot.y + relativePos.y);
+      const newX = Math.round(this.pivot.x + relativePos.x + offsetX);
+      const newY = Math.round(this.pivot.y + relativePos.y + offsetY);
       
       // Wall collision
       if (newX < 0 || newX >= GRID_COLS || newY < 0 || newY >= GRID_ROWS) {
@@ -161,6 +147,75 @@ export default class Tetramino {
     }
     
     return true;
+  }
+
+  // Try to rotate with wall kick offsets
+  // Returns the offset that works, or null if no rotation is possible
+  tryRotateWithWallKick(fieldData = null) {
+    // Standard wall kick offsets (in order of preference)
+    // These are the offsets to try when normal rotation fails
+    const wallKickOffsets = [
+      { x: 0, y: 0 },    // Original position
+      { x: -1, y: 0 },   // Left
+      { x: 1, y: 0 },    // Right
+      { x: 0, y: -1 },   // Up
+      { x: -1, y: -1 },  // Up-left
+      { x: 1, y: -1 },   // Up-right
+      { x: 0, y: 1 },    // Down (less common)
+      { x: -2, y: 0 },   // Two left (for I piece)
+      { x: 2, y: 0 }     // Two right (for I piece)
+    ];
+
+    // For I piece, use extended wall kick offsets
+    if (this.type === 'I') {
+      const iOffsets = [
+        { x: 0, y: 0 },
+        { x: -1, y: 0 },
+        { x: 1, y: 0 },
+        { x: -2, y: 0 },
+        { x: 2, y: 0 },
+        { x: 0, y: -1 },
+        { x: -1, y: -1 },
+        { x: 1, y: -1 }
+      ];
+      for (const offset of iOffsets) {
+        if (this.canRotate(fieldData, offset.x, offset.y)) {
+          return offset;
+        }
+      }
+    } else {
+      // For other pieces, use standard offsets
+      for (const offset of wallKickOffsets) {
+        if (this.canRotate(fieldData, offset.x, offset.y)) {
+          return offset;
+        }
+      }
+    }
+
+    return null; // No valid rotation found
+  }
+
+  // Rotate with optional offset (for wall kicks)
+  rotateWithOffset(offsetX = 0, offsetY = 0) {
+    // Apply offset to pivot first
+    this.pivot.x += offsetX;
+    this.pivot.y += offsetY;
+    
+    // Rotate relative positions 90 degrees clockwise
+    // Formula: (x, y) -> (y, -x)
+    this.relativePositions = this.relativePositions.map(pos => ({
+      x: pos.y,
+      y: -pos.x
+    }));
+    
+    // Update block positions based on new relative positions
+    this.relativePositions.forEach((relativePos, index) => {
+      const logicalX = Math.round(this.pivot.x + relativePos.x);
+      const logicalY = Math.round(this.pivot.y + relativePos.y);
+      this.blocks[index].setLogicalPosition(logicalX, logicalY);
+    });
+    
+    this.rotation = (this.rotation + 90) % 360;
   }
 
   // Destroy all blocks

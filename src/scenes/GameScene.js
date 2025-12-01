@@ -843,8 +843,12 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
     
-    if (this.currentTetramino.canRotate(this.fieldData)) {
-      this.currentTetramino.rotate();
+    // Try rotation with wall kicks
+    const wallKickOffset = this.currentTetramino.tryRotateWithWallKick(this.fieldData);
+    
+    if (wallKickOffset !== null) {
+      // Rotate with the found offset (wall kick)
+      this.currentTetramino.rotateWithOffset(wallKickOffset.x, wallKickOffset.y);
       
       // Play rotate sound
       if (this.soundEffects) {
