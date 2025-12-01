@@ -102,11 +102,6 @@ export default class GameScene extends Phaser.Scene {
     this.rotateTimer = null;
     this.rotateDelay = 150;
     
-    // Create UI
-    this.createUI();
-    this.updateUI();
-    
-    
     // Initialize retro music (optional, won't break game if it fails)
     this.musicMuted = false;
     try {
@@ -133,6 +128,10 @@ export default class GameScene extends Phaser.Scene {
       console.warn('No se pudo inicializar los efectos de sonido:', error);
       this.soundEffects = null;
     }
+    
+    // Create UI (after initializing sound effects so indicator shows correct state)
+    this.createUI();
+    this.updateUI();
     
     // Initialize particle system
     this.initParticleSystem();
