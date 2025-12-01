@@ -9,6 +9,7 @@ export class RetroMusic {
     this.audioContext = null;
     this.oscillators = [];
     this.isPlaying = false;
+    this.isPaused = false;
     this.currentSongIndex = 0;
     this.currentNoteIndex = 0;
     this.masterGain = null;
@@ -119,7 +120,7 @@ export class RetroMusic {
   }
 
   scheduleNextSong() {
-    if (!this.isPlaying || !this.scene || !this.scene.time) return;
+    if (!this.isPlaying || this.isPaused || !this.scene || !this.scene.time) return;
     
     if (this.songs.length === 1) {
       const currentDuration = this.songDurations[0];
@@ -234,7 +235,7 @@ export class RetroMusic {
   }
 
   playMelody() {
-    if (!this.isPlaying) return;
+    if (!this.isPlaying || this.isPaused) return;
     
     // Verificar que la escena esté disponible
     if (!this.scene || !this.scene.time) {
@@ -317,7 +318,7 @@ export class RetroMusic {
   }
 
   playBass() {
-    if (!this.isPlaying) return;
+    if (!this.isPlaying || this.isPaused) return;
     
     // Verificar que la escena esté disponible
     if (!this.scene || !this.scene.time) {
@@ -391,6 +392,75 @@ export class RetroMusic {
         });
       } else {
         this.isPlaying = false;
+      }
+    }
+  }
+
+  pause() {
+    if (!this.isPlaying || this.isPaused) return;
+    
+    this.isPaused = true;
+    
+    try {
+      if (this.audioContext && this.audioContext.state === 'running') {
+        this.audioContext.suspend();
+      }
+    } catch (error) {
+      console.warn('Error al pausar la música:', error);
+    }
+  }
+
+  resume() {
+    if (!this.isPlaying || !this.isPaused) return;
+    
+    this.isPaused = false;
+    
+    try {
+      if (this.audioContext && this.audioContext.state === 'suspended') {
+        this.audioContext.resume().then(() => {
+          // Reiniciar la reproducción de música después de reanudar el audioContext
+          // Los delayedCall de Phaser se pausaron, así que necesitamos reiniciar la música
+          if (this.scene && this.scene.time) {
+            // Pequeño delay para asegurar que el audioContext esté listo
+            this.scene.time.delayedCall(50, () => {
+              if (this.isPlaying && !this.isPaused) {
+                this.playMelody();
+                this.playBass();
+              }
+            });
+          }
+        }).catch(() => {
+          // Si falla el resume, intentar reiniciar de todos modos
+          if (this.scene && this.scene.time) {
+            this.scene.time.delayedCall(50, () => {
+              if (this.isPlaying && !this.isPaused) {
+                this.playMelody();
+                this.playBass();
+              }
+            });
+          }
+        });
+      } else {
+        // Si el audioContext no está suspendido, solo reiniciar la reproducción
+        if (this.scene && this.scene.time) {
+          this.scene.time.delayedCall(50, () => {
+            if (this.isPlaying && !this.isPaused) {
+              this.playMelody();
+              this.playBass();
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Error al reanudar la música:', error);
+      // Intentar reiniciar de todos modos
+      if (this.scene && this.scene.time) {
+        this.scene.time.delayedCall(50, () => {
+          if (this.isPlaying && !this.isPaused) {
+            this.playMelody();
+            this.playBass();
+          }
+        });
       }
     }
   }

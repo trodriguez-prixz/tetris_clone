@@ -14,6 +14,7 @@ Un clon completo del juego Tetris implementado con JavaScript y Phaser 3.
 - ✅ Colisiones y física del juego
 - ✅ Pantalla de inicio con instrucciones
 - ✅ Sistema de Game Over
+- ✅ Sistema de pausa (P o Espacio)
 - ✅ Música retro de fondo (Korobeiniki - Tema de Tetris)
 - ✅ Control de volumen de música (silenciar/activar)
 - ✅ Efectos de sonido retro (movimiento, rotación, líneas eliminadas, game over)
@@ -94,6 +95,7 @@ Esto generará un archivo `.AppImage` en `dist-electron/`
 - **Flecha Derecha (→)**: Mover pieza a la derecha
 - **Flecha Arriba (↑)**: Rotar pieza
 - **Flecha Abajo (↓)**: Acelerar caída (mueve la pieza inmediatamente y luego acelera)
+- **P o Espacio**: Pausar/Reanudar juego
 - **M**: Silenciar/activar música
 - **S**: Silenciar/activar efectos de sonido
 - **R**: Reiniciar juego (solo en Game Over)

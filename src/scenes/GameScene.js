@@ -78,6 +78,9 @@ export default class GameScene extends Phaser.Scene {
     this.isFastDrop = false;
     this.gameOver = false;
     this.gameStarted = false;
+    this.isPaused = false;
+    this.justStarted = false; // Flag to prevent pause on first frame after start
+    this.isPaused = false;
     
     // Initialize field data (20x10 grid)
     this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
@@ -141,18 +144,14 @@ export default class GameScene extends Phaser.Scene {
     // Setup sound effects toggle key (S key)
     this.soundEffectsKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.soundEffectsKey.on('down', () => {
-      if (this.gameStarted) {
+      if (this.gameStarted && !this.isPaused) {
         this.toggleSoundEffects();
       }
     });
     
-    // Setup sound effects toggle key (S key)
-    this.soundEffectsKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    this.soundEffectsKey.on('down', () => {
-      if (this.gameStarted) {
-        this.toggleSoundEffects();
-      }
-    });
+    // Setup pause toggle keys (P key or Space) - will be checked in update()
+    this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
     // Show start screen with instructions
     this.showStartScreen();
@@ -250,6 +249,117 @@ export default class GameScene extends Phaser.Scene {
       if (enabled) {
         this.soundEffects.playMove();
       }
+    }
+  }
+
+  togglePause() {
+    if (this.isPaused) {
+      this.resumeGame();
+    } else {
+      this.pauseGame();
+    }
+  }
+
+  pauseGame() {
+    if (this.isPaused || this.gameOver || !this.gameStarted) return;
+    
+    this.isPaused = true;
+    
+    // Pause all timers
+    if (this.verticalTimer) {
+      this.verticalTimer.paused = true;
+    }
+    if (this.horizontalMoveTimer) {
+      this.horizontalMoveTimer.paused = true;
+    }
+    if (this.rotateTimer) {
+      this.rotateTimer.paused = true;
+    }
+    
+    // Pause music
+    if (this.retroMusic) {
+      this.retroMusic.pause();
+    }
+    
+    // Show pause overlay
+    this.showPauseScreen();
+  }
+
+  resumeGame() {
+    if (!this.isPaused) return;
+    
+    this.isPaused = false;
+    
+    // Resume all timers
+    if (this.verticalTimer) {
+      this.verticalTimer.paused = false;
+    }
+    if (this.horizontalMoveTimer) {
+      this.horizontalMoveTimer.paused = false;
+    }
+    if (this.rotateTimer) {
+      this.rotateTimer.paused = false;
+    }
+    
+    // Resume music
+    if (this.retroMusic) {
+      this.retroMusic.resume();
+    }
+    
+    // Hide pause overlay
+    this.hidePauseScreen();
+  }
+
+  showPauseScreen() {
+    // Create semi-transparent overlay
+    const overlay = this.add.rectangle(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2,
+      CANVAS_WIDTH,
+      CANVAS_HEIGHT,
+      0x000000,
+      0.7
+    );
+    
+    // Paused text
+    const pausedText = this.add.text(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 - 30,
+      'PAUSED',
+      {
+        fontSize: '64px',
+        fill: '#f39c12',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
+    // Resume instruction
+    const resumeText = this.add.text(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 + 40,
+      'Press P or SPACE to Resume',
+      {
+        fontSize: '24px',
+        fill: '#ecf0f1',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
+    // Store UI elements for cleanup
+    this.pauseUI = {
+      overlay,
+      pausedText,
+      resumeText
+    };
+  }
+
+  hidePauseScreen() {
+    if (this.pauseUI) {
+      this.pauseUI.overlay.destroy();
+      this.pauseUI.pausedText.destroy();
+      this.pauseUI.resumeText.destroy();
+      this.pauseUI = null;
     }
   }
 
@@ -367,7 +477,23 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update() {
-    if (!this.gameStarted || this.gameOver || !this.currentTetramino) return;
+    if (!this.gameStarted || this.gameOver) return;
+    
+    // Handle pause (works even when paused to resume)
+    // Space can start game, but once started it pauses/resumes
+    // Don't pause on the first few frames after starting (prevents auto-pause when starting with Space)
+    if (this.justStarted) {
+      // Clear the flag after a few frames to allow pause
+      if (this.time.now > (this.startTime || 0) + 200) {
+        this.justStarted = false;
+      }
+    } else {
+      if (Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+        this.togglePause();
+      }
+    }
+    
+    if (this.isPaused || !this.currentTetramino) return;
     
     this.handleHorizontalInput();
     this.handleRotationInput();
@@ -416,6 +542,7 @@ export default class GameScene extends Phaser.Scene {
       '← → : Mover pieza',
       '↑ : Rotar pieza',
       '↓ : Acelerar caída',
+      'P/Espacio : Pausar',
       'M : Silenciar música',
       'S : Silenciar sonidos'
     ];
@@ -467,13 +594,30 @@ export default class GameScene extends Phaser.Scene {
     };
     
     // Listen for any key or click to start
-    const startHandler = () => {
-      this.startGame();
-      // Remove listeners
-      this.input.keyboard.off('keydown', startHandler);
-      this.input.off('pointerdown', startHandler);
+    // Note: Space can start the game, but once started, Space will pause/resume
+    const startHandler = (event) => {
+      // Only block P key from starting (P is only for pause)
+      if (event && event.keyCode !== undefined) {
+        const keyCode = event.keyCode;
+        if (keyCode === Phaser.Input.Keyboard.KeyCodes.P) {
+          return;
+        }
+      }
+      
+      // Remove listeners BEFORE starting game to prevent update() from processing the same key
+      if (this.startGameHandler) {
+        this.input.keyboard.off('keydown', this.startGameHandler);
+        this.input.off('pointerdown', this.startGameHandler);
+        this.startGameHandler = null;
+      }
+      
+      // Use a small delay to ensure the key event is consumed before update() processes it
+      this.time.delayedCall(50, () => {
+        this.startGame();
+      });
     };
     
+    this.startGameHandler = startHandler;
     this.input.keyboard.on('keydown', startHandler);
     this.input.on('pointerdown', startHandler);
   }
@@ -488,7 +632,17 @@ export default class GameScene extends Phaser.Scene {
       this.startScreenUI = null;
     }
     
+    // Remove start game handler (in case it wasn't removed in the handler)
+    if (this.startGameHandler) {
+      this.input.keyboard.off('keydown', this.startGameHandler);
+      this.input.off('pointerdown', this.startGameHandler);
+      this.startGameHandler = null;
+    }
+    
     this.gameStarted = true;
+    this.isPaused = false;
+    this.justStarted = true; // Set flag to prevent pause on first frame
+    this.startTime = this.time.now; // Record start time for delay check
     this.createPreview();
     
     if (this.retroMusic && !this.musicMuted) {
@@ -916,6 +1070,9 @@ export default class GameScene extends Phaser.Scene {
       this.gameOverUI = null;
     }
     
+    // Clean up pause UI if exists
+    this.hidePauseScreen();
+    
     // Remove restart key listener
     if (this.restartKey) {
       this.restartKey.removeAllListeners();
@@ -924,6 +1081,8 @@ export default class GameScene extends Phaser.Scene {
     
     // Reset game state
     this.gameOver = false;
+    this.isPaused = false;
+    this.justStarted = true; // Set flag to prevent pause on first frame after restart
     this.gameStarted = true; // Keep game started after restart
     this.dropSpeed = INITIAL_DROP_SPEED;
     this.baseDropSpeed = INITIAL_DROP_SPEED;
