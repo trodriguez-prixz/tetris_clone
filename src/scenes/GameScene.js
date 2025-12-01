@@ -17,6 +17,7 @@ import {
   LEVEL_SPEED_MULTIPLIER,
   GRID_ROWS,
   GRID_COLS,
+  CELL_SIZE,
   TETRAMINOS
 } from '../config/settings.js';
 import Tetramino from '../classes/Tetramino.js';
@@ -132,6 +133,9 @@ export default class GameScene extends Phaser.Scene {
       console.warn('No se pudo inicializar los efectos de sonido:', error);
       this.soundEffects = null;
     }
+    
+    // Initialize particle system
+    this.initParticleSystem();
     
     // Setup mute toggle key (M key)
     this.muteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
@@ -858,6 +862,11 @@ export default class GameScene extends Phaser.Scene {
     // Update UI
     this.updateUI();
     
+    // Create particle effects before removing blocks
+    rowsToClear.forEach(row => {
+      this.createLineClearParticles(row, rowsToClear.length);
+    });
+    
     // Remove blocks from complete rows
     rowsToClear.forEach(row => {
       for (let col = 0; col < GRID_COLS; col++) {
@@ -1139,6 +1148,118 @@ export default class GameScene extends Phaser.Scene {
       width,
       height
     );
+  }
+
+  initParticleSystem() {
+    // Create particle manager for line clear effects
+    // We'll create particles dynamically when needed
+    this.particleManagers = [];
+  }
+
+  createLineClearParticles(row, linesCleared) {
+    // Calculate the Y position of the row in pixels
+    const rowY = GAME_AREA_Y + (row * CELL_SIZE) + (CELL_SIZE / 2);
+    
+    // Determine particle properties based on number of lines cleared
+    let particleCount, colors, speed, scale;
+    
+    if (linesCleared === 1) {
+      particleCount = 20;
+      colors = [0x3498db, 0x2980b9]; // Blue shades
+      speed = { min: 50, max: 150 };
+      scale = { start: 0.5, end: 0 };
+    } else if (linesCleared === 2) {
+      particleCount = 30;
+      colors = [0x2ecc71, 0x27ae60]; // Green shades
+      speed = { min: 80, max: 200 };
+      scale = { start: 0.6, end: 0 };
+    } else if (linesCleared === 3) {
+      particleCount = 40;
+      colors = [0xf39c12, 0xe67e22]; // Orange shades
+      speed = { min: 100, max: 250 };
+      scale = { start: 0.7, end: 0 };
+    } else { // 4 lines - TETRIS!
+      particleCount = 60;
+      colors = [0xe74c3c, 0xc0392b, 0xf1c40f, 0xf39c12]; // Red, yellow, orange
+      speed = { min: 150, max: 300 };
+      scale = { start: 0.8, end: 0 };
+    }
+    
+    // Create particles for each column in the cleared row
+    for (let col = 0; col < GRID_COLS; col++) {
+      const colX = GAME_AREA_X + (col * CELL_SIZE) + (CELL_SIZE / 2);
+      
+      // Create multiple particles per block
+      const particlesPerBlock = Math.floor(particleCount / GRID_COLS);
+      
+      for (let i = 0; i < particlesPerBlock; i++) {
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const angle = (Math.random() * Math.PI * 2); // Random direction
+        const velocity = speed.min + Math.random() * (speed.max - speed.min);
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        
+        // Create a simple particle using a rectangle
+        const particle = this.add.rectangle(
+          colX + (Math.random() - 0.5) * CELL_SIZE,
+          rowY + (Math.random() - 0.5) * CELL_SIZE,
+          CELL_SIZE * 0.3,
+          CELL_SIZE * 0.3,
+          color
+        );
+        
+        // Animate particle
+        this.tweens.add({
+          targets: particle,
+          x: particle.x + vx * 0.5,
+          y: particle.y + vy * 0.5,
+          alpha: { from: 1, to: 0 },
+          scale: { from: scale.start, to: scale.end },
+          duration: 500 + Math.random() * 300,
+          ease: 'Power2',
+          onComplete: () => {
+            particle.destroy();
+          }
+        });
+      }
+    }
+    
+    // Add extra burst effect for Tetris (4 lines)
+    if (linesCleared === 4) {
+      const centerX = GAME_AREA_X + (GAME_AREA_WIDTH / 2);
+      const centerY = rowY;
+      
+      // Create a burst of particles from the center
+      for (let i = 0; i < 30; i++) {
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const angle = (Math.PI * 2 * i) / 30;
+        const velocity = 200 + Math.random() * 100;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        
+        const particle = this.add.rectangle(
+          centerX,
+          centerY,
+          CELL_SIZE * 0.4,
+          CELL_SIZE * 0.4,
+          color
+        );
+        
+        this.tweens.add({
+          targets: particle,
+          x: particle.x + vx * 0.8,
+          y: particle.y + vy * 0.8,
+          alpha: { from: 1, to: 0 },
+          scale: { from: 1, to: 0 },
+          rotation: Math.PI * 2,
+          duration: 800,
+          ease: 'Power2',
+          onComplete: () => {
+            particle.destroy();
+          }
+        });
+      }
+    }
   }
 }
 
