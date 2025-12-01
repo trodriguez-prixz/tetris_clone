@@ -844,6 +844,11 @@ export default class GameScene extends Phaser.Scene {
   tryRotate() {
     if (!this.currentTetramino) return;
     
+    // The 'O' (square) piece does not rotate
+    if (this.currentTetramino.type === 'O') {
+      return;
+    }
+    
     // Check if rotation timer is active
     if (this.rotateTimer && this.rotateTimer.getProgress() < 1) {
       return;
