@@ -842,84 +842,9 @@ export default class GameScene extends Phaser.Scene {
       this.soundEffects.playLineClear(rowsToClear.length);
     }
     
-    // Add score
-    const levelIncreased = this.score.addScore(rowsToClear.length);
+    // Animate lines before clearing
+    this.animateLineClear(rowsToClear);
     
-    // Update speed if level increased
-    if (levelIncreased) {
-      // Play level up sound
-      if (this.soundEffects) {
-        this.soundEffects.playLevelUp();
-      }
-      this.baseDropSpeed = Math.max(50, this.baseDropSpeed * LEVEL_SPEED_MULTIPLIER);
-      if (!this.isFastDrop) {
-        this.dropSpeed = this.baseDropSpeed;
-        this.startVerticalTimer();
-      }
-    }
-    
-    // Update UI
-    this.updateUI();
-    
-    // Create particle effects before removing blocks
-    rowsToClear.forEach(row => {
-      this.createLineClearParticles(row, rowsToClear.length);
-    });
-    
-    // Remove blocks from complete rows
-    rowsToClear.forEach(row => {
-      for (let col = 0; col < GRID_COLS; col++) {
-        if (this.fieldData[row][col]) {
-          this.fieldData[row][col].destroy();
-          this.fieldData[row][col] = null;
-        }
-      }
-    });
-    
-    // Apply gravity: move blocks above cleared rows down
-    // Sort rows to clear from bottom to top
-    rowsToClear.sort((a, b) => b - a);
-    
-    rowsToClear.forEach(clearedRow => {
-      // Move all blocks above this row down by 1
-      for (let row = clearedRow - 1; row >= 0; row--) {
-        for (let col = 0; col < GRID_COLS; col++) {
-          if (this.fieldData[row][col] !== null) {
-            const block = this.fieldData[row][col];
-            const pos = block.getLogicalPosition();
-            
-            // Move block down
-            block.setLogicalPosition(pos.x, pos.y + 1);
-          }
-        }
-      }
-    });
-    
-    // Rebuild field_data from scratch based on current block positions
-    // First, collect all blocks before clearing
-    const allBlocks = [];
-    for (let row = 0; row < GRID_ROWS; row++) {
-      for (let col = 0; col < GRID_COLS; col++) {
-        if (this.fieldData[row][col] !== null) {
-          allBlocks.push(this.fieldData[row][col]);
-        }
-      }
-    }
-    
-    // Clear field_data
-    for (let row = 0; row < GRID_ROWS; row++) {
-      for (let col = 0; col < GRID_COLS; col++) {
-        this.fieldData[row][col] = null;
-      }
-    }
-    
-    // Rebuild field_data based on current positions
-    allBlocks.forEach(block => {
-      const pos = block.getLogicalPosition();
-      if (pos.y >= 0 && pos.y < GRID_ROWS && pos.x >= 0 && pos.x < GRID_COLS) {
-        this.fieldData[pos.y][pos.x] = block;
-      }
-    });
   }
 
   // Check if a tetramino can be placed at its initial spawn position
@@ -1259,6 +1184,152 @@ export default class GameScene extends Phaser.Scene {
         });
       }
     }
+  }
+
+  animateLineClear(rowsToClear) {
+    // Collect all blocks in rows to clear
+    const blocksToAnimate = [];
+    rowsToClear.forEach(row => {
+      for (let col = 0; col < GRID_COLS; col++) {
+        if (this.fieldData[row][col]) {
+          blocksToAnimate.push(this.fieldData[row][col]);
+        }
+      }
+    });
+    
+    if (blocksToAnimate.length === 0) return;
+    
+    // Create flash effect overlay for each row
+    const flashOverlays = [];
+    rowsToClear.forEach(row => {
+      const rowY = GAME_AREA_Y + (row * CELL_SIZE) + (CELL_SIZE / 2);
+      const overlay = this.add.rectangle(
+        GAME_AREA_X + (GAME_AREA_WIDTH / 2),
+        rowY,
+        GAME_AREA_WIDTH,
+        CELL_SIZE,
+        0xffffff,
+        0
+      );
+      flashOverlays.push(overlay);
+    });
+    
+    // Flash animation: blink white 3 times
+    let flashCount = 0;
+    const maxFlashes = 3;
+    const flashDuration = 100; // ms per flash
+    
+    const flashAnimation = () => {
+      flashOverlays.forEach(overlay => {
+        overlay.setAlpha(flashCount % 2 === 0 ? 0.5 : 0);
+      });
+      
+      flashCount++;
+      if (flashCount < maxFlashes * 2) {
+        this.time.delayedCall(flashDuration, flashAnimation);
+      } else {
+        // After flash, fade out blocks
+        flashOverlays.forEach(overlay => overlay.destroy());
+        this.fadeOutBlocks(blocksToAnimate, rowsToClear);
+      }
+    };
+    
+    // Start flash animation
+    flashAnimation();
+  }
+
+  fadeOutBlocks(blocks, rowsToClear) {
+    // Fade out all blocks in the rows
+    const fadeTweens = blocks.map(block => {
+      return this.tweens.add({
+        targets: block,
+        alpha: { from: 1, to: 0 },
+        scale: { from: 1, to: 0.5 },
+        duration: 200,
+        ease: 'Power2'
+      });
+    });
+    
+    // After fade out, clear rows and apply gravity
+    this.time.delayedCall(200, () => {
+      // Add score
+      const levelIncreased = this.score.addScore(rowsToClear.length);
+      
+      // Update speed if level increased
+      if (levelIncreased) {
+        // Play level up sound
+        if (this.soundEffects) {
+          this.soundEffects.playLevelUp();
+        }
+        this.baseDropSpeed = Math.max(50, this.baseDropSpeed * LEVEL_SPEED_MULTIPLIER);
+        if (!this.isFastDrop) {
+          this.dropSpeed = this.baseDropSpeed;
+          this.startVerticalTimer();
+        }
+      }
+      
+      // Update UI
+      this.updateUI();
+      
+      // Create particle effects before removing blocks
+      rowsToClear.forEach(row => {
+        this.createLineClearParticles(row, rowsToClear.length);
+      });
+      
+      // Remove blocks from complete rows
+      rowsToClear.forEach(row => {
+        for (let col = 0; col < GRID_COLS; col++) {
+          if (this.fieldData[row][col]) {
+            this.fieldData[row][col].destroy();
+            this.fieldData[row][col] = null;
+          }
+        }
+      });
+      
+      // Apply gravity: move blocks above cleared rows down
+      // Sort rows to clear from bottom to top
+      rowsToClear.sort((a, b) => b - a);
+      
+      rowsToClear.forEach(clearedRow => {
+        // Move all blocks above this row down by 1
+        for (let row = clearedRow - 1; row >= 0; row--) {
+          for (let col = 0; col < GRID_COLS; col++) {
+            if (this.fieldData[row][col] !== null) {
+              const block = this.fieldData[row][col];
+              const pos = block.getLogicalPosition();
+              
+              // Move block down
+              block.setLogicalPosition(pos.x, pos.y + 1);
+            }
+          }
+        }
+      });
+      
+      // Rebuild field_data from scratch based on current block positions
+      // First, collect all blocks before clearing
+      const allBlocks = [];
+      for (let row = 0; row < GRID_ROWS; row++) {
+        for (let col = 0; col < GRID_COLS; col++) {
+          if (this.fieldData[row][col] !== null) {
+            allBlocks.push(this.fieldData[row][col]);
+          }
+        }
+      }
+      
+      // Clear field_data
+      this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
+      
+      // Rebuild field_data from block positions
+      allBlocks.forEach(block => {
+        const pos = block.getLogicalPosition();
+        if (pos.y >= 0 && pos.y < GRID_ROWS && pos.x >= 0 && pos.x < GRID_COLS) {
+          this.fieldData[pos.y][pos.x] = block;
+        }
+      });
+      
+      // Render preview
+      this.renderPreview();
+    });
   }
 }
 
