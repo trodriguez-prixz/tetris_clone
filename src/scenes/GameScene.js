@@ -101,8 +101,8 @@ export default class GameScene extends Phaser.Scene {
     this.createUI();
     this.updateUI();
     
-    // Create preview
-    this.createPreview();
+    // Don't create preview until game starts
+    // Preview will be created in startGame()
     
     // Initialize retro music (optional, won't break game if it fails)
     this.musicMuted = false; // Estado de silencio de la música
@@ -449,6 +449,9 @@ export default class GameScene extends Phaser.Scene {
     
     // Mark game as started
     this.gameStarted = true;
+    
+    // Create preview now that game has started
+    this.createPreview();
     
     // Start music on first interaction (now that game has started)
     if (this.retroMusic && !this.musicMuted) {
