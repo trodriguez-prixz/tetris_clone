@@ -76,6 +76,7 @@ export default class GameScene extends Phaser.Scene {
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.isFastDrop = false;
     this.gameOver = false;
+    this.gameStarted = false; // Controla si el juego ha comenzado
     
     // Initialize field data (20x10 grid)
     this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
@@ -122,14 +123,13 @@ export default class GameScene extends Phaser.Scene {
     // Setup mute toggle key (M key)
     this.muteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
     this.muteKey.on('down', () => {
-      this.toggleMusic();
+      if (this.gameStarted) {
+        this.toggleMusic();
+      }
     });
     
-    // Create first tetramino
-    this.spawnTetramino();
-    
-    // Start vertical timer
-    this.startVerticalTimer();
+    // Show start screen with instructions
+    this.showStartScreen();
   }
 
   getRandomShapeType() {
@@ -286,11 +286,11 @@ export default class GameScene extends Phaser.Scene {
       }
     }
     
-    // Start music when user presses any key for the first time
+    // Start music when user presses any key for the first time (only after game starts)
     this.musicStartHandler = () => {
       try {
-        // Solo iniciar si no está silenciada
-        if (!this.musicStarted && this.retroMusic && !this.musicMuted) {
+        // Solo iniciar si el juego ha comenzado, no está silenciada y no se ha iniciado ya
+        if (this.gameStarted && !this.musicStarted && this.retroMusic && !this.musicMuted) {
           this.retroMusic.play();
           this.musicStarted = true;
           this.updateMusicIndicator();
@@ -318,8 +318,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update() {
-    // Don't process input if game is over
-    if (this.gameOver) return;
+    // Don't process input if game hasn't started or is over
+    if (!this.gameStarted || this.gameOver) return;
     
     if (!this.currentTetramino) return;
     
@@ -331,6 +331,135 @@ export default class GameScene extends Phaser.Scene {
     
     // Handle fast drop (K_DOWN)
     this.handleFastDrop();
+  }
+
+  showStartScreen() {
+    // Create semi-transparent overlay
+    const overlay = this.add.rectangle(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2,
+      CANVAS_WIDTH,
+      CANVAS_HEIGHT,
+      0x000000,
+      0.8
+    );
+    
+    // Title
+    const titleText = this.add.text(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 - 200,
+      'TETRIS',
+      {
+        fontSize: '64px',
+        fill: '#e74c3c',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
+    // Instructions title
+    const instructionsTitle = this.add.text(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 - 120,
+      'Instrucciones',
+      {
+        fontSize: '32px',
+        fill: '#ecf0f1',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
+    // Instructions
+    const instructions = [
+      '← → : Mover pieza',
+      '↑ : Rotar pieza',
+      '↓ : Acelerar caída',
+      'M : Silenciar música'
+    ];
+    
+    const instructionTexts = [];
+    instructions.forEach((instruction, index) => {
+      const text = this.add.text(
+        CANVAS_WIDTH / 2,
+        CANVAS_HEIGHT / 2 - 60 + (index * 35),
+        instruction,
+        {
+          fontSize: '20px',
+          fill: '#bdc3c7',
+          align: 'center'
+        }
+      ).setOrigin(0.5);
+      instructionTexts.push(text);
+    });
+    
+    // Start instruction
+    const startText = this.add.text(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 + 100,
+      'Presiona cualquier tecla para comenzar',
+      {
+        fontSize: '24px',
+        fill: '#2ecc71',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
+    // Blinking animation for start text
+    this.tweens.add({
+      targets: startText,
+      alpha: 0.3,
+      duration: 800,
+      yoyo: true,
+      repeat: -1
+    });
+    
+    // Store UI elements for cleanup
+    this.startScreenUI = {
+      overlay,
+      titleText,
+      instructionsTitle,
+      instructionTexts,
+      startText
+    };
+    
+    // Listen for any key or click to start
+    const startHandler = () => {
+      this.startGame();
+      // Remove listeners
+      this.input.keyboard.off('keydown', startHandler);
+      this.input.off('pointerdown', startHandler);
+    };
+    
+    this.input.keyboard.on('keydown', startHandler);
+    this.input.on('pointerdown', startHandler);
+  }
+
+  startGame() {
+    // Clean up start screen UI
+    if (this.startScreenUI) {
+      this.startScreenUI.overlay.destroy();
+      this.startScreenUI.titleText.destroy();
+      this.startScreenUI.instructionsTitle.destroy();
+      this.startScreenUI.instructionTexts.forEach(text => text.destroy());
+      this.startScreenUI.startText.destroy();
+      this.startScreenUI = null;
+    }
+    
+    // Mark game as started
+    this.gameStarted = true;
+    
+    // Start music on first interaction (now that game has started)
+    if (this.retroMusic && !this.musicMuted) {
+      this.startMusicOnInteraction();
+    }
+    
+    // Create first tetramino
+    this.spawnTetramino();
+    
+    // Start vertical timer
+    this.startVerticalTimer();
   }
 
   handleFastDrop() {
@@ -763,6 +892,7 @@ export default class GameScene extends Phaser.Scene {
     
     // Reset game state
     this.gameOver = false;
+    this.gameStarted = true; // Keep game started after restart
     this.dropSpeed = INITIAL_DROP_SPEED;
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.isFastDrop = false;
