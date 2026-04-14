@@ -1,72 +1,72 @@
-# Guía para agentes de IA
+# AI Agents Guide
 
-Este documento resume el contexto del proyecto **tetris-clone** y las reglas que deben seguir los asistentes al modificar o extender el código.
+This document summarizes the context of the **tetris-clone** project and the rules that assistants must follow when modifying or extending the code.
 
-## Qué es este proyecto
+## What is this project
 
-Clon de Tetris en el navegador (y empaquetable como app de escritorio) con **Phaser 3**, lógica en **JavaScript** puro con **módulos ES** (`"type": "module"` en `package.json`).
+Tetris clone in the browser (and packable as a desktop app) using **Phaser 3**, logic in pure **JavaScript** with **ES modules** (`"type": "module"` in `package.json`).
 
-## Stack principal
+## Main Stack
 
-| Área | Tecnología |
+| Area | Technology |
 |------|------------|
-| Motor de juego | Phaser 3 (física Arcade) |
-| Bundler / dev server | Vite 5 (`base: './'`, puerto **3000**) |
+| Game engine | Phaser 3 (Arcade physics) |
+| Bundler / dev server | Vite 5 (`base: './'`, port **3000**) |
 | Tests | Jest + jsdom + Babel (`babel-jest`) |
-| Despliegue web | Express sirviendo `dist/` (Heroku vía `Procfile`) |
-| Escritorio | Electron + electron-builder |
+| Web deployment | Express serving `dist/` (Heroku via `Procfile`) |
+| Desktop | Electron + electron-builder |
 
-**Node.js:** 18 o superior (según README).
+**Node.js:** 18 or higher (according to README).
 
-## Estructura de directorios
+## Directory structure
 
 ```
 src/
-  config/settings.js    # Constantes del juego, grid, tetraminós, canvas
-  classes/              # Block, Tetramino, Score (lógica de dominio + objetos Phaser)
-  scenes/               # GameScene (escena principal)
+  config/settings.js    # Game constants, grid, tetraminos, canvas
+  classes/              # Block, Tetramino, Score (domain logic + Phaser objects)
+  scenes/               # GameScene (main scene)
   utils/                # timer, audio (retroMusic, soundEffects), storage
-  main.js               # Entrada: crea Phaser.Game y registra escenas
-tests/                  # *.test.js; mock de Phaser en tests/__mocks__/phaser.js
-electron/main.cjs       # Ventana Electron (CommonJS; .cjs por "type": "module")
-server.js               # Express para producción
-index.html              # Raíz del proyecto (Vite); `lang="es"`
+  main.js               # Entry point: creates Phaser.Game and registers scenes
+tests/                  # *.test.js; Phaser mock in tests/__mocks__/phaser.js
+electron/main.cjs       # Electron window (CommonJS; .cjs because of "type": "module")
+server.js               # Express for production
+index.html              # Project root (Vite); `lang="es"`
 ```
 
-La documentación detallada de arquitectura y controles está en `README.md`.
+Detailed documentation of architecture and controls is in `README.md`.
 
-## Convenciones de código
+## Coding conventions
 
-- **Módulos ES:** `import` / `export`; en el código de aplicación **incluir la extensión** en las rutas (p. ej. `'./Block.js'`, `'../config/settings.js'`).
-- **Exports:** clases con `export default class …`; utilidades según encaje (default o named).
-- **Nombres de archivo:** `PascalCase` para escenas y clases de juego (`GameScene.js`, `Tetramino.js`); `camelCase` para utilidades (`timer.js`, `soundEffects.js`).
-- **Comentarios en el código:** en **inglés**, alineados con el estilo actual (comentarios breves sobre intención o rendimiento).
-- **Configuración centralizada:** dimensiones, colores de piezas, constantes de rejilla y UI van en `src/config/settings.js`; evitar números mágicos dispersos.
-- **Phaser en tests:** Jest mapea `phaser` al mock en `tests/__mocks__/phaser.js`. Si el código usa APIs nuevas de Phaser en tests, puede ser necesario ampliar ese mock.
-- **Alias `@/`:** definido solo en Jest (`moduleNameMapper` → `src/`). El código fuente en Vite usa rutas relativas; no asumir que `@/` funciona en el bundle sin añadirlo a `vite.config.js`.
+- **ES Modules:** `import` / `export`; in application code **include the extension** in paths (e.g. `'./Block.js'`, `'../config/settings.js'`).
+- **Exports:** classes with `export default class ...`; utilities depending on fit (default or named).
+- **File names:** `PascalCase` for scenes and game classes (`GameScene.js`, `Tetramino.js`); `camelCase` for utilities (`timer.js`, `soundEffects.js`).
+- **Code comments:** in **English**, aligned with the current style (brief comments about intent or performance).
+- **Centralized configuration:** dimensions, piece colors, grid constants and UI go in `src/config/settings.js`; avoid scattered magic numbers.
+- **Phaser in tests:** Jest maps `phaser` to the mock in `tests/__mocks__/phaser.js`. If the code uses new Phaser APIs in tests, it might be necessary to expand that mock.
+- **`@/` Alias:** defined only in Jest (`moduleNameMapper` → `src/`). Source code in Vite uses relative paths; do not assume `@/` works in the bundle without adding it to `vite.config.js`.
 
-## Scripts útiles
+## Useful scripts
 
-- `npm run dev` — desarrollo con Vite.
-- `npm run build` — salida en `dist/`.
+- `npm run dev` — development with Vite.
+- `npm run build` — output to `dist/`.
 - `npm test` / `npm run test:watch` — tests.
-- `npm run electron` — Electron en dev (espera Vite en `:3000`).
-- Builds de escritorio: `npm run build:electron:mac` / `:linux` (tras `npm run build`).
+- `npm run electron` — Electron in dev (waits for Vite on `:3000`).
+- Desktop builds: `npm run build:electron:mac` / `:linux` (after `npm run build`).
 
-## Cobertura y exclusiones (Jest)
+## Test Coverage and exclusions (Jest)
 
-`collectCoverageFrom` excluye `src/main.js` y `src/utils/retroMusic.js`. Tenerlo en cuenta al valorar cobertura.
+`collectCoverageFrom` excludes `src/main.js` and `src/utils/retroMusic.js`. Keep this in mind when evaluating coverage.
 
-## Reglas globales para cambios
+## Global rules for changes
 
-1. **Alcance mínimo:** cambiar solo lo necesario para la tarea; no refactorizar masivamente ni tocar archivos no relacionados.
-2. **Consistencia:** imitar el estilo existente (imports, nombres, organización por carpetas).
-3. **Tests:** al modificar lógica en `classes/`, `utils/` o comportamiento relevante en escenas, añadir o actualizar tests en `tests/` y ejecutar `npm test`.
-4. **Documentación:** no crear ni editar `README.md` u otros `.md` salvo que el usuario lo pida explícitamente.
-5. **Electron:** el proceso principal es `electron/main.cjs` (**CommonJS** con `require`) porque `"type": "module"` fuerza ESM en `.js`; el resto del proyecto es ESM.
-6. **Despliegue:** producción sirve `dist/`; cualquier recurso nuevo debe incluirse en el flujo de `vite build`.
+1. **Minimum scope:** change only what is necessary for the task; do not refactor massively or touch unrelated files.
+2. **Consistency:** imitate the existing style (imports, names, folder organization).
+3. **Tests:** when modifying logic in `classes/`, `utils/`, or relevant behavior in scenes, add or update tests in `tests/` and run `npm test`.
+4. **Documentation:** do not create or edit `README.md` or other `.md` files unless explicitly requested by the user.
+5. **Electron:** the main process is `electron/main.cjs` (**CommonJS** with `require`) because `"type": "module"` forces ESM in `.js`; the rest of the project is ESM.
+6. **Deployment:** production serves `dist/`; any new resource must be included in the `vite build` workflow.
 
-## Idioma
+## Language
 
-- Mensajes al usuario y documentación de producto pueden estar en **español** (como el README).
-- Comentarios en código fuente: **inglés**, como en el repositorio actual.
+- Messages to the user and product documentation may be in **Spanish** (like the README) or English.
+- Source code comments: **English**, as in the current repository.
