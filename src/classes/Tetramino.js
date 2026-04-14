@@ -2,8 +2,7 @@ import Block from './Block.js';
 import { TETRAMINOS, GRID_COLS, GRID_ROWS } from '../config/settings.js';
 
 export default class Tetramino {
-  constructor(scene, type = null) {
-    this.scene = scene;
+  constructor(type = null) {
     this.blocks = [];
     
     // Get random type if not provided
@@ -24,12 +23,12 @@ export default class Tetramino {
     this.relativePositions.forEach(relativePos => {
       const logicalX = startX + relativePos.x;
       const logicalY = startY + relativePos.y;
-      const block = new Block(scene, logicalX, logicalY, this.color);
+      const block = new Block(logicalX, logicalY, this.color);
       this.blocks.push(block);
     });
     
     // Pivot point (center of the tetramino, typically at startX, startY or first block)
-    this.pivot = new Phaser.Math.Vector2(startX, startY);
+    this.pivot = { x: startX, y: startY };
     this.rotation = 0; // 0, 90, 180, 270 degrees
   }
 

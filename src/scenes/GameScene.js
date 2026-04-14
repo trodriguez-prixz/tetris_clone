@@ -1,30 +1,15 @@
 import Phaser from 'phaser';
-import {
-  CANVAS_WIDTH,
-  CANVAS_HEIGHT,
-  GAME_AREA_X,
-  GAME_AREA_Y,
-  GAME_AREA_WIDTH,
-  GAME_AREA_HEIGHT,
-  SIDEBAR_X,
-  SIDEBAR_Y,
-  SIDEBAR_WIDTH,
-  PREVIEW_AREA_HEIGHT,
-  SCORE_AREA_HEIGHT,
-  PADDING,
-  INITIAL_DROP_SPEED,
-  FAST_DROP_SPEED,
-  LEVEL_SPEED_MULTIPLIER,
-  GRID_ROWS,
-  GRID_COLS,
-  CELL_SIZE,
-  TETRAMINOS
-} from '../config/settings.js';
-import Tetramino from '../classes/Tetramino.js';
-import Score from '../classes/Score.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, FAST_DROP_SPEED } from '../config/settings.js';
 import { RetroMusic } from '../utils/retroMusic.js';
 import { SoundEffects } from '../utils/soundEffects.js';
 import { StorageManager } from '../utils/storage.js';
+
+import EventBus, { EVENTS } from '../events/EventBus.js';
+import GameState from '../logic/GameState.js';
+import GameStateMachine, { GAME_STATES } from '../logic/GameStateMachine.js';
+
+import BoardRenderer from './components/BoardRenderer.js';
+import UIRenderer from './components/UIRenderer.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -32,1595 +17,269 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // Draw background
-    this.add.rectangle(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2,
-      CANVAS_WIDTH,
-      CANVAS_HEIGHT,
-      0x34495e
-    );
-
-    // Draw Game Area
-    this.drawArea(
-      GAME_AREA_X + GAME_AREA_WIDTH / 2,
-      GAME_AREA_Y + GAME_AREA_HEIGHT / 2,
-      GAME_AREA_WIDTH,
-      GAME_AREA_HEIGHT,
-      0x2c3e50,
-      0xecf0f1
-    );
-
-    // Draw grid lines
-    this.drawGridLines();
-
-    // Draw Preview Area (in sidebar)
-    const previewAreaY = SIDEBAR_Y + PREVIEW_AREA_HEIGHT / 2;
-    this.drawArea(
-      SIDEBAR_X + SIDEBAR_WIDTH / 2,
-      previewAreaY,
-      SIDEBAR_WIDTH - PADDING,
-      PREVIEW_AREA_HEIGHT,
-      0x2c3e50,
-      0xecf0f1
-    );
-
-    // Draw Score Area (in sidebar, below preview)
-    const scoreAreaY = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING + SCORE_AREA_HEIGHT / 2;
-    this.drawArea(
-      SIDEBAR_X + SIDEBAR_WIDTH / 2,
-      scoreAreaY,
-      SIDEBAR_WIDTH - PADDING,
-      SCORE_AREA_HEIGHT,
-      0x2c3e50,
-      0xecf0f1
-    );
-
-    // Initialize game state
-    this.currentTetramino = null;
-    this.dropSpeed = INITIAL_DROP_SPEED;
-    this.baseDropSpeed = INITIAL_DROP_SPEED;
-    this.isFastDrop = false;
-    this.gameOver = false;
-    this.gameStarted = false;
-    this.isPaused = false;
-    this.justStarted = false; // Flag to prevent pause on first frame after start
+    this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x34495e);
     
-    // Performance optimizations
-    this.uiUpdateThrottle = 0; // Throttle UI updates
-    this.uiUpdateInterval = 100; // Update UI every 100ms instead of every frame
-    this.timeUpdateThrottle = 0; // Throttle time updates
-    this.timeUpdateInterval = 1000; // Update time every second
-    this.formatNumberCache = new Map(); // Cache formatted numbers
+    this.gameState = new GameState();
+    this.stateMachine = new GameStateMachine();
     
-    // Initialize field data (20x10 grid)
-    this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
+    this.boardRenderer = new BoardRenderer(this, this.gameState);
+    this.uiRenderer = new UIRenderer(this, this.gameState);
     
-    // Initialize score
-    this.score = new Score();
+    this.setupAudio();
+    this.setupInputs();
     
-    // Initialize next shapes queue (3 shapes)
-    this.nextShapes = [];
-    for (let i = 0; i < 3; i++) {
-      this.nextShapes.push(this.getRandomShapeType());
-    }
+    this.timeUpdateThrottle = 0;
     
-    // Input handling
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.horizontalMoveTimer = null;
-    this.horizontalMoveDelay = 200;
-    this.rotateTimer = null;
-    this.rotateDelay = 150;
+    EventBus.on(EVENTS.GAME_START, this.onGameStart, this);
+    EventBus.on(EVENTS.GAME_OVER, this.onGameOver, this);
+    EventBus.on(EVENTS.GAME_PAUSED, this.showPauseScreen, this);
+    EventBus.on(EVENTS.GAME_RESUMED, this.hidePauseScreen, this);
     
-    // Initialize retro music (optional, won't break game if it fails)
+    this.showStartScreen();
+  }
+  
+  setupAudio() {
     this.musicMuted = false;
     try {
       this.retroMusic = new RetroMusic(this);
-      if (this.retroMusic.init()) {
-        this.musicStarted = false;
-        // Start music on first user interaction
-        this.startMusicOnInteraction();
-      } else {
-        this.retroMusic = null;
-      }
-    } catch (error) {
-      console.warn('No se pudo inicializar la música:', error);
-      this.retroMusic = null;
-    }
+      if (this.retroMusic.init()) this.musicStarted = false;
+      else this.retroMusic = null;
+    } catch (e) { this.retroMusic = null; }
     
-    // Initialize sound effects
     try {
       this.soundEffects = new SoundEffects(this);
-      if (!this.soundEffects.init()) {
-        this.soundEffects = null;
-      }
-    } catch (error) {
-      console.warn('No se pudo inicializar los efectos de sonido:', error);
-      this.soundEffects = null;
-    }
+      if (!this.soundEffects.init()) this.soundEffects = null;
+    } catch (e) { this.soundEffects = null; }
+
+    this.uiRenderer.updateAudioIndicators(this.musicMuted, this.soundEffects ? this.soundEffects.isEnabled() : false);
     
-    // Create UI (after initializing sound effects so indicator shows correct state)
-    this.createUI();
-    this.updateUI(); // Initial UI update
+    EventBus.on(EVENTS.LINES_CLEARED, (r) => { if(this.soundEffects) this.soundEffects.playLineClear(r.length); }, this);
+    EventBus.on(EVENTS.LEVEL_UP, () => { if(this.soundEffects) this.soundEffects.playLevelUp(); }, this);
+    EventBus.on(EVENTS.GAME_OVER, () => { 
+        if(this.soundEffects) this.soundEffects.playGameOver(); 
+        if(this.retroMusic) this.retroMusic.stop();
+    }, this);
+  }
+
+  setupInputs() {
+    this.cursors = this.input.keyboard.createCursorKeys();
     
-    // Initialize particle system
-    this.initParticleSystem();
-    
-    // Setup mute toggle key (M key)
     this.muteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
-    this.muteKey.on('down', () => {
-      if (this.gameStarted) {
-        this.toggleMusic();
-      }
-    });
+    this.muteKey.on('down', () => this.toggleMusic());
     
-    // Setup sound effects toggle key (S key)
     this.soundEffectsKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    this.soundEffectsKey.on('down', () => {
-      if (this.gameStarted && !this.isPaused) {
-        this.toggleSoundEffects();
-      }
-    });
+    this.soundEffectsKey.on('down', () => this.toggleSoundEffects());
     
-    // Setup pause toggle keys (P key or Space) - will be checked in update()
     this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-    // Show start screen with instructions
-    this.showStartScreen();
+    this.horizontalMoveDelay = 200;
+    this.rotateDelay = 150;
   }
-
-  getRandomShapeType() {
-    const types = Object.keys(TETRAMINOS);
-    return types[Math.floor(Math.random() * types.length)];
-  }
-
-  createUI() {
-    const uiX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
-    
-    // Calculate the top of the score area to ensure proper spacing
-    const scoreAreaTop = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING;
-    
-    // Title for score section - more space from top border
-    this.add.text(uiX, scoreAreaTop + 15, 'STATS', {
-      fontSize: '18px',
-      fill: '#bdc3c7',
-      fontStyle: 'bold',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    // Score text - better spacing from title
-    this.scoreText = this.add.text(uiX, scoreAreaTop + 45, 'Score: 0', {
-      fontSize: '20px',
-      fill: '#ecf0f1',
-      fontStyle: 'bold',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    // Level text - better spacing
-    this.levelText = this.add.text(uiX, scoreAreaTop + 75, 'Level: 1', {
-      fontSize: '20px',
-      fill: '#ecf0f1',
-      fontStyle: 'bold',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    // Lines text - better spacing
-    this.linesText = this.add.text(uiX, scoreAreaTop + 100, 'Lines: 0', {
-      fontSize: '20px',
-      fill: '#ecf0f1',
-      fontStyle: 'bold',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    // High score text
-    const bestScore = StorageManager.getBestScore();
-    this.highScoreText = this.add.text(uiX, scoreAreaTop + 130, `Best: ${this.formatNumber(bestScore)}`, {
-      fontSize: '16px',
-      fill: '#f39c12',
-      fontStyle: 'bold',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    // Time text
-    this.timeText = this.add.text(uiX, scoreAreaTop + 155, 'Time: 0:00', {
-      fontSize: '16px',
-      fill: '#95a5a6',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    // Pieces placed text
-    this.piecesText = this.add.text(uiX, scoreAreaTop + 180, 'Pieces: 0', {
-      fontSize: '16px',
-      fill: '#95a5a6',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    // Tetrises text
-    this.tetrisesText = this.add.text(uiX, scoreAreaTop + 205, 'Tetrises: 0', {
-      fontSize: '16px',
-      fill: '#95a5a6',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    // Calculate bottom of sidebar for positioning AUDIO section at the bottom
-    const sidebarBottom = CANVAS_HEIGHT - PADDING;
-    
-    // Audio section positioned at the bottom of the sidebar
-    this.muteInstruction = this.add.text(uiX, sidebarBottom - 20, 'M: Música | S: Sonidos', {
-      fontSize: '12px',
-      fill: '#7f8c8d',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    this.soundEffectsIndicator = this.add.text(uiX, sidebarBottom - 50, '🔊 Sonidos: ON', {
-      fontSize: '16px',
-      fill: '#95a5a6',
-      align: 'center'
-    }).setOrigin(0.5);
-    
-    this.musicIndicator = this.add.text(uiX, sidebarBottom - 75, '🔊 Música: ON', {
-      fontSize: '16px',
-      fill: '#95a5a6',
-      align: 'center'
-    }).setOrigin(0.5);
-    this.add.text(uiX, sidebarBottom - 100, 'AUDIO', {
-      fontSize: '14px',
-      fill: '#95a5a6',
-      fontStyle: 'bold',
-      align: 'center'
-    }).setOrigin(0.5);
-  }
-
-  formatNumber(num) {
-    // Cache formatted numbers for performance
-    if (this.formatNumberCache.has(num)) {
-      return this.formatNumberCache.get(num);
-    }
-    const formatted = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    // Cache up to 1000 entries to prevent memory bloat
-    if (this.formatNumberCache.size < 1000) {
-      this.formatNumberCache.set(num, formatted);
-    }
-    return formatted;
-  }
-
-  updateUI(force = false) {
-    // Only update if forced or if values changed (performance optimization)
-    const newScore = this.score.getScore();
-    const newLevel = this.score.getLevel();
-    const newLines = this.score.getLinesCleared();
-    const newPieces = this.score.getPiecesPlaced();
-    const newTetrises = this.score.getTetrises();
-    
-    // Store old values for animation detection
-    if (!this.lastScore) this.lastScore = 0;
-    if (!this.lastLevel) this.lastLevel = 1;
-    if (!this.lastLines) this.lastLines = 0;
-    if (!this.lastPieces) this.lastPieces = 0;
-    if (!this.lastTetrises) this.lastTetrises = 0;
-    
-    // Early exit if nothing changed (unless forced)
-    if (!force && 
-        newScore === this.lastScore && 
-        newLevel === this.lastLevel && 
-        newLines === this.lastLines &&
-        newPieces === this.lastPieces &&
-        newTetrises === this.lastTetrises) {
-      // Still update time as it changes frequently
-      if (this.timeText) {
-        const gameTime = this.score.getGameTime();
-        this.timeText.setText(`Time: ${this.score.formatTime(gameTime)}`);
-      }
-      return;
-    }
-    
-    // Update score with animation if changed
-    if (this.scoreText && (force || newScore !== this.lastScore)) {
-      this.scoreText.setText(`Score: ${this.formatNumber(newScore)}`);
-      if (newScore > this.lastScore) {
-        this.animateTextUpdate(this.scoreText);
-      }
-      this.lastScore = newScore;
-    }
-    
-    // Update level with animation if changed
-    if (this.levelText && (force || newLevel !== this.lastLevel)) {
-      this.levelText.setText(`Level: ${newLevel}`);
-      if (newLevel > this.lastLevel) {
-        this.animateLevelUp(this.levelText);
-      }
-      this.lastLevel = newLevel;
-    }
-    
-    // Update lines with animation if changed
-    if (this.linesText && (force || newLines !== this.lastLines)) {
-      this.linesText.setText(`Lines: ${this.formatNumber(newLines)}`);
-      if (newLines > this.lastLines) {
-        this.animateTextUpdate(this.linesText);
-      }
-      this.lastLines = newLines;
-    }
-    
-    // Update high score if current score is higher
-    if (this.highScoreText && (force || newScore !== this.lastScore)) {
-      const bestScore = StorageManager.getBestScore();
-      const currentBest = Math.max(bestScore, newScore);
-      this.highScoreText.setText(`Best: ${this.formatNumber(currentBest)}`);
-      if (newScore > bestScore) {
-        this.highScoreText.setFill('#e74c3c'); // Red when new record
-      } else {
-        this.highScoreText.setFill('#f39c12'); // Orange otherwise
-      }
-    }
-    
-    // Update time
-    if (this.timeText) {
-      const gameTime = this.score.getGameTime();
-      this.timeText.setText(`Time: ${this.score.formatTime(gameTime)}`);
-    }
-    
-    // Update pieces placed
-    if (this.piecesText && (force || newPieces !== this.lastPieces)) {
-      this.piecesText.setText(`Pieces: ${newPieces}`);
-      this.lastPieces = newPieces;
-    }
-    
-    // Update tetrises
-    if (this.tetrisesText && (force || newTetrises !== this.lastTetrises)) {
-      this.tetrisesText.setText(`Tetrises: ${newTetrises}`);
-      this.lastTetrises = newTetrises;
-    }
-    
-    this.updateMusicIndicator();
-    this.updateSoundEffectsIndicator();
-  }
-
-  animateTextUpdate(textObject) {
-    // Subtle pulse animation when value changes
-    this.tweens.add({
-      targets: textObject,
-      scaleX: 1.15,
-      scaleY: 1.15,
-      duration: 150,
-      yoyo: true,
-      ease: 'Power2'
-    });
-  }
-
-  animateLevelUp(textObject) {
-    // Special animation for level up
-    this.tweens.add({
-      targets: textObject,
-      scaleX: 1.3,
-      scaleY: 1.3,
-      duration: 200,
-      yoyo: true,
-      ease: 'Power2',
-      onComplete: () => {
-        // Flash effect
-        this.tweens.add({
-          targets: textObject,
-          alpha: 0.3,
-          duration: 100,
-          yoyo: true,
-          ease: 'Power2'
-        });
-      }
-    });
-  }
-
-  updateMusicIndicator() {
-    if (this.musicIndicator) {
+  
+  toggleMusic() {
+    this.musicMuted = !this.musicMuted;
+    if (this.retroMusic) {
       if (this.musicMuted) {
-        this.musicIndicator.setText('🔇 Música: OFF');
-        this.musicIndicator.setFill('#e74c3c');
-      } else {
-        this.musicIndicator.setText('🔊 Música: ON');
-        this.musicIndicator.setFill('#2ecc71');
+        this.retroMusic.stop();
+        this.musicStarted = false;
+      } else if (this.stateMachine.isState(GAME_STATES.PLAYING)) {
+        this.retroMusic.play();
+        this.musicStarted = true;
       }
     }
+    this.uiRenderer.updateAudioIndicators(this.musicMuted, this.soundEffects ? this.soundEffects.isEnabled() : false);
   }
-
-  updateSoundEffectsIndicator() {
-    if (this.soundEffectsIndicator) {
-      if (!this.soundEffects || !this.soundEffects.isEnabled()) {
-        this.soundEffectsIndicator.setText('🔇 Sonidos: OFF');
-        this.soundEffectsIndicator.setFill('#e74c3c');
-      } else {
-        this.soundEffectsIndicator.setText('🔊 Sonidos: ON');
-        this.soundEffectsIndicator.setFill('#2ecc71');
-      }
-    }
-  }
-
+  
   toggleSoundEffects() {
     if (this.soundEffects) {
       const enabled = this.soundEffects.toggle();
-      this.updateSoundEffectsIndicator();
-      // Play a test sound when enabling
-      if (enabled) {
-        this.soundEffects.playMove();
-      }
-    }
-  }
-
-  togglePause() {
-    if (this.isPaused) {
-      this.resumeGame();
-    } else {
-      this.pauseGame();
-    }
-  }
-
-  pauseGame() {
-    if (this.isPaused || this.gameOver || !this.gameStarted) return;
-    
-    this.isPaused = true;
-    
-    // Pause all timers
-    if (this.verticalTimer) {
-      this.verticalTimer.paused = true;
-    }
-    if (this.horizontalMoveTimer) {
-      this.horizontalMoveTimer.paused = true;
-    }
-    if (this.rotateTimer) {
-      this.rotateTimer.paused = true;
-    }
-    
-    // Pause music
-    if (this.retroMusic) {
-      this.retroMusic.pause();
-    }
-    
-    // Show pause overlay
-    this.showPauseScreen();
-  }
-
-  resumeGame() {
-    if (!this.isPaused) return;
-    
-    this.isPaused = false;
-    
-    // Resume all timers
-    if (this.verticalTimer) {
-      this.verticalTimer.paused = false;
-    }
-    if (this.horizontalMoveTimer) {
-      this.horizontalMoveTimer.paused = false;
-    }
-    if (this.rotateTimer) {
-      this.rotateTimer.paused = false;
-    }
-    
-    // Resume music
-    if (this.retroMusic) {
-      this.retroMusic.resume();
-    }
-    
-    // Hide pause overlay
-    this.hidePauseScreen();
-  }
-
-  showPauseScreen() {
-    // Create semi-transparent overlay
-    const overlay = this.add.rectangle(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2,
-      CANVAS_WIDTH,
-      CANVAS_HEIGHT,
-      0x000000,
-      0.7
-    );
-    
-    // Paused text
-    const pausedText = this.add.text(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2 - 30,
-      'PAUSED',
-      {
-        fontSize: '64px',
-        fill: '#f39c12',
-        fontStyle: 'bold',
-        align: 'center'
-      }
-    ).setOrigin(0.5);
-    
-    // Resume instruction
-    const resumeText = this.add.text(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2 + 40,
-      'Press P or SPACE to Resume',
-      {
-        fontSize: '24px',
-        fill: '#ecf0f1',
-        align: 'center'
-      }
-    ).setOrigin(0.5);
-    
-    // Store UI elements for cleanup
-    this.pauseUI = {
-      overlay,
-      pausedText,
-      resumeText
-    };
-  }
-
-  hidePauseScreen() {
-    if (this.pauseUI) {
-      this.pauseUI.overlay.destroy();
-      this.pauseUI.pausedText.destroy();
-      this.pauseUI.resumeText.destroy();
-      this.pauseUI = null;
-    }
-  }
-
-  toggleMusic() {
-    this.musicMuted = !this.musicMuted;
-    
-    try {
-      if (this.retroMusic) {
-        if (this.musicMuted) {
-          // Silenciar música
-          this.retroMusic.stop();
-          this.musicStarted = false;
-        } else {
-          // Activar música si no está iniciada
-          if (!this.musicStarted) {
-            this.retroMusic.play();
-            this.musicStarted = true;
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('Error al cambiar estado de música:', error);
-    }
-    
-    // Actualizar indicador visual
-    this.updateMusicIndicator();
-  }
-
-  createPreview() {
-    this.previewBlocks = [];
-    this.renderPreview();
-  }
-
-  renderPreview() {
-    // Clear previous preview blocks
-    if (this.previewBlocks) {
-      this.previewBlocks.forEach(block => block.destroy());
-    }
-    this.previewBlocks = [];
-    
-    const previewAreaWidth = SIDEBAR_WIDTH - PADDING;
-    // Preview area is centered in sidebar, so its left edge is at SIDEBAR_X + PADDING/2
-    const previewAreaLeft = SIDEBAR_X + PADDING / 2;
-    const previewStartY = SIDEBAR_Y + PADDING;
-    const segmentHeight = (PREVIEW_AREA_HEIGHT - PADDING * 2) / 3;
-    const cellSize = 20; // Smaller cells for preview
-    
-    this.nextShapes.forEach((shapeType, index) => {
-      const tetraminoData = TETRAMINOS[shapeType];
-      const color = tetraminoData.color;
-      const segmentCenterY = previewStartY + (index * segmentHeight) + (segmentHeight / 2);
-      
-      // Calculate bounding box of the shape to center it
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-      tetraminoData.blocks.forEach(relativePos => {
-        minX = Math.min(minX, relativePos.x);
-        maxX = Math.max(maxX, relativePos.x);
-        minY = Math.min(minY, relativePos.y);
-        maxY = Math.max(maxY, relativePos.y);
-      });
-      
-      const shapeWidth = (maxX - minX + 1) * cellSize;
-      const shapeHeight = (maxY - minY + 1) * cellSize;
-      // Center the shape horizontally within the preview area
-      const offsetX = (previewAreaWidth - shapeWidth) / 2;
-      const offsetY = (segmentHeight - shapeHeight) / 2;
-      
-      // Center each shape in its segment
-      tetraminoData.blocks.forEach(relativePos => {
-        // Calculate position relative to the left edge of preview area
-        const x = previewAreaLeft + offsetX + ((relativePos.x - minX) * cellSize) + (cellSize / 2);
-        const y = segmentCenterY + offsetY + ((relativePos.y - minY) * cellSize) + (cellSize / 2);
-        
-        const block = this.add.rectangle(x, y, cellSize - 2, cellSize - 2, color);
-        this.previewBlocks.push(block);
-      });
-    });
-  }
-
-  startMusicOnInteraction() {
-    if (!this.retroMusic || this.musicMuted) return;
-    
-    if (this.musicStartHandler) {
-      try {
-        this.input.keyboard.off('keydown', this.musicStartHandler);
-        this.input.off('pointerdown', this.musicStartHandler);
-      } catch (error) {}
-    }
-    
-    this.musicStartHandler = () => {
-      try {
-        if (this.gameStarted && !this.musicStarted && this.retroMusic && !this.musicMuted) {
-          this.retroMusic.play();
-          this.musicStarted = true;
-          this.updateMusicIndicator();
-          if (this.musicStartHandler) {
-            this.input.keyboard.off('keydown', this.musicStartHandler);
-            this.input.off('pointerdown', this.musicStartHandler);
-            this.musicStartHandler = null;
-          }
-        }
-      } catch (error) {
-        console.warn('Error al iniciar la música:', error);
-        this.retroMusic = null;
-      }
-    };
-    
-    try {
-      this.input.keyboard.on('keydown', this.musicStartHandler);
-      this.input.on('pointerdown', this.musicStartHandler);
-    } catch (error) {
-      console.warn('Error al configurar listeners de música:', error);
-      this.retroMusic = null;
+      this.uiRenderer.updateAudioIndicators(this.musicMuted, enabled);
+      if (enabled) this.soundEffects.playMove();
     }
   }
 
   update() {
-    if (!this.gameStarted || this.gameOver) return;
-    
     const now = this.time.now;
-    
-    // Update game time (throttled to once per second)
-    if (!this.isPaused && now - this.timeUpdateThrottle >= this.timeUpdateInterval) {
-      this.score.updateGameTime();
-      this.timeUpdateThrottle = now;
-    }
-    
-    // Update UI (throttled to reduce updates)
-    if (now - this.uiUpdateThrottle >= this.uiUpdateInterval) {
-      this.updateUI();
-      this.uiUpdateThrottle = now;
-    }
-    
-    // Handle pause input (prevents auto-pause when starting with Space)
-    if (this.justStarted) {
-      if (now > (this.startTime || 0) + 200) {
-        this.justStarted = false;
-      }
-    } else {
-      if (Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-        this.togglePause();
-      }
-    }
-    
-    if (this.isPaused || !this.currentTetramino) return;
-    
-    this.handleHorizontalInput();
-    this.handleRotationInput();
-    this.handleFastDrop();
-  }
-
-  showStartScreen() {
-    // Create semi-transparent overlay
-    const overlay = this.add.rectangle(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2,
-      CANVAS_WIDTH,
-      CANVAS_HEIGHT,
-      0x000000,
-      0.8
-    );
-    
-    // Title
-    const titleText = this.add.text(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2 - 200,
-      'TETRIS',
-      {
-        fontSize: '64px',
-        fill: '#e74c3c',
-        fontStyle: 'bold',
-        align: 'center'
-      }
-    ).setOrigin(0.5);
-    
-    // Instructions title
-    const instructionsTitle = this.add.text(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2 - 120,
-      'Instrucciones',
-      {
-        fontSize: '32px',
-        fill: '#ecf0f1',
-        fontStyle: 'bold',
-        align: 'center'
-      }
-    ).setOrigin(0.5);
-    
-    // Instructions
-    const instructions = [
-      '← → : Mover pieza',
-      '↑ : Rotar pieza',
-      '↓ : Acelerar caída',
-      'P/Espacio : Pausar',
-      'M : Silenciar música',
-      'S : Silenciar sonidos'
-    ];
-    
-    const instructionTexts = [];
-    instructions.forEach((instruction, index) => {
-      const text = this.add.text(
-        CANVAS_WIDTH / 2,
-        CANVAS_HEIGHT / 2 - 60 + (index * 35),
-        instruction,
-        {
-          fontSize: '20px',
-          fill: '#bdc3c7',
-          align: 'center'
+    if (this.stateMachine.isState(GAME_STATES.PLAYING)) {
+        if (now - this.timeUpdateThrottle >= 1000) {
+            this.gameState.score.updateGameTime();
+            this.uiRenderer.updateTime(this.gameState.score.getGameTime());
+            this.timeUpdateThrottle = now;
         }
-      ).setOrigin(0.5);
-      instructionTexts.push(text);
-    });
-    
-    // Start instruction
-    const startText = this.add.text(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2 + 100,
-      'Presiona cualquier tecla para comenzar',
-      {
-        fontSize: '24px',
-        fill: '#2ecc71',
-        fontStyle: 'bold',
-        align: 'center'
-      }
-    ).setOrigin(0.5);
-    
-    // Blinking animation for start text
-    this.tweens.add({
-      targets: startText,
-      alpha: 0.3,
-      duration: 800,
-      yoyo: true,
-      repeat: -1
-    });
-    
-    // Store UI elements for cleanup
-    this.startScreenUI = {
-      overlay,
-      titleText,
-      instructionsTitle,
-      instructionTexts,
-      startText
-    };
-    
-    // Listen for any key or click to start
-    // Note: Space can start the game, but once started, Space will pause/resume
-    const startHandler = (event) => {
-      // Only block P key from starting (P is only for pause)
-      if (event && event.keyCode !== undefined) {
-        const keyCode = event.keyCode;
-        if (keyCode === Phaser.Input.Keyboard.KeyCodes.P) {
-          return;
-        }
-      }
-      
-      // Remove listeners BEFORE starting game to prevent update() from processing the same key
-      if (this.startGameHandler) {
-        this.input.keyboard.off('keydown', this.startGameHandler);
-        this.input.off('pointerdown', this.startGameHandler);
-        this.startGameHandler = null;
-      }
-      
-      // Use a small delay to ensure the key event is consumed before update() processes it
-      this.time.delayedCall(50, () => {
-        this.startGame();
-      });
-    };
-    
-    this.startGameHandler = startHandler;
-    this.input.keyboard.on('keydown', startHandler);
-    this.input.on('pointerdown', startHandler);
-  }
 
-  startGame() {
-    if (this.startScreenUI) {
-      this.startScreenUI.overlay.destroy();
-      this.startScreenUI.titleText.destroy();
-      this.startScreenUI.instructionsTitle.destroy();
-      this.startScreenUI.instructionTexts.forEach(text => text.destroy());
-      this.startScreenUI.startText.destroy();
-      this.startScreenUI = null;
-    }
-    
-    // Remove start game handler (in case it wasn't removed in the handler)
-    if (this.startGameHandler) {
-      this.input.keyboard.off('keydown', this.startGameHandler);
-      this.input.off('pointerdown', this.startGameHandler);
-      this.startGameHandler = null;
-    }
-    
-    this.gameStarted = true;
-    this.isPaused = false;
-    this.justStarted = true; // Set flag to prevent pause on first frame
-    this.startTime = this.time.now; // Record start time for delay check
-    
-    // Start game timer
-    this.score.startTimer();
-    
-    this.createPreview();
-    
-    if (this.retroMusic && !this.musicMuted) {
-      this.startMusicOnInteraction();
-    }
-    
-    this.spawnTetramino();
-    this.startVerticalTimer();
-  }
-
-  handleFastDrop() {
-      if (Phaser.Input.Keyboard.JustDown(this.cursors.down) && !this.isFastDrop) {
-      if (this.currentTetramino) {
-        if (this.currentTetramino.nextMoveVerticalCollide(this.fieldData)) {
-          this.landTetramino();
-        } else {
-          this.currentTetramino.moveDown();
-          // Play move sound for automatic drop
-          if (this.soundEffects && !this.isFastDrop) {
-            // Only play soft sound for automatic drops, not for fast drop
-          }
+        if (Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+            if (!this.justStarted) this.stateMachine.pause();
         }
-      }
         
-        this.dropSpeed = FAST_DROP_SPEED;
-        this.startVerticalTimer();
-        this.isFastDrop = true;
-      } else if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
-        this.dropSpeed = this.baseDropSpeed;
+        this.handleGameplayInputs();
+    } else if (this.stateMachine.isState(GAME_STATES.PAUSED)) {
+        if (Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+            this.stateMachine.resume();
+        }
+    }
+    
+    if (this.justStarted && now > (this.startTime || 0) + 200) {
+        this.justStarted = false;
+    }
+  }
+
+  handleGameplayInputs() {
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.left)) this.tryMove(-1);
+    else if (this.cursors.left.isDown && this.canMoveHorizontally()) this.tryMove(-1);
+    
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.right)) this.tryMove(1);
+    else if (this.cursors.right.isDown && this.canMoveHorizontally()) this.tryMove(1);
+    
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && this.canRotate()) {
+        if (this.gameState.rotate()) {
+            if (this.soundEffects) this.soundEffects.playRotate();
+            this.boardRenderer.update();
+        }
+        this.lastRotateTime = this.time.now;
+    }
+    
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
+        this.gameState.updateTick();
+        this.boardRenderer.update();
+        if (!this.isFastDrop) {
+            this.gameState.dropSpeed = FAST_DROP_SPEED;
+            this.startVerticalTimer();
+            this.isFastDrop = true;
+        }
+    } else if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
+        this.gameState.dropSpeed = this.gameState.baseDropSpeed;
         this.startVerticalTimer();
         this.isFastDrop = false;
+    }
+  }
+
+  canMoveHorizontally() {
+      if (!this.lastMoveTime) return true;
+      return this.time.now - this.lastMoveTime > this.horizontalMoveDelay;
+  }
+  
+  canRotate() {
+      if (!this.lastRotateTime) return true;
+      return this.time.now - this.lastRotateTime > this.rotateDelay;
+  }
+
+  tryMove(dir) {
+      const moved = dir === -1 ? this.gameState.moveLeft() : this.gameState.moveRight();
+      if (moved) {
+          if (this.soundEffects) this.soundEffects.playMove();
+          this.lastMoveTime = this.time.now;
+          this.boardRenderer.update();
       }
   }
 
-  handleHorizontalInput() {
-    // Left arrow
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
-      this.tryMoveHorizontal(-1);
-      this.startHorizontalTimer(-1);
-    } else if (this.cursors.left.isDown && (!this.horizontalMoveTimer || !this.horizontalMoveTimer.getProgress())) {
-      this.tryMoveHorizontal(-1);
-      this.startHorizontalTimer(-1);
-    }
-    
-    // Right arrow
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
-      this.tryMoveHorizontal(1);
-      this.startHorizontalTimer(1);
-    } else if (this.cursors.right.isDown && (!this.horizontalMoveTimer || !this.horizontalMoveTimer.getProgress())) {
-      this.tryMoveHorizontal(1);
-      this.startHorizontalTimer(1);
-    }
-  }
-
-  startHorizontalTimer(direction) {
-    if (this.horizontalMoveTimer) {
-      this.horizontalMoveTimer.remove();
-    }
-    
-    this.horizontalMoveTimer = this.time.addEvent({
-      delay: this.horizontalMoveDelay,
-      callback: () => {
-        if (this.cursors.left.isDown && direction === -1) {
-          this.tryMoveHorizontal(-1);
-          this.startHorizontalTimer(-1);
-        } else if (this.cursors.right.isDown && direction === 1) {
-          this.tryMoveHorizontal(1);
-          this.startHorizontalTimer(1);
-        }
-      },
-      loop: false
-    });
-  }
-
-  tryMoveHorizontal(direction) {
-    if (!this.currentTetramino) return;
-    
-    if (!this.currentTetramino.nextMoveHorizontalCollide(direction, this.fieldData)) {
-      if (direction === -1) {
-        this.currentTetramino.moveLeft();
-      } else {
-        this.currentTetramino.moveRight();
-      }
-      // Play move sound
-      if (this.soundEffects) {
-        this.soundEffects.playMove();
-      }
-    }
-  }
-
-  handleRotationInput() {
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
-      this.tryRotate();
-    }
-  }
-
-  tryRotate() {
-    if (!this.currentTetramino) return;
-    
-    // The 'O' (square) piece does not rotate
-    if (this.currentTetramino.type === 'O') {
-      return;
-    }
-    
-    // Check if rotation timer is active
-    if (this.rotateTimer && this.rotateTimer.getProgress() < 1) {
-      return;
-    }
-    
-    // Try rotation with wall kicks
-    const wallKickOffset = this.currentTetramino.tryRotateWithWallKick(this.fieldData);
-    
-    if (wallKickOffset !== null) {
-      // Rotate with the found offset (wall kick)
-      this.currentTetramino.rotateWithOffset(wallKickOffset.x, wallKickOffset.y);
+  onGameStart() {
+      this.gameState.score.startTimer();
+      this.uiRenderer.renderPreview();
       
-      // Play rotate sound
-      if (this.soundEffects) {
-        this.soundEffects.playRotate();
+      if (this.retroMusic && !this.musicMuted && !this.musicStarted) {
+          this.retroMusic.play();
+          this.musicStarted = true;
       }
       
-      // Start rotation timer
-      if (this.rotateTimer) {
-        this.rotateTimer.remove();
-      }
-      this.rotateTimer = this.time.addEvent({
-        delay: this.rotateDelay,
-        callback: () => {},
-        loop: false
-      });
-    }
+      this.gameState.spawnTetramino();
+      this.boardRenderer.update();
+      this.startVerticalTimer();
   }
 
   startVerticalTimer() {
-    if (this.verticalTimer) {
-      this.verticalTimer.remove();
-    }
-    
+    if (this.verticalTimer) this.verticalTimer.remove();
     this.verticalTimer = this.time.addEvent({
-      delay: this.dropSpeed,
+      delay: this.gameState.dropSpeed,
       callback: () => {
-        if (this.currentTetramino) {
-          if (this.currentTetramino.nextMoveVerticalCollide(this.fieldData)) {
-            // Tetramino has landed
-            this.landTetramino();
-          } else {
-            this.currentTetramino.moveDown();
-          }
-        }
+        this.gameState.updateTick();
+        this.boardRenderer.update();
       },
       loop: true
     });
   }
 
-  landTetramino() {
-    if (!this.currentTetramino) return;
+  showStartScreen() {
+    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.8);
+    const titleText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 200, 'TETRIS', { fontSize: '64px', fill: '#e74c3c', fontStyle: 'bold' }).setOrigin(0.5);
+    const startText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 100, 'Presiona cualquier tecla', { fontSize: '24px', fill: '#2ecc71', fontStyle: 'bold' }).setOrigin(0.5);
+    this.tweens.add({ targets: startText, alpha: 0.3, duration: 800, yoyo: true, repeat: -1 });
     
-    // Track piece placed
-    this.score.incrementPiecesPlaced();
+    this.startUIElements = [overlay, titleText, startText];
     
-    // Store blocks in field_data (optimized: use positions directly)
-    const positions = this.currentTetramino.getBlockPositions();
-    for (let i = 0; i < positions.length; i++) {
-      const pos = positions[i];
-      if (pos.y >= 0 && pos.y < GRID_ROWS && pos.x >= 0 && pos.x < GRID_COLS) {
-        this.fieldData[pos.y][pos.x] = this.currentTetramino.blocks[i];
-      }
-    }
-    
-    // Destroy current tetramino (blocks are now in field_data)
-    this.currentTetramino.blocks = [];
-    this.currentTetramino = null;
-    
-    // Check and clear finished rows
-    this.checkFinishedRows();
-    
-    // Spawn new tetramino
-    this.spawnTetramino();
-  }
-
-  checkFinishedRows() {
-    const rowsToClear = [];
-    
-    // Identify complete rows (optimized: check from bottom to top)
-    // Start from bottom as completed rows are more likely there
-    for (let row = GRID_ROWS - 1; row >= 0; row--) {
-      let isComplete = true;
-      // Use a simple loop without function calls for better performance
-      const rowData = this.fieldData[row];
-      for (let col = 0; col < GRID_COLS; col++) {
-        if (rowData[col] === null) {
-          isComplete = false;
-          break;
-        }
-      }
-      if (isComplete) {
-        rowsToClear.push(row);
-      }
-    }
-    
-    if (rowsToClear.length === 0) return;
-    
-    // Play line clear sound
-    if (this.soundEffects) {
-      this.soundEffects.playLineClear(rowsToClear.length);
-    }
-    
-    // Animate lines before clearing
-    this.animateLineClear(rowsToClear);
-    
-  }
-
-  // Check if a tetramino can be placed at its initial spawn position
-  canSpawnTetramino(shapeType) {
-    const tetraminoData = TETRAMINOS[shapeType];
-    const startX = Math.floor(GRID_COLS / 2) - 1;
-    const startY = 0;
-    
-    for (const relativePos of tetraminoData.blocks) {
-      const logicalX = startX + relativePos.x;
-      const logicalY = startY + relativePos.y;
-      
-      if (logicalX < 0 || logicalX >= GRID_COLS || logicalY < 0 || logicalY >= GRID_ROWS) {
-        return false;
-      }
-      
-      if (this.fieldData[logicalY] && this.fieldData[logicalY][logicalX] !== null) {
-        return false;
-      }
-    }
-    
-    return true;
-  }
-
-  spawnTetramino() {
-    const nextType = this.nextShapes.shift();
-    
-    if (!this.canSpawnTetramino(nextType)) {
-      this.triggerGameOver();
-      return;
-    }
-    
-    this.currentTetramino = new Tetramino(this, nextType);
-    this.nextShapes.push(this.getRandomShapeType());
-    this.renderPreview();
-  }
-
-  triggerGameOver() {
-    this.gameOver = true;
-    
-    // Update final game time
-    this.score.updateGameTime();
-    
-    // Save high score if applicable
-    const currentScore = this.score.getScore();
-    const bestScore = StorageManager.getBestScore();
-    if (currentScore > bestScore) {
-      const stats = this.score.getAllStats();
-      StorageManager.saveHighScore(stats);
-    }
-    
-    // Update lifetime statistics
-    const gameStats = this.score.getAllStats();
-    StorageManager.updateStatistics(gameStats);
-    
-    // Play game over sound
-    if (this.soundEffects) {
-      this.soundEffects.playGameOver();
-    }
-    
-    try {
-      if (this.retroMusic) {
-        this.retroMusic.stop();
-      }
-    } catch (error) {
-      console.warn('Error al detener la música:', error);
-    }
-    
-    if (this.verticalTimer) {
-      this.verticalTimer.remove();
-      this.verticalTimer = null;
-    }
-    if (this.horizontalMoveTimer) {
-      this.horizontalMoveTimer.remove();
-      this.horizontalMoveTimer = null;
-    }
-    if (this.rotateTimer) {
-      this.rotateTimer.remove();
-      this.rotateTimer = null;
-    }
-    
-    this.showGameOver();
-  }
-
-  showGameOver() {
-    // Create semi-transparent overlay
-    const overlay = this.add.rectangle(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2,
-      CANVAS_WIDTH,
-      CANVAS_HEIGHT,
-      0x000000,
-      0.7
-    );
-    
-    // Game Over text
-    const gameOverText = this.add.text(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2 - 60,
-      'GAME OVER',
-      {
-        fontSize: '48px',
-        fill: '#e74c3c',
-        fontStyle: 'bold',
-        align: 'center'
-      }
-    ).setOrigin(0.5);
-    
-    // Final score text
-    const finalScore = this.score.getScore();
-    const bestScore = StorageManager.getBestScore();
-    const isNewRecord = finalScore > bestScore;
-    
-    const finalScoreText = this.add.text(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2,
-      `Final Score: ${this.formatNumber(finalScore)}`,
-      {
-        fontSize: '24px',
-        fill: isNewRecord ? '#e74c3c' : '#ecf0f1',
-        fontStyle: 'bold',
-        align: 'center'
-      }
-    ).setOrigin(0.5);
-    
-    let newRecordText = null;
-    // Show "NEW RECORD!" if applicable
-    if (isNewRecord) {
-      newRecordText = this.add.text(
-        CANVAS_WIDTH / 2,
-        CANVAS_HEIGHT / 2 + 35,
-        'NEW RECORD!',
-        {
-          fontSize: '28px',
-          fill: '#f39c12',
-          fontStyle: 'bold',
-          align: 'center'
-        }
-      ).setOrigin(0.5);
-      
-      // Pulse animation for new record
-      this.tweens.add({
-        targets: newRecordText,
-        scaleX: 1.2,
-        scaleY: 1.2,
-        duration: 300,
-        yoyo: true,
-        repeat: -1
-      });
-    }
-    
-    // Restart instruction
-    const restartText = this.add.text(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT / 2 + (isNewRecord ? 90 : 60),
-      'Press R to Restart',
-      {
-        fontSize: '20px',
-        fill: '#95a5a6',
-        align: 'center'
-      }
-    ).setOrigin(0.5);
-    
-    // Store UI elements for cleanup
-    this.gameOverUI = {
-      overlay,
-      gameOverText,
-      finalScoreText,
-      restartText,
-      newRecordText
+    const startTrigger = (evt) => {
+        if (evt && evt.keyCode === Phaser.Input.Keyboard.KeyCodes.P) return;
+        this.input.keyboard.off('keydown', startTrigger);
+        this.input.off('pointerdown', startTrigger);
+        
+        this.startUIElements.forEach(el => el.destroy());
+        this.justStarted = true;
+        this.startTime = this.time.now;
+        this.stateMachine.start();
     };
+    this.input.keyboard.on('keydown', startTrigger);
+    this.input.on('pointerdown', startTrigger);
+  }
+
+  showPauseScreen() {
+    if (this.verticalTimer) this.verticalTimer.paused = true;
+    if (this.retroMusic) this.retroMusic.pause();
     
-    // Listen for restart key
+    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.7);
+    const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'PAUSED', { fontSize: '64px', fill: '#f39c12', fontStyle: 'bold' }).setOrigin(0.5);
+    this.pauseUIElements = [overlay, text];
+  }
+
+  hidePauseScreen() {
+    if (this.verticalTimer) this.verticalTimer.paused = false;
+    if (this.retroMusic) this.retroMusic.resume();
+    
+    if (this.pauseUIElements) {
+        this.pauseUIElements.forEach(el => el.destroy());
+        this.pauseUIElements = null;
+    }
+  }
+
+  onGameOver() {
+    if (this.verticalTimer) this.verticalTimer.remove();
+    this.gameState.score.updateGameTime();
+    
+    const stats = this.gameState.score.getAllStats();
+    if (stats.score > StorageManager.getBestScore()) {
+        StorageManager.saveHighScore(stats);
+    }
+    StorageManager.updateStatistics(stats);
+    
+    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.7);
+    const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 60, 'GAME OVER', { fontSize: '48px', fill: '#e74c3c', fontStyle: 'bold' }).setOrigin(0.5);
+    const restartText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60, 'Press R to Restart', { fontSize: '20px', fill: '#95a5a6' }).setOrigin(0.5);
+    this.gameOverUIElements = [overlay, text, restartText];
+    
     this.restartKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-    this.restartKey.on('down', () => {
-      this.restartGame();
-    });
+    this.restartKey.on('down', () => this.restartGame());
   }
 
   restartGame() {
-    // Clean up current game
-    if (this.currentTetramino) {
-      this.currentTetramino.destroy();
-      this.currentTetramino = null;
+    if (this.gameOverUIElements) {
+      this.gameOverUIElements.forEach(el => el.destroy());
+      this.gameOverUIElements = null;
     }
-    
-    // Clear all blocks from field
-    for (let row = 0; row < GRID_ROWS; row++) {
-      for (let col = 0; col < GRID_COLS; col++) {
-        if (this.fieldData[row][col] !== null) {
-          this.fieldData[row][col].destroy();
-          this.fieldData[row][col] = null;
-        }
-      }
-    }
-    
-    // Clean up Game Over UI
-    if (this.gameOverUI) {
-      this.gameOverUI.overlay.destroy();
-      this.gameOverUI.gameOverText.destroy();
-      this.gameOverUI.finalScoreText.destroy();
-      if (this.gameOverUI.newRecordText) {
-        this.gameOverUI.newRecordText.destroy();
-      }
-      this.gameOverUI.restartText.destroy();
-      this.gameOverUI = null;
-    }
-    
-    // Clean up pause UI if exists
-    this.hidePauseScreen();
-    
-    // Remove restart key listener
     if (this.restartKey) {
       this.restartKey.removeAllListeners();
       this.restartKey = null;
     }
     
-    // Reset game state
-    this.gameOver = false;
-    this.isPaused = false;
-    this.justStarted = true; // Set flag to prevent pause on first frame after restart
-    this.gameStarted = true; // Keep game started after restart
-    this.dropSpeed = INITIAL_DROP_SPEED;
-    this.baseDropSpeed = INITIAL_DROP_SPEED;
-    this.isFastDrop = false;
+    this.gameState.reset();
+    this.uiRenderer.onScoreUpdated(this.gameState.score.getAllStats());
+    this.uiRenderer.onLevelUp(1);
+    this.boardRenderer.update();
     
-    // Reset score
-    this.score = new Score();
-    
-    // Reset next shapes queue
-    this.nextShapes = [];
-    for (let i = 0; i < 3; i++) {
-      this.nextShapes.push(this.getRandomShapeType());
+    if (this.retroMusic && !this.musicMuted) {
+      this.retroMusic.play();
+      this.musicStarted = true;
     }
     
-    // Update UI (force update after score changes)
-    this.updateUI(true);
-    this.renderPreview();
-    
-    // Restart retro music (safely) - respetar estado de mute
-    try {
-      if (this.retroMusic) {
-        this.retroMusic.stop();
-        this.musicStarted = false;
-        // Solo iniciar música si no está silenciada
-        if (!this.musicMuted) {
-          this.startMusicOnInteraction();
-        }
-      }
-    } catch (error) {
-      console.warn('Error al reiniciar la música:', error);
-      this.retroMusic = null;
-    }
-    
-    // Actualizar indicador de música
-    this.updateMusicIndicator();
-    
-    // Spawn new tetramino
-    this.spawnTetramino();
-    
-    // Start vertical timer
-    this.startVerticalTimer();
-  }
-
-  drawArea(centerX, centerY, width, height, fillColor, strokeColor) {
-    // Fill rectangle
-    this.add.rectangle(centerX, centerY, width, height, fillColor);
-    
-    // Stroke rectangle
-    const graphics = this.add.graphics();
-    graphics.lineStyle(2, strokeColor, 1);
-    graphics.strokeRect(
-      centerX - width / 2,
-      centerY - height / 2,
-      width,
-      height
-    );
-  }
-
-  drawGridLines() {
-    const graphics = this.add.graphics();
-    const gridLineColor = 0x34495e; // Subtle dark blue-gray color
-    const gridLineAlpha = 0.3; // Semi-transparent
-    const gridLineWidth = 1;
-
-    graphics.lineStyle(gridLineWidth, gridLineColor, gridLineAlpha);
-
-    // Draw vertical lines (GRID_COLS + 1 lines)
-    for (let col = 0; col <= GRID_COLS; col++) {
-      const x = GAME_AREA_X + (col * CELL_SIZE);
-      graphics.moveTo(x, GAME_AREA_Y);
-      graphics.lineTo(x, GAME_AREA_Y + GAME_AREA_HEIGHT);
-    }
-
-    // Draw horizontal lines (GRID_ROWS + 1 lines)
-    for (let row = 0; row <= GRID_ROWS; row++) {
-      const y = GAME_AREA_Y + (row * CELL_SIZE);
-      graphics.moveTo(GAME_AREA_X, y);
-      graphics.lineTo(GAME_AREA_X + GAME_AREA_WIDTH, y);
-    }
-
-    graphics.strokePath();
-  }
-
-  initParticleSystem() {
-    // Create particle manager for line clear effects
-    // We'll create particles dynamically when needed
-    this.particleManagers = [];
-  }
-
-  createLineClearParticles(row, linesCleared) {
-    // Calculate the Y position of the row in pixels
-    const rowY = GAME_AREA_Y + (row * CELL_SIZE) + (CELL_SIZE / 2);
-    
-    // Determine particle properties based on number of lines cleared
-    let particleCount, colors, speed, scale;
-    
-    if (linesCleared === 1) {
-      particleCount = 20;
-      colors = [0x3498db, 0x2980b9]; // Blue shades
-      speed = { min: 50, max: 150 };
-      scale = { start: 0.5, end: 0 };
-    } else if (linesCleared === 2) {
-      particleCount = 30;
-      colors = [0x2ecc71, 0x27ae60]; // Green shades
-      speed = { min: 80, max: 200 };
-      scale = { start: 0.6, end: 0 };
-    } else if (linesCleared === 3) {
-      particleCount = 40;
-      colors = [0xf39c12, 0xe67e22]; // Orange shades
-      speed = { min: 100, max: 250 };
-      scale = { start: 0.7, end: 0 };
-    } else { // 4 lines - TETRIS!
-      particleCount = 60;
-      colors = [0xe74c3c, 0xc0392b, 0xf1c40f, 0xf39c12]; // Red, yellow, orange
-      speed = { min: 150, max: 300 };
-      scale = { start: 0.8, end: 0 };
-    }
-    
-    // Create particles for each column in the cleared row
-    for (let col = 0; col < GRID_COLS; col++) {
-      const colX = GAME_AREA_X + (col * CELL_SIZE) + (CELL_SIZE / 2);
-      
-      // Create multiple particles per block
-      const particlesPerBlock = Math.floor(particleCount / GRID_COLS);
-      
-      for (let i = 0; i < particlesPerBlock; i++) {
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const angle = (Math.random() * Math.PI * 2); // Random direction
-        const velocity = speed.min + Math.random() * (speed.max - speed.min);
-        const vx = Math.cos(angle) * velocity;
-        const vy = Math.sin(angle) * velocity;
-        
-        // Create a simple particle using a rectangle
-        const particle = this.add.rectangle(
-          colX + (Math.random() - 0.5) * CELL_SIZE,
-          rowY + (Math.random() - 0.5) * CELL_SIZE,
-          CELL_SIZE * 0.3,
-          CELL_SIZE * 0.3,
-          color
-        );
-        
-        // Animate particle
-        this.tweens.add({
-          targets: particle,
-          x: particle.x + vx * 0.5,
-          y: particle.y + vy * 0.5,
-          alpha: { from: 1, to: 0 },
-          scale: { from: scale.start, to: scale.end },
-          duration: 500 + Math.random() * 300,
-          ease: 'Power2',
-          onComplete: () => {
-            particle.destroy();
-          }
-        });
-      }
-    }
-    
-    // Add extra burst effect for Tetris (4 lines)
-    if (linesCleared === 4) {
-      const centerX = GAME_AREA_X + (GAME_AREA_WIDTH / 2);
-      const centerY = rowY;
-      
-      // Create a burst of particles from the center
-      for (let i = 0; i < 30; i++) {
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const angle = (Math.PI * 2 * i) / 30;
-        const velocity = 200 + Math.random() * 100;
-        const vx = Math.cos(angle) * velocity;
-        const vy = Math.sin(angle) * velocity;
-        
-        const particle = this.add.rectangle(
-          centerX,
-          centerY,
-          CELL_SIZE * 0.4,
-          CELL_SIZE * 0.4,
-          color
-        );
-        
-        this.tweens.add({
-          targets: particle,
-          x: particle.x + vx * 0.8,
-          y: particle.y + vy * 0.8,
-          alpha: { from: 1, to: 0 },
-          scale: { from: 1, to: 0 },
-          rotation: Math.PI * 2,
-          duration: 800,
-          ease: 'Power2',
-          onComplete: () => {
-            particle.destroy();
-          }
-        });
-      }
-    }
-  }
-
-  animateLineClear(rowsToClear) {
-    // Collect all blocks in rows to clear
-    const blocksToAnimate = [];
-    rowsToClear.forEach(row => {
-      for (let col = 0; col < GRID_COLS; col++) {
-        if (this.fieldData[row][col]) {
-          blocksToAnimate.push(this.fieldData[row][col]);
-        }
-      }
-    });
-    
-    if (blocksToAnimate.length === 0) return;
-    
-    // Create flash effect overlay for each row
-    const flashOverlays = [];
-    rowsToClear.forEach(row => {
-      const rowY = GAME_AREA_Y + (row * CELL_SIZE) + (CELL_SIZE / 2);
-      const overlay = this.add.rectangle(
-        GAME_AREA_X + (GAME_AREA_WIDTH / 2),
-        rowY,
-        GAME_AREA_WIDTH,
-        CELL_SIZE,
-        0xffffff,
-        0
-      );
-      flashOverlays.push(overlay);
-    });
-    
-    // Flash animation: blink white 3 times
-    let flashCount = 0;
-    const maxFlashes = 3;
-    const flashDuration = 100; // ms per flash
-    
-    const flashAnimation = () => {
-      flashOverlays.forEach(overlay => {
-        overlay.setAlpha(flashCount % 2 === 0 ? 0.5 : 0);
-      });
-      
-      flashCount++;
-      if (flashCount < maxFlashes * 2) {
-        this.time.delayedCall(flashDuration, flashAnimation);
-      } else {
-        // After flash, fade out blocks
-        flashOverlays.forEach(overlay => overlay.destroy());
-        this.fadeOutBlocks(blocksToAnimate, rowsToClear);
-      }
-    };
-    
-    // Start flash animation
-    flashAnimation();
-  }
-
-  fadeOutBlocks(blocks, rowsToClear) {
-    // Fade out all blocks in the rows
-    const fadeTweens = blocks.map(block => {
-      return this.tweens.add({
-        targets: block,
-        alpha: { from: 1, to: 0 },
-        scale: { from: 1, to: 0.5 },
-        duration: 200,
-        ease: 'Power2'
-      });
-    });
-    
-    // After fade out, clear rows and apply gravity
-    this.time.delayedCall(200, () => {
-      // Add score
-      const levelIncreased = this.score.addScore(rowsToClear.length);
-      
-      // Update speed if level increased
-      if (levelIncreased) {
-        // Play level up sound
-        if (this.soundEffects) {
-          this.soundEffects.playLevelUp();
-        }
-        this.baseDropSpeed = Math.max(50, this.baseDropSpeed * LEVEL_SPEED_MULTIPLIER);
-        if (!this.isFastDrop) {
-          this.dropSpeed = this.baseDropSpeed;
-          this.startVerticalTimer();
-        }
-      }
-      
-      // Update UI
-      this.updateUI();
-      
-      // Create particle effects before removing blocks
-      rowsToClear.forEach(row => {
-        this.createLineClearParticles(row, rowsToClear.length);
-      });
-      
-      // Remove blocks from complete rows
-      rowsToClear.forEach(row => {
-        for (let col = 0; col < GRID_COLS; col++) {
-          if (this.fieldData[row][col]) {
-            this.fieldData[row][col].destroy();
-            this.fieldData[row][col] = null;
-          }
-        }
-      });
-      
-      // Apply gravity: move blocks above cleared rows down
-      // Sort rows to clear from bottom to top
-      rowsToClear.sort((a, b) => b - a);
-      
-      rowsToClear.forEach(clearedRow => {
-        // Move all blocks above this row down by 1
-        for (let row = clearedRow - 1; row >= 0; row--) {
-          for (let col = 0; col < GRID_COLS; col++) {
-            if (this.fieldData[row][col] !== null) {
-              const block = this.fieldData[row][col];
-              const pos = block.getLogicalPosition();
-              
-              // Move block down
-              block.setLogicalPosition(pos.x, pos.y + 1);
-            }
-          }
-        }
-      });
-      
-      // Rebuild field_data from scratch based on current block positions
-      // First, collect all blocks before clearing
-      const allBlocks = [];
-      for (let row = 0; row < GRID_ROWS; row++) {
-        for (let col = 0; col < GRID_COLS; col++) {
-          if (this.fieldData[row][col] !== null) {
-            allBlocks.push(this.fieldData[row][col]);
-          }
-        }
-      }
-      
-      // Clear field_data
-      this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
-      
-      // Rebuild field_data from block positions
-      allBlocks.forEach(block => {
-        const pos = block.getLogicalPosition();
-        if (pos.y >= 0 && pos.y < GRID_ROWS && pos.x >= 0 && pos.x < GRID_COLS) {
-          this.fieldData[pos.y][pos.x] = block;
-        }
-      });
-      
-      // Render preview
-      this.renderPreview();
-    });
+    this.stateMachine.currentState = GAME_STATES.START_SCREEN;
+    this.stateMachine.start();
   }
 }
-
