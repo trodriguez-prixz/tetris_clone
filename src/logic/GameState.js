@@ -58,6 +58,9 @@ export default class GameState {
     
     this.currentTetramino = newTetramino;
     this.nextShapes.push(this.getRandomShapeType());
+    
+    EventBus.emit(EVENTS.NEXT_SHAPE_UPDATED);
+    
     return true;
   }
 

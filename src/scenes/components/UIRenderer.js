@@ -24,6 +24,7 @@ export default class UIRenderer {
     // Listen to changes
     EventBus.on(EVENTS.SCORE_UPDATED, this.onScoreUpdated, this);
     EventBus.on(EVENTS.LEVEL_UP, this.onLevelUp, this);
+    EventBus.on(EVENTS.NEXT_SHAPE_UPDATED, this.renderPreview, this);
   }
   
   createBackgrounds() {
@@ -161,6 +162,7 @@ export default class UIRenderer {
   destroy() {
       EventBus.off(EVENTS.SCORE_UPDATED, this.onScoreUpdated, this);
       EventBus.off(EVENTS.LEVEL_UP, this.onLevelUp, this);
+      EventBus.off(EVENTS.NEXT_SHAPE_UPDATED, this.renderPreview, this);
       this.previewBlocks.forEach(block => block.destroy());
   }
 }

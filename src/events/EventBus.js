@@ -13,7 +13,8 @@ export const EVENTS = {
   LINES_CLEARED: 'lines-cleared',
   TETRAMINO_LOCKED: 'tetramino-locked',
   PIECE_PLACED: 'piece-placed',
-  HARD_DROP: 'hard-drop'
+  HARD_DROP: 'hard-drop',
+  NEXT_SHAPE_UPDATED: 'next-shape-updated'
 };
 
 export default EventBus;
