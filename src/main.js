@@ -3,7 +3,8 @@ import GameScene from './scenes/GameScene.js';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from './config/settings.js';
 
 const config = {
-  type: Phaser.AUTO,
+  // Canvas 2D avoids noisy WebGL texture warnings on some macOS + Electron/Chrome setups
+  type: Phaser.CANVAS,
   width: CANVAS_WIDTH,
   height: CANVAS_HEIGHT,
   parent: 'game-container',

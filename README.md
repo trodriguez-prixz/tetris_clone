@@ -166,7 +166,7 @@ tetris_clone/
 │   ├── Score.test.js
 │   └── Tetramino.test.js
 ├── electron/                   # Configuración de Electron
-│   └── main.js
+│   └── main.cjs
 ├── server.js                   # Servidor Express para despliegue
 ├── vite.config.js              # Configuración de Vite
 ├── jest.config.js              # Configuración de Jest

@@ -28,7 +28,7 @@ src/
   utils/                # timer, audio (retroMusic, soundEffects), storage
   main.js               # Entrada: crea Phaser.Game y registra escenas
 tests/                  # *.test.js; mock de Phaser en tests/__mocks__/phaser.js
-electron/main.js        # Ventana Electron (CommonJS)
+electron/main.cjs       # Ventana Electron (CommonJS; .cjs por "type": "module")
 server.js               # Express para producción
 index.html              # Raíz del proyecto (Vite); `lang="es"`
 ```
@@ -63,7 +63,7 @@ La documentación detallada de arquitectura y controles está en `README.md`.
 2. **Consistencia:** imitar el estilo existente (imports, nombres, organización por carpetas).
 3. **Tests:** al modificar lógica en `classes/`, `utils/` o comportamiento relevante en escenas, añadir o actualizar tests en `tests/` y ejecutar `npm test`.
 4. **Documentación:** no crear ni editar `README.md` u otros `.md` salvo que el usuario lo pida explícitamente.
-5. **Electron:** `electron/main.js` usa **CommonJS** (`require`); el resto del proyecto es ESM. Mantener esa separación salvo migración explícita.
+5. **Electron:** el proceso principal es `electron/main.cjs` (**CommonJS** con `require`) porque `"type": "module"` fuerza ESM en `.js`; el resto del proyecto es ESM.
 6. **Despliegue:** producción sirve `dist/`; cualquier recurso nuevo debe incluirse en el flujo de `vite build`.
 
 ## Idioma
