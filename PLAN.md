@@ -18,7 +18,7 @@ This plan is the single source of truth for improving the project's architecture
 | 2. Scene orchestration cleanup | `[x]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[x]` | Separate visual layout from game rules. |
 | 4. Event communication cleanup | `[x]` | Make module communication explicit and consistent. |
-| 5. Quality tooling | `[ ]` | Add minimal automated checks for safer maintenance. |
+| 5. Quality tooling | `[~]` | Add minimal automated checks for safer maintenance. |
 | 6. Platform and packaging verification | `[ ]` | Preserve web, Express, and Electron delivery paths. |
 | 7. Architecture documentation | `[ ]` | Record the final structure and update agent guidance if needed. |
 
@@ -143,7 +143,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Tasks**
 
-- [ ] Add a formatter configuration.
+- [x] Add a formatter configuration.
 - [ ] Add a linter configuration.
 - [ ] Add a simple CI workflow that runs install, tests, and build.
 - [ ] Decide whether coverage thresholds are useful after the safety baseline exists.
