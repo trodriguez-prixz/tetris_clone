@@ -1,7 +1,7 @@
 import EventBus, { EVENTS } from '../events/EventBus.js';
 import Tetramino from '../classes/Tetramino.js';
 import Score from '../classes/Score.js';
-import { GRID_ROWS, GRID_COLS, TETRAMINOS, INITIAL_DROP_SPEED, LEVEL_SPEED_MULTIPLIER } from '../config/settings.js';
+import { GRID_ROWS, GRID_COLS, TETRAMINOS, INITIAL_DROP_SPEED, FAST_DROP_SPEED, LEVEL_SPEED_MULTIPLIER } from '../config/settings.js';
 
 export default class GameState {
   constructor() {
@@ -11,6 +11,7 @@ export default class GameState {
     this.nextShapes = [];
     this.dropSpeed = INITIAL_DROP_SPEED;
     this.baseDropSpeed = INITIAL_DROP_SPEED;
+    this.softDropActive = false;
     
     // Initialize next shapes queue (3 shapes)
     for (let i = 0; i < 3; i++) {
@@ -25,6 +26,7 @@ export default class GameState {
     this.nextShapes = [];
     this.dropSpeed = INITIAL_DROP_SPEED;
     this.baseDropSpeed = INITIAL_DROP_SPEED;
+    this.softDropActive = false;
     for (let i = 0; i < 3; i++) {
         this.nextShapes.push(this.getRandomShapeType());
     }
@@ -44,6 +46,22 @@ export default class GameState {
     } else {
       this.currentTetramino.moveDown();
     }
+  }
+
+  startSoftDrop() {
+    if (this.softDropActive) return false;
+
+    this.dropSpeed = FAST_DROP_SPEED;
+    this.softDropActive = true;
+    return true;
+  }
+
+  stopSoftDrop() {
+    if (!this.softDropActive) return false;
+
+    this.dropSpeed = this.baseDropSpeed;
+    this.softDropActive = false;
+    return true;
   }
 
   // Attempt to spawn a new shape; returns false if failure (Game Over)

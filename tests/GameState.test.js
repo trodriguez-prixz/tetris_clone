@@ -1,7 +1,7 @@
 import GameState from '../src/logic/GameState.js';
 import EventBus, { EVENTS } from '../src/events/EventBus.js';
 import Block from '../src/classes/Block.js';
-import { GRID_COLS, GRID_ROWS, INITIAL_DROP_SPEED, LEVEL_SPEED_MULTIPLIER } from '../src/config/settings.js';
+import { GRID_COLS, GRID_ROWS, INITIAL_DROP_SPEED, FAST_DROP_SPEED, LEVEL_SPEED_MULTIPLIER } from '../src/config/settings.js';
 
 const createFilledRow = (row, color = 0xffffff) => (
   Array.from({ length: GRID_COLS }, (_, col) => new Block(col, row, color))
@@ -28,6 +28,7 @@ describe('GameState', () => {
     expect(gameState.currentTetramino).toBeNull();
     expect(gameState.dropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED);
+    expect(gameState.softDropActive).toBe(false);
     expect(gameState.score.getAllStats()).toEqual(expect.objectContaining({ score: 0, level: 1, lines: 0, pieces: 0 }));
     expect(gameState.nextShapes).toEqual(['T', 'T', 'T']);
   });
@@ -38,6 +39,7 @@ describe('GameState', () => {
     gameState.score.incrementPiecesPlaced();
     gameState.dropSpeed = 250;
     gameState.baseDropSpeed = 250;
+    gameState.softDropActive = true;
     gameState.currentTetramino = { type: 'O' };
     gameState.nextShapes = ['I'];
 
@@ -48,7 +50,23 @@ describe('GameState', () => {
     expect(gameState.score.getAllStats()).toEqual(expect.objectContaining({ score: 0, level: 1, lines: 0, pieces: 0 }));
     expect(gameState.dropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED);
+    expect(gameState.softDropActive).toBe(false);
     expect(gameState.nextShapes).toEqual(['T', 'T', 'T']);
+  });
+
+  test('startSoftDrop and stopSoftDrop own soft-drop speed selection', () => {
+    gameState.baseDropSpeed = 700;
+    gameState.dropSpeed = 700;
+
+    expect(gameState.startSoftDrop()).toBe(true);
+    expect(gameState.dropSpeed).toBe(FAST_DROP_SPEED);
+    expect(gameState.softDropActive).toBe(true);
+    expect(gameState.startSoftDrop()).toBe(false);
+
+    expect(gameState.stopSoftDrop()).toBe(true);
+    expect(gameState.dropSpeed).toBe(700);
+    expect(gameState.softDropActive).toBe(false);
+    expect(gameState.stopSoftDrop()).toBe(false);
   });
 
   test('spawnTetramino consumes the next shape, replenishes the queue, and emits a preview update', () => {

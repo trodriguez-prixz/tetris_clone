@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, FAST_DROP_SPEED } from '../config/settings.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../config/settings.js';
 import { RetroMusic } from '../utils/retroMusic.js';
 import { SoundEffects } from '../utils/soundEffects.js';
 import { StorageManager } from '../utils/storage.js';
@@ -142,15 +142,13 @@ export default class GameScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
         this.gameState.updateTick();
         this.boardRenderer.update();
-        if (!this.isFastDrop) {
-            this.gameState.dropSpeed = FAST_DROP_SPEED;
+        if (this.gameState.startSoftDrop()) {
             this.startVerticalTimer();
-            this.isFastDrop = true;
         }
     } else if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
-        this.gameState.dropSpeed = this.gameState.baseDropSpeed;
-        this.startVerticalTimer();
-        this.isFastDrop = false;
+        if (this.gameState.stopSoftDrop()) {
+            this.startVerticalTimer();
+        }
     }
   }
 

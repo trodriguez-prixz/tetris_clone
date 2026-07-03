@@ -14,7 +14,7 @@ This plan is the single source of truth for improving the project's architecture
 | Phase | Status | Goal |
 |-------|--------|------|
 | 0. Refactor safety baseline | `[x]` | Protect current behavior before architecture changes. |
-| 1. Game domain extraction | `[ ]` | Keep Tetris rules testable without Phaser. |
+| 1. Game domain extraction | `[~]` | Keep Tetris rules testable without Phaser. |
 | 2. Scene orchestration cleanup | `[ ]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[ ]` | Separate visual layout from game rules. |
 | 4. Event communication cleanup | `[ ]` | Make module communication explicit and consistent. |
@@ -47,7 +47,8 @@ This plan is the single source of truth for improving the project's architecture
 **Tasks**
 
 - [x] Identify rule logic currently coupled to `GameScene`.
-- [ ] Move board state, collision, rotation, line clearing, scoring, and falling behavior into `src/logic/` or existing domain classes.
+- [~] Move board state, collision, rotation, line clearing, scoring, and falling behavior into `src/logic/` or existing domain classes.
+  - 2026-07-03: Extracted soft-drop mode and speed selection into `GameState`; `GameScene` still owns Phaser timer restart and input/rendering reactions. Remaining slices include fall tick result wrapping, start/restart transitions, and game-over stats snapshot.
 - [ ] Keep Phaser-specific objects out of core rule modules.
 - [ ] Ensure `GameState` and `GameStateMachine` expose clear state transitions.
 - [ ] Update tests alongside each extraction.
@@ -177,4 +178,5 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 1 task 2 started with a safe soft-drop extraction into `GameState`; task remains partially complete. |
 | 2026-07-02 | Initial plan created from the latest architecture improvement plan. |

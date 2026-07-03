@@ -228,7 +228,7 @@ describe('GameScene orchestration', () => {
     expect(soundEffects.playRotate).toHaveBeenCalled();
     expect(boardRenderer.update).toHaveBeenCalledTimes(3);
     expect(scene.gameState.dropSpeed).toBe(FAST_DROP_SPEED);
-    expect(scene.isFastDrop).toBe(true);
+    expect(scene.gameState.softDropActive).toBe(true);
     expect(scene.time.addEvent).toHaveBeenCalledWith(expect.objectContaining({ delay: FAST_DROP_SPEED }));
   });
 
