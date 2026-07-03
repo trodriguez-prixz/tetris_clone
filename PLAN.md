@@ -32,7 +32,7 @@ This plan is the single source of truth for improving the project's architecture
 - [x] Add or strengthen regression tests for `src/logic/GameStateMachine.js`.
 - [x] Cover core behavior in `src/classes/Tetramino.js` and `src/classes/Score.js`.
 - [x] Add focused coverage for important `src/scenes/GameScene.js` behavior.
-- [ ] Update `tests/__mocks__/phaser.js` or `tests/setup.js` if new test seams need browser or Phaser APIs.
+- [x] Update `tests/__mocks__/phaser.js` or `tests/setup.js` if new test seams need browser or Phaser APIs.
 
 **Exit criteria**
 
