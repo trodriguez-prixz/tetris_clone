@@ -20,7 +20,7 @@ This plan is the single source of truth for improving the project's architecture
 | 4. Event communication cleanup | `[x]` | Make module communication explicit and consistent. |
 | 5. Quality tooling | `[x]` | Add minimal automated checks for safer maintenance. |
 | 6. Platform and packaging verification | `[x]` | Preserve web, Express, and Electron delivery paths. |
-| 7. Architecture documentation | `[ ]` | Record the final structure and update agent guidance if needed. |
+| 7. Architecture documentation | `[~]` | Record the final structure and update agent guidance if needed. |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -178,9 +178,19 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Tasks**
 
-- [ ] Document the final ownership of `src/logic/`, `src/classes/`, `src/scenes/`, `src/scenes/components/`, and `src/events/`.
+- [x] Document the final ownership of `src/logic/`, `src/classes/`, `src/scenes/`, `src/scenes/components/`, and `src/events/`.
 - [ ] Update `AGENTS.md` if new repo-specific rules or gotchas were introduced.
 - [ ] Keep documentation compact and focused on facts future agents would likely miss.
+
+**Final ownership**
+
+| Area | Owns | Does not own |
+|------|------|--------------|
+| `src/logic/` | Pure game flow and rule coordination: board state, spawning, movement/collision decisions, soft-drop speed state, line clearing, scoring triggers, game-over stats snapshots, state-machine transitions, and plain domain event descriptors. | Phaser scene objects, rendering, keyboard/input APIs, audio, timers, storage, or direct EventBus emission. |
+| `src/classes/` | Small domain models used by logic: `Block` logical coordinates/color, `Tetramino` shape movement/rotation/collision helpers, and `Score` scoring/stat/timer calculations. | Scene orchestration, persistence, rendering, platform APIs, or global event wiring. |
+| `src/scenes/` | Phaser scene composition and runtime orchestration. `GameScene` wires game state, state machine, components, storage, audio, input, timers, rendering updates, and domain-event emission to the infrastructure EventBus. | Core gameplay rule ownership that belongs in `src/logic/` or domain classes. |
+| `src/scenes/components/` | Focused scene collaborators for Phaser-facing concerns: board rendering/effects, sidebar UI, preview, score display, audio indicators/control, overlays, input handling, and drop-loop timer control. | Pure Tetris rules, durable game state transitions, storage policy, or event-name definitions. |
+| `src/events/` | Shared event contract and Phaser-backed infrastructure bus: `GameEvents.js` defines event names; `EventBus.js` exposes the singleton emitter for scene/component communication. | Business decisions, state mutation, payload derivation beyond the named event contract, or duplicate ad hoc event names. |
 
 **Exit criteria**
 
