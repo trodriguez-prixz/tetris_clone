@@ -25,6 +25,8 @@ export const SIDEBAR_Y = PADDING;
 export const PREVIEW_AREA_HEIGHT = 200;
 export const SCORE_AREA_HEIGHT = 280;
 export const PREVIEW_CELL_SIZE = CELL_SIZE / 2;
+export const RENDERED_BLOCK_INSET = 2;
+export const PANEL_BORDER_WIDTH = 2;
 
 // Shared colors
 export const COLORS = {

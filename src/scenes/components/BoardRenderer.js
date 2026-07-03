@@ -1,5 +1,29 @@
-import { CELL_SIZE, COLORS, GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, GRID_COLS, GRID_ROWS } from '../../config/settings.js';
+import { CELL_SIZE, COLORS, GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, GRID_COLS, GRID_ROWS, PANEL_BORDER_WIDTH, RENDERED_BLOCK_INSET } from '../../config/settings.js';
 import EventBus, { EVENTS } from '../../events/EventBus.js';
+
+const PANEL_BORDER_ALPHA = 1;
+const CENTER_ORIGIN = 0.5;
+const GRID_LINE_WIDTH = 1;
+const GRID_LINE_ALPHA = 0.3;
+const CLEARED_BLOCK_SHRINK_SCALE = 0.5;
+const CLEARED_BLOCK_FADE_ALPHA = 0;
+const CLEARED_BLOCK_FADE_DURATION = 150;
+const PARTICLE_JITTER_ORIGIN = 0.5;
+const PARTICLE_SIZE_RATIO = 0.3;
+const PARTICLE_DISTANCE_TIME_SCALE = 0.5;
+const PARTICLE_ALPHA_START = 1;
+const PARTICLE_ALPHA_END = 0;
+const PARTICLE_BASE_DURATION = 500;
+const PARTICLE_RANDOM_DURATION = 300;
+const FULL_CIRCLE_RADIANS = Math.PI * 2;
+const PARTICLE_EASE = 'Power2';
+
+const LINE_CLEAR_EFFECTS = {
+  1: { particleCount: 20, colors: [0x3498db, 0x2980b9], speed: { min: 50, max: 150 }, scale: { start: 0.5, end: 0 } },
+  2: { particleCount: 30, colors: [0x2ecc71, 0x27ae60], speed: { min: 80, max: 200 }, scale: { start: 0.6, end: 0 } },
+  3: { particleCount: 40, colors: [0xf39c12, 0xe67e22], speed: { min: 100, max: 250 }, scale: { start: 0.7, end: 0 } },
+  4: { particleCount: 60, colors: [0xe74c3c, 0xc0392b, 0xf1c40f, 0xf39c12], speed: { min: 150, max: 300 }, scale: { start: 0.8, end: 0 } }
+};
 
 export default class BoardRenderer {
   constructor(scene, gameState) {
@@ -30,17 +54,14 @@ export default class BoardRenderer {
   drawArea(centerX, centerY, width, height, fillColor, strokeColor) {
     this.scene.add.rectangle(centerX, centerY, width, height, fillColor);
     const graphics = this.scene.add.graphics();
-    graphics.lineStyle(2, strokeColor, 1);
+    graphics.lineStyle(PANEL_BORDER_WIDTH, strokeColor, PANEL_BORDER_ALPHA);
     graphics.strokeRect(centerX - width / 2, centerY - height / 2, width, height);
   }
 
   drawGridLines() {
     const graphics = this.scene.add.graphics();
     const gridLineColor = COLORS.GRID_LINE;
-    const gridLineAlpha = 0.3;
-    const gridLineWidth = 1;
-
-    graphics.lineStyle(gridLineWidth, gridLineColor, gridLineAlpha);
+    graphics.lineStyle(GRID_LINE_WIDTH, gridLineColor, GRID_LINE_ALPHA);
 
     for (let col = 0; col <= GRID_COLS; col++) {
       const x = GAME_AREA_X + (col * CELL_SIZE);
@@ -59,8 +80,8 @@ export default class BoardRenderer {
   createVisualBlock(logicalX, logicalY, color) {
     const pixelX = GAME_AREA_X + (logicalX * CELL_SIZE) + (CELL_SIZE / 2);
     const pixelY = GAME_AREA_Y + (logicalY * CELL_SIZE) + (CELL_SIZE / 2);
-    const rect = this.scene.add.rectangle(pixelX, pixelY, CELL_SIZE - 2, CELL_SIZE - 2, color);
-    rect.setOrigin(0.5, 0.5);
+    const rect = this.scene.add.rectangle(pixelX, pixelY, CELL_SIZE - RENDERED_BLOCK_INSET, CELL_SIZE - RENDERED_BLOCK_INSET, color);
+    rect.setOrigin(CENTER_ORIGIN, CENTER_ORIGIN);
     return rect;
   }
   
@@ -105,12 +126,12 @@ export default class BoardRenderer {
              
              // Animated destroy
              this.scene.tweens.add({
-                 targets: vb,
-                 scaleX: 0.5,
-                 scaleY: 0.5,
-                 alpha: 0,
-                 duration: 150,
-                 onComplete: () => vb.destroy()
+                  targets: vb,
+                  scaleX: CLEARED_BLOCK_SHRINK_SCALE,
+                  scaleY: CLEARED_BLOCK_SHRINK_SCALE,
+                  alpha: CLEARED_BLOCK_FADE_ALPHA,
+                  duration: CLEARED_BLOCK_FADE_DURATION,
+                  onComplete: () => vb.destroy()
              });
              this.visualBlocks.delete(lb);
          }
@@ -129,17 +150,7 @@ export default class BoardRenderer {
 
   createLineClearParticles(row, linesCleared) {
     const rowY = GAME_AREA_Y + (row * CELL_SIZE) + (CELL_SIZE / 2);
-    let particleCount, colors, speed, scale;
-    
-    if (linesCleared === 1) {
-      particleCount = 20; colors = [0x3498db, 0x2980b9]; speed = { min: 50, max: 150 }; scale = { start: 0.5, end: 0 };
-    } else if (linesCleared === 2) {
-      particleCount = 30; colors = [0x2ecc71, 0x27ae60]; speed = { min: 80, max: 200 }; scale = { start: 0.6, end: 0 };
-    } else if (linesCleared === 3) {
-      particleCount = 40; colors = [0xf39c12, 0xe67e22]; speed = { min: 100, max: 250 }; scale = { start: 0.7, end: 0 };
-    } else {
-      particleCount = 60; colors = [0xe74c3c, 0xc0392b, 0xf1c40f, 0xf39c12]; speed = { min: 150, max: 300 }; scale = { start: 0.8, end: 0 };
-    }
+    const { particleCount, colors, speed, scale } = LINE_CLEAR_EFFECTS[linesCleared] ?? LINE_CLEAR_EFFECTS[4];
     
     for (let col = 0; col < GRID_COLS; col++) {
       const colX = GAME_AREA_X + (col * CELL_SIZE) + (CELL_SIZE / 2);
@@ -147,27 +158,27 @@ export default class BoardRenderer {
       
       for (let i = 0; i < particlesPerBlock; i++) {
         const color = colors[Math.floor(Math.random() * colors.length)];
-        const angle = (Math.random() * Math.PI * 2);
+        const angle = Math.random() * FULL_CIRCLE_RADIANS;
         const velocity = speed.min + Math.random() * (speed.max - speed.min);
         const vx = Math.cos(angle) * velocity;
         const vy = Math.sin(angle) * velocity;
         
         const particle = this.scene.add.rectangle(
-          colX + (Math.random() - 0.5) * CELL_SIZE,
-          rowY + (Math.random() - 0.5) * CELL_SIZE,
-          CELL_SIZE * 0.3,
-          CELL_SIZE * 0.3,
+          colX + (Math.random() - PARTICLE_JITTER_ORIGIN) * CELL_SIZE,
+          rowY + (Math.random() - PARTICLE_JITTER_ORIGIN) * CELL_SIZE,
+          CELL_SIZE * PARTICLE_SIZE_RATIO,
+          CELL_SIZE * PARTICLE_SIZE_RATIO,
           color
         );
         
         this.scene.tweens.add({
           targets: particle,
-          x: particle.x + vx * 0.5,
-          y: particle.y + vy * 0.5,
-          alpha: { from: 1, to: 0 },
+          x: particle.x + vx * PARTICLE_DISTANCE_TIME_SCALE,
+          y: particle.y + vy * PARTICLE_DISTANCE_TIME_SCALE,
+          alpha: { from: PARTICLE_ALPHA_START, to: PARTICLE_ALPHA_END },
           scale: { from: scale.start, to: scale.end },
-          duration: 500 + Math.random() * 300,
-          ease: 'Power2',
+          duration: PARTICLE_BASE_DURATION + Math.random() * PARTICLE_RANDOM_DURATION,
+          ease: PARTICLE_EASE,
           onComplete: () => particle.destroy()
         });
       }
