@@ -15,7 +15,7 @@ This plan is the single source of truth for improving the project's architecture
 |-------|--------|------|
 | 0. Refactor safety baseline | `[x]` | Protect current behavior before architecture changes. |
 | 1. Game domain extraction | `[x]` | Keep Tetris rules testable without Phaser. |
-| 2. Scene orchestration cleanup | `[ ]` | Make `GameScene` coordinate instead of owning every concern. |
+| 2. Scene orchestration cleanup | `[~]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[ ]` | Separate visual layout from game rules. |
 | 4. Event communication cleanup | `[ ]` | Make module communication explicit and consistent. |
 | 5. Quality tooling | `[ ]` | Add minimal automated checks for safer maintenance. |
@@ -82,7 +82,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Tasks**
 
-- [ ] Split input handling into a dedicated helper or scene component.
+- [x] Split input handling into a dedicated helper or scene component.
 - [ ] Split timer/drop-loop coordination into a dedicated helper or scene component.
 - [ ] Split audio coordination from gameplay decisions.
 - [ ] Keep scene lifecycle methods short and intention-revealing.

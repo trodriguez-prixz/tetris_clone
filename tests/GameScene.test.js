@@ -188,6 +188,22 @@ describe('GameScene orchestration', () => {
     expect(retroMusic.play).toHaveBeenCalled();
   });
 
+  test('input controller routes audio toggle keys through scene actions', () => {
+    scene.create();
+    const muteKey = scene.input.keyboard.addKey.mock.results[0].value;
+    const soundEffectsKey = scene.input.keyboard.addKey.mock.results[1].value;
+    const muteHandler = muteKey.on.mock.calls.find(([event]) => event === 'down')[1];
+    const soundEffectsHandler = soundEffectsKey.on.mock.calls.find(([event]) => event === 'down')[1];
+
+    muteHandler();
+    soundEffectsHandler();
+
+    expect(retroMusic.stop).toHaveBeenCalled();
+    expect(soundEffects.toggle).toHaveBeenCalledTimes(1);
+    expect(uiRenderer.updateAudioIndicators).toHaveBeenCalledWith(true, true);
+    expect(uiRenderer.updateAudioIndicators).toHaveBeenCalledWith(true, false);
+  });
+
   test('update refreshes elapsed time and pauses active gameplay after the start guard expires', () => {
     scene.create();
     scene.stateMachine.start();
@@ -197,7 +213,7 @@ describe('GameScene orchestration', () => {
     scene.time.now = 1000;
     jest.spyOn(scene.gameState.score, 'updateGameTime');
     jest.spyOn(scene.gameState.score, 'getGameTime').mockReturnValue(42);
-    Phaser.Input.Keyboard.JustDown.mockImplementation((key) => key === scene.pauseKey);
+    Phaser.Input.Keyboard.JustDown.mockImplementation((key) => key === scene.inputController.pauseKey);
 
     scene.update();
 
@@ -218,7 +234,7 @@ describe('GameScene orchestration', () => {
     jest.spyOn(scene.gameState, 'rotate').mockReturnValue(true);
     jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({ moved: true, locked: false, spawned: false, gameOver: false });
     Phaser.Input.Keyboard.JustDown.mockImplementation((key) => (
-      key === scene.cursors.left || key === scene.cursors.up || key === scene.cursors.down
+      key === scene.inputController.cursors.left || key === scene.inputController.cursors.up || key === scene.inputController.cursors.down
     ));
 
     scene.update();

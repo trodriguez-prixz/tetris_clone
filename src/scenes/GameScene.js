@@ -9,6 +9,7 @@ import GameState from '../logic/GameState.js';
 import GameStateMachine, { GAME_STATES } from '../logic/GameStateMachine.js';
 
 import BoardRenderer from './components/BoardRenderer.js';
+import InputController from './components/InputController.js';
 import UIRenderer from './components/UIRenderer.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -62,19 +63,17 @@ export default class GameScene extends Phaser.Scene {
   }
 
   setupInputs() {
-    this.cursors = this.input.keyboard.createCursorKeys();
-    
-    this.muteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
-    this.muteKey.on('down', () => this.toggleMusic());
-    
-    this.soundEffectsKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    this.soundEffectsKey.on('down', () => this.toggleSoundEffects());
-    
-    this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
-    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
-    this.horizontalMoveDelay = 200;
-    this.rotateDelay = 150;
+    this.inputController = new InputController(this, {
+      toggleMusic: () => this.toggleMusic(),
+      toggleSoundEffects: () => this.toggleSoundEffects(),
+      pause: () => this.pauseGame(),
+      resume: () => this.resumeGame(),
+      move: (direction) => this.tryMove(direction),
+      rotate: () => this.tryRotate(),
+      startSoftDrop: () => this.startSoftDrop(),
+      stopSoftDrop: () => this.stopSoftDrop()
+    });
+    this.inputController.setup();
   }
   
   toggleMusic() {
@@ -108,69 +107,55 @@ export default class GameScene extends Phaser.Scene {
             this.timeUpdateThrottle = now;
         }
 
-        if (Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-            if (!this.justStarted) {
-                this.stateMachine.pause();
-                this.emitDomainEvents(this.stateMachine.consumeEvents());
-            }
-        }
-        
-        this.handleGameplayInputs();
-    } else if (this.stateMachine.isState(GAME_STATES.PAUSED)) {
-        if (Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-            this.stateMachine.resume();
-            this.emitDomainEvents(this.stateMachine.consumeEvents());
-        }
     }
+
+    this.inputController.update({
+        isPlaying: this.stateMachine.isState(GAME_STATES.PLAYING),
+        isPaused: this.stateMachine.isState(GAME_STATES.PAUSED),
+        justStarted: this.justStarted
+    });
     
     if (this.justStarted && now > (this.startTime || 0) + 200) {
         this.justStarted = false;
     }
   }
 
-  handleGameplayInputs() {
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.left)) this.tryMove(-1);
-    else if (this.cursors.left.isDown && this.canMoveHorizontally()) this.tryMove(-1);
-    
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.right)) this.tryMove(1);
-    else if (this.cursors.right.isDown && this.canMoveHorizontally()) this.tryMove(1);
-    
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && this.canRotate()) {
-        if (this.gameState.rotate()) {
-            if (this.soundEffects) this.soundEffects.playRotate();
-            this.boardRenderer.update();
-        }
-        this.lastRotateTime = this.time.now;
-    }
-    
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
-        this.handleFallTick();
-        if (this.gameState.startSoftDrop()) {
-            this.startVerticalTimer();
-        }
-    } else if (Phaser.Input.Keyboard.JustUp(this.cursors.down)) {
-        if (this.gameState.stopSoftDrop()) {
-            this.startVerticalTimer();
-        }
-    }
+  pauseGame() {
+      this.stateMachine.pause();
+      this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
 
-  canMoveHorizontally() {
-      if (!this.lastMoveTime) return true;
-      return this.time.now - this.lastMoveTime > this.horizontalMoveDelay;
-  }
-  
-  canRotate() {
-      if (!this.lastRotateTime) return true;
-      return this.time.now - this.lastRotateTime > this.rotateDelay;
+  resumeGame() {
+      this.stateMachine.resume();
+      this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
 
   tryMove(dir) {
       const moved = dir === -1 ? this.gameState.moveLeft() : this.gameState.moveRight();
       if (moved) {
           if (this.soundEffects) this.soundEffects.playMove();
-          this.lastMoveTime = this.time.now;
           this.boardRenderer.update();
+      }
+      return moved;
+  }
+
+  tryRotate() {
+      if (this.gameState.rotate()) {
+          if (this.soundEffects) this.soundEffects.playRotate();
+          this.boardRenderer.update();
+      }
+  }
+
+  startSoftDrop() {
+      this.handleFallTick();
+      if (this.gameState.startSoftDrop()) {
+          this.startVerticalTimer();
+      }
+  }
+
+  stopSoftDrop() {
+      if (this.gameState.stopSoftDrop()) {
+          this.startVerticalTimer();
       }
   }
 
@@ -222,19 +207,13 @@ export default class GameScene extends Phaser.Scene {
     
     this.startUIElements = [overlay, titleText, startText];
     
-    const startTrigger = (evt) => {
-        if (evt && evt.keyCode === Phaser.Input.Keyboard.KeyCodes.P) return;
-        this.input.keyboard.off('keydown', startTrigger);
-        this.input.off('pointerdown', startTrigger);
-        
+    this.inputController.bindStartInput(() => {
         this.startUIElements.forEach(el => el.destroy());
         this.justStarted = true;
         this.startTime = this.time.now;
         this.stateMachine.start();
         this.emitDomainEvents(this.stateMachine.consumeEvents());
-    };
-    this.input.keyboard.on('keydown', startTrigger);
-    this.input.on('pointerdown', startTrigger);
+    });
   }
 
   showPauseScreen() {
@@ -272,8 +251,7 @@ export default class GameScene extends Phaser.Scene {
     const restartText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60, 'Press R to Restart', { fontSize: '20px', fill: '#95a5a6' }).setOrigin(0.5);
     this.gameOverUIElements = [overlay, text, restartText];
     
-    this.restartKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-    this.restartKey.on('down', () => this.restartGame());
+    this.restartKey = this.inputController.bindRestartInput(() => this.restartGame());
   }
 
   restartGame() {
@@ -281,10 +259,8 @@ export default class GameScene extends Phaser.Scene {
       this.gameOverUIElements.forEach(el => el.destroy());
       this.gameOverUIElements = null;
     }
-    if (this.restartKey) {
-      this.restartKey.removeAllListeners();
-      this.restartKey = null;
-    }
+    this.inputController.clearRestartInput();
+    this.restartKey = null;
     
     this.gameState.reset();
     this.uiRenderer.onScoreUpdated(this.gameState.score.getAllStats());
