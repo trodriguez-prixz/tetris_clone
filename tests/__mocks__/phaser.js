@@ -85,5 +85,53 @@ export default {
       JustDown: jest.fn(() => false),
       JustUp: jest.fn(() => false)
     }
+  },
+  Events: {
+    EventEmitter: class EventEmitter {
+      constructor() {
+        this.listeners = new Map();
+      }
+
+      on(event, callback) {
+        const callbacks = this.listeners.get(event) || [];
+        callbacks.push({ callback, once: false });
+        this.listeners.set(event, callbacks);
+        return this;
+      }
+
+      once(event, callback) {
+        const callbacks = this.listeners.get(event) || [];
+        callbacks.push({ callback, once: true });
+        this.listeners.set(event, callbacks);
+        return this;
+      }
+
+      off(event, callback) {
+        if (!this.listeners.has(event)) return this;
+        if (!callback) {
+          this.listeners.delete(event);
+          return this;
+        }
+        const callbacks = this.listeners.get(event).filter(listener => listener.callback !== callback);
+        this.listeners.set(event, callbacks);
+        return this;
+      }
+
+      emit(event, ...args) {
+        const callbacks = this.listeners.get(event) || [];
+        callbacks.forEach(listener => listener.callback(...args));
+        this.listeners.set(event, callbacks.filter(listener => !listener.once));
+        return this;
+      }
+
+      removeAllListeners(event) {
+        if (event) {
+          this.listeners.delete(event);
+        } else {
+          this.listeners.clear();
+        }
+        return this;
+      }
+    }
   }
 };
