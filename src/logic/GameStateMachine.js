@@ -29,6 +29,23 @@ export default class GameStateMachine {
     return false;
   }
 
+  restart() {
+    if (this.currentState === GAME_STATES.GAME_OVER) {
+      this.currentState = GAME_STATES.PLAYING;
+      EventBus.emit(EVENTS.GAME_START);
+      return true;
+    }
+    return false;
+  }
+
+  markGameOver() {
+    if (this.currentState === GAME_STATES.PLAYING) {
+      this.currentState = GAME_STATES.GAME_OVER;
+      return true;
+    }
+    return false;
+  }
+
   pause() {
     if (this.currentState === GAME_STATES.PLAYING) {
       this.currentState = GAME_STATES.PAUSED;

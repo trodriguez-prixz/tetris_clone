@@ -179,7 +179,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   onGameStart() {
-      this.gameState.score.startTimer();
+      const startResult = this.gameState.startGame();
       this.uiRenderer.renderPreview();
       
       if (this.retroMusic && !this.musicMuted && !this.musicStarted) {
@@ -187,9 +187,10 @@ export default class GameScene extends Phaser.Scene {
           this.musicStarted = true;
       }
       
-      this.gameState.spawnTetramino();
-      this.boardRenderer.update();
-      this.startVerticalTimer();
+      if (startResult.spawned) {
+          this.boardRenderer.update();
+          this.startVerticalTimer();
+      }
   }
 
   startVerticalTimer() {
@@ -245,6 +246,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   onGameOver() {
+    this.stateMachine.markGameOver();
+
     if (this.verticalTimer) this.verticalTimer.remove();
     this.gameState.score.updateGameTime();
     
@@ -283,7 +286,6 @@ export default class GameScene extends Phaser.Scene {
       this.musicStarted = true;
     }
     
-    this.stateMachine.currentState = GAME_STATES.START_SCREEN;
-    this.stateMachine.start();
+    this.stateMachine.restart();
   }
 }

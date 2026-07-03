@@ -83,6 +83,33 @@ describe('GameState', () => {
     expect(previewUpdates).toHaveBeenCalledTimes(1);
   });
 
+  test('startGame starts score timing, spawns the initial piece, and returns a start result', () => {
+    const previewUpdates = jest.fn();
+    EventBus.on(EVENTS.NEXT_SHAPE_UPDATED, previewUpdates);
+    jest.spyOn(gameState.score, 'startTimer');
+    gameState.nextShapes = ['O', 'I', 'T'];
+
+    const result = gameState.startGame();
+
+    expect(result).toEqual({ started: true, spawned: true, gameOver: false });
+    expect(gameState.score.startTimer).toHaveBeenCalledTimes(1);
+    expect(gameState.currentTetramino.type).toBe('O');
+    expect(gameState.nextShapes).toEqual(['I', 'T', 'T']);
+    expect(previewUpdates).toHaveBeenCalledTimes(1);
+  });
+
+  test('startGame returns a game-over result when the initial piece cannot spawn', () => {
+    jest.spyOn(gameState.score, 'startTimer');
+    gameState.nextShapes = ['O', 'I', 'T'];
+    gameState.fieldData[1][4] = new Block(4, 1, 0xffffff);
+
+    const result = gameState.startGame();
+
+    expect(result).toEqual({ started: false, spawned: false, gameOver: true });
+    expect(gameState.score.startTimer).toHaveBeenCalledTimes(1);
+    expect(gameState.currentTetramino).toBeNull();
+  });
+
   test('spawnTetramino returns false and preserves the current state when the spawn area is blocked', () => {
     const previewUpdates = jest.fn();
     EventBus.on(EVENTS.NEXT_SHAPE_UPDATED, previewUpdates);

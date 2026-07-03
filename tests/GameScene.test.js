@@ -246,6 +246,7 @@ describe('GameScene orchestration', () => {
 
   test('game over stops the drop loop, saves score data, shows restart UI, and stops music', () => {
     scene.create();
+    scene.stateMachine.currentState = GAME_STATES.PLAYING;
     scene.verticalTimer = { remove: jest.fn() };
     jest.spyOn(scene.gameState.score, 'updateGameTime');
     jest.spyOn(scene.gameState.score, 'getAllStats').mockReturnValue({
@@ -264,9 +265,33 @@ describe('GameScene orchestration', () => {
     expect(scene.gameState.score.updateGameTime).toHaveBeenCalled();
     expect(StorageManager.saveHighScore).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
     expect(StorageManager.updateStatistics).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
+    expect(scene.stateMachine.getState()).toBe(GAME_STATES.GAME_OVER);
     expect(scene.gameOverUIElements).toHaveLength(3);
     expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.R);
     expect(soundEffects.playGameOver).toHaveBeenCalled();
     expect(retroMusic.stop).toHaveBeenCalled();
+  });
+
+  test('restart clears game-over UI, resets domain state, updates UI, and uses the restart transition', () => {
+    scene.create();
+    scene.stateMachine.currentState = GAME_STATES.PLAYING;
+    EventBus.emit(EVENTS.GAME_OVER);
+    const gameOverElements = [...scene.gameOverUIElements];
+    const restartKey = scene.restartKey;
+    const restartHandler = restartKey.on.mock.calls.find(([event]) => event === 'down')[1];
+    jest.spyOn(scene.gameState, 'reset');
+    jest.spyOn(scene.stateMachine, 'restart');
+
+    restartHandler();
+
+    gameOverElements.forEach((element) => expect(element.destroy).toHaveBeenCalled());
+    expect(restartKey.removeAllListeners).toHaveBeenCalled();
+    expect(scene.gameState.reset).toHaveBeenCalledTimes(1);
+    expect(uiRenderer.onScoreUpdated).toHaveBeenCalledWith(expect.objectContaining({ score: 0, level: 1 }));
+    expect(uiRenderer.onLevelUp).toHaveBeenCalledWith(1);
+    expect(scene.stateMachine.restart).toHaveBeenCalledTimes(1);
+    expect(scene.stateMachine.getState()).toBe(GAME_STATES.PLAYING);
+    expect(scene.gameState.currentTetramino).toBeDefined();
+    expect(scene.time.addEvent).toHaveBeenCalledWith(expect.objectContaining({ callback: expect.any(Function), loop: true }));
   });
 });

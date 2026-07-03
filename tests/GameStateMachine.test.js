@@ -67,10 +67,20 @@ describe('GameStateMachine', () => {
     const machine = createMachineInState(GAME_STATES.GAME_OVER);
     const events = trackLifecycleEvents();
 
-    expect(machine.start()).toBe(true);
+    expect(machine.restart()).toBe(true);
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
     expect(events).toEqual([EVENTS.GAME_START]);
+  });
+
+  test('marks game over without emitting a duplicate game over event', () => {
+    const machine = createMachineInState(GAME_STATES.PLAYING);
+    const events = trackLifecycleEvents();
+
+    expect(machine.markGameOver()).toBe(true);
+
+    expect(machine.getState()).toBe(GAME_STATES.GAME_OVER);
+    expect(events).toEqual([]);
   });
 
   test('pauses only while playing and emits the pause event', () => {
@@ -106,9 +116,9 @@ describe('GameStateMachine', () => {
   test('blocks invalid transitions without changing state or emitting lifecycle events', () => {
     const invalidTransitions = [
       [GAME_STATES.START_SCREEN, ['pause', 'resume', 'gameOver']],
-      [GAME_STATES.PLAYING, ['start', 'resume']],
-      [GAME_STATES.PAUSED, ['start', 'pause', 'gameOver']],
-      [GAME_STATES.GAME_OVER, ['pause', 'resume', 'gameOver']]
+      [GAME_STATES.PLAYING, ['start', 'restart', 'resume']],
+      [GAME_STATES.PAUSED, ['start', 'restart', 'pause', 'gameOver', 'markGameOver']],
+      [GAME_STATES.GAME_OVER, ['pause', 'resume', 'gameOver', 'markGameOver']]
     ];
 
     invalidTransitions.forEach(([state, actions]) => {

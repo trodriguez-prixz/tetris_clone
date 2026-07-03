@@ -32,6 +32,17 @@ export default class GameState {
     }
   }
 
+  startGame() {
+    this.score.startTimer();
+    const spawned = this.spawnTetramino();
+
+    return {
+      started: spawned,
+      spawned,
+      gameOver: !spawned
+    };
+  }
+
   getRandomShapeType() {
     const types = Object.keys(TETRAMINOS);
     return types[Math.floor(Math.random() * types.length)];
