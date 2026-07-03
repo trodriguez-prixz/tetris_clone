@@ -34,8 +34,7 @@ export default class BoardRenderer {
     this.activeBlocks = [];
     
     this.drawBackground();
-    
-    EventBus.on(EVENTS.TETRAMINO_LOCKED, this.handleTetraminoLocked, this);
+
     EventBus.on(EVENTS.LINES_CLEARED, this.handleLinesCleared, this);
   }
   
@@ -135,9 +134,6 @@ export default class BoardRenderer {
      }
   }
 
-  handleTetraminoLocked({ blocks } = {}) {
-  }
-  
   handleLinesCleared({ rows } = {}) {
       if (!rows) return;
       rows.forEach(row => {
@@ -183,7 +179,6 @@ export default class BoardRenderer {
   }
 
   destroy() {
-      EventBus.off(EVENTS.TETRAMINO_LOCKED, this.handleTetraminoLocked, this);
       EventBus.off(EVENTS.LINES_CLEARED, this.handleLinesCleared, this);
       this.visualBlocks.forEach(vb => vb.destroy());
       this.activeBlocks.forEach(b => b.destroy());

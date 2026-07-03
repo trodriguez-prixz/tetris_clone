@@ -67,7 +67,7 @@ describe('GameState', () => {
     expect(gameState.stopSoftDrop()).toBe(false);
   });
 
-  test('spawnTetramino consumes the next shape, replenishes the queue, and records a preview update', () => {
+  test('spawnTetramino consumes the next shape and replenishes the queue', () => {
     gameState.nextShapes = ['O', 'I', 'T'];
     Math.random.mockReturnValueOnce(5 / 7);
 
@@ -76,7 +76,7 @@ describe('GameState', () => {
     expect(spawned).toBe(true);
     expect(gameState.currentTetramino.type).toBe('O');
     expect(gameState.nextShapes).toEqual(['I', 'T', 'S']);
-    expect(gameState.consumeEvents()).toEqual([{ type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined }]);
+    expect(gameState.consumeEvents()).toEqual([]);
   });
 
   test('startGame starts score timing, spawns the initial piece, and returns a start result', () => {
@@ -89,7 +89,7 @@ describe('GameState', () => {
     expect(gameState.score.startTimer).toHaveBeenCalledTimes(1);
     expect(gameState.currentTetramino.type).toBe('O');
     expect(gameState.nextShapes).toEqual(['I', 'T', 'T']);
-    expect(gameState.consumeEvents()).toEqual([{ type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined }]);
+    expect(gameState.consumeEvents()).toEqual([]);
   });
 
   test('startGame returns a game-over result when the initial piece cannot spawn', () => {
@@ -164,11 +164,7 @@ describe('GameState', () => {
     const result = gameState.updateTick();
 
     expect(result).toEqual({ moved: false, locked: true, spawned: true, gameOver: false });
-    expect(gameState.consumeEvents()).toEqual([
-      { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined },
-      { type: EVENTS.TETRAMINO_LOCKED, payload: { blocks: expect.any(Array) } },
-      { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined }
-    ]);
+    expect(gameState.consumeEvents()).toEqual([]);
     expect(gameState.score.getAllStats().pieces).toBe(1);
     expect(gameState.currentTetramino.type).toBe('I');
     expect(gameState.fieldData[GRID_ROWS - 2][4]).not.toBeNull();
@@ -187,8 +183,6 @@ describe('GameState', () => {
 
     expect(result).toEqual({ moved: false, locked: true, spawned: false, gameOver: true });
     expect(gameState.consumeEvents()).toEqual([
-      { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined },
-      { type: EVENTS.TETRAMINO_LOCKED, payload: { blocks: expect.any(Array) } },
       { type: EVENTS.GAME_OVER, payload: undefined }
     ]);
     expect(gameState.currentTetramino).toBeNull();

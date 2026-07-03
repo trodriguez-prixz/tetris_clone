@@ -1,5 +1,4 @@
 import { SIDEBAR_X, SIDEBAR_Y, SIDEBAR_WIDTH, PREVIEW_AREA_HEIGHT, PADDING, TETRAMINOS, PREVIEW_CELL_SIZE, RENDERED_BLOCK_INSET } from '../../config/settings.js';
-import EventBus, { EVENTS } from '../../events/EventBus.js';
 
 const PREVIEW_SLOT_COUNT = 3;
 
@@ -8,8 +7,6 @@ export default class PreviewRenderer {
     this.scene = scene;
     this.gameState = gameState;
     this.previewBlocks = [];
-
-    EventBus.on(EVENTS.NEXT_SHAPE_UPDATED, this.renderPreview, this);
   }
 
   renderPreview() {
@@ -43,7 +40,6 @@ export default class PreviewRenderer {
   }
 
   destroy() {
-    EventBus.off(EVENTS.NEXT_SHAPE_UPDATED, this.renderPreview, this);
     this.previewBlocks.forEach(block => block.destroy());
   }
 }

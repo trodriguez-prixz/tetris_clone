@@ -285,6 +285,17 @@ describe('GameScene orchestration', () => {
     expect(boardRenderer.update).toHaveBeenCalled();
   });
 
+  test('drop loop timer refreshes the preview directly when a new piece spawns', () => {
+    scene.create();
+    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({ moved: false, locked: true, spawned: true, gameOver: false });
+
+    scene.dropLoopController.restart(scene.gameState.dropSpeed);
+    const timerConfig = scene.time.addEvent.mock.calls.at(-1)[0];
+    timerConfig.callback();
+
+    expect(uiRenderer.renderPreview).toHaveBeenCalledTimes(1);
+  });
+
   test('game over stops the drop loop, saves score data, shows restart UI, and stops music', () => {
     scene.create();
     scene.stateMachine.start();

@@ -125,8 +125,6 @@ export default class GameState {
     this.currentTetramino = newTetramino;
     this.nextShapes.push(this.getRandomShapeType());
     
-    this.recordEvent(EVENTS.NEXT_SHAPE_UPDATED);
-    
     return true;
   }
 
@@ -176,10 +174,8 @@ export default class GameState {
         }
     }
     
-    const blocks = this.currentTetramino.blocks;
     this.currentTetramino = null;
-    
-    this.recordEvent(EVENTS.TETRAMINO_LOCKED, { blocks });
+
     this.checkFinishedRows();
     
     const spawned = this.spawnTetramino();

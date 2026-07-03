@@ -152,6 +152,9 @@ export default class GameScene extends Phaser.Scene {
       if (result.moved || result.locked || result.spawned || result.gameOver) {
           this.boardRenderer.update();
       }
+      if (result.spawned) {
+          this.uiRenderer.renderPreview();
+      }
       return result;
   }
 

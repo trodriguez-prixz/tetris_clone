@@ -5,7 +5,5 @@ export const EVENTS = {
   GAME_RESUMED: 'game-resumed',
   LEVEL_UP: 'level-up',
   SCORE_UPDATED: 'score-updated',
-  LINES_CLEARED: 'lines-cleared',
-  TETRAMINO_LOCKED: 'tetramino-locked',
-  NEXT_SHAPE_UPDATED: 'next-shape-updated'
+  LINES_CLEARED: 'lines-cleared'
 };

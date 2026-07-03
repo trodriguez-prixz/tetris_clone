@@ -17,7 +17,7 @@ This plan is the single source of truth for improving the project's architecture
 | 1. Game domain extraction | `[x]` | Keep Tetris rules testable without Phaser. |
 | 2. Scene orchestration cleanup | `[x]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[x]` | Separate visual layout from game rules. |
-| 4. Event communication cleanup | `[~]` | Make module communication explicit and consistent. |
+| 4. Event communication cleanup | `[x]` | Make module communication explicit and consistent. |
 | 5. Quality tooling | `[ ]` | Add minimal automated checks for safer maintenance. |
 | 6. Platform and packaging verification | `[ ]` | Preserve web, Express, and Electron delivery paths. |
 | 7. Architecture documentation | `[ ]` | Record the final structure and update agent guidance if needed. |
@@ -128,13 +128,14 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
   - 2026-07-03: Verified EventBus producers/consumers and domain `recordEvent` calls in `src/` and `tests/`; game-domain events already use `EVENTS` constants. Remaining string event names are Phaser input/API events or the explicit `GameEvents` inventory test.
 - [x] Define predictable payload shapes for important events.
   - 2026-07-03: Non-empty gameplay event payloads now use named object fields: `LINES_CLEARED` emits `{ rows }`, `TETRAMINO_LOCKED` emits `{ blocks }`, `SCORE_UPDATED` emits `{ stats }`, and `LEVEL_UP` emits `{ level }`. Lifecycle, preview, and game-over events remain no-payload (`undefined`) because consumers do not need event data.
-- [ ] Remove event flows that duplicate direct state reads without adding value.
+- [x] Remove event flows that duplicate direct state reads without adding value.
+  - 2026-07-03: Removed `TETRAMINO_LOCKED` because its only EventBus consumer ignored `{ blocks }`, and removed `NEXT_SHAPE_UPDATED` because preview rendering already reads `gameState.nextShapes` directly from scene coordination after spawns. Retained lifecycle, line-clear, score, and level events because they decouple scene/audio/UI effects or carry payloads used by consumers.
 
 **Exit criteria**
 
-- [ ] Event names are discoverable from one place.
-- [ ] Event payloads are consistent enough for tests and future changes.
-- [ ] No hidden gameplay rule decisions live only in event handlers.
+- [x] Event names are discoverable from one place.
+- [x] Event payloads are consistent enough for tests and future changes.
+- [x] No hidden gameplay rule decisions live only in event handlers.
 
 ## Phase 5 — Quality tooling
 
