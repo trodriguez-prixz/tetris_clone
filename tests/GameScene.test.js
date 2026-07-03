@@ -208,7 +208,8 @@ describe('GameScene orchestration', () => {
     scene.create();
     scene.stateMachine.start();
     scene.stateMachine.consumeEvents();
-    scene.verticalTimer = { paused: false, remove: jest.fn() };
+    scene.dropLoopController.restart(scene.gameState.dropSpeed);
+    const activeTimer = scene.dropLoopController.timer;
     scene.justStarted = false;
     scene.time.now = 1000;
     jest.spyOn(scene.gameState.score, 'updateGameTime');
@@ -220,7 +221,7 @@ describe('GameScene orchestration', () => {
     expect(scene.gameState.score.updateGameTime).toHaveBeenCalled();
     expect(uiRenderer.updateTime).toHaveBeenCalledWith(42);
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.PAUSED);
-    expect(scene.verticalTimer.paused).toBe(true);
+    expect(activeTimer.paused).toBe(true);
     expect(retroMusic.pause).toHaveBeenCalled();
     expect(scene.pauseUIElements).toHaveLength(2);
   });
@@ -250,11 +251,11 @@ describe('GameScene orchestration', () => {
     expect(scene.time.addEvent).toHaveBeenCalledWith(expect.objectContaining({ delay: FAST_DROP_SPEED }));
   });
 
-  test('vertical timer renders through the fall tick result wrapper', () => {
+  test('drop loop timer renders through the fall tick result wrapper', () => {
     scene.create();
     jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({ moved: false, locked: true, spawned: true, gameOver: false });
 
-    scene.startVerticalTimer();
+    scene.dropLoopController.restart(scene.gameState.dropSpeed);
     const timerConfig = scene.time.addEvent.mock.calls.at(-1)[0];
     timerConfig.callback();
 
@@ -266,7 +267,8 @@ describe('GameScene orchestration', () => {
     scene.create();
     scene.stateMachine.start();
     scene.stateMachine.consumeEvents();
-    scene.verticalTimer = { remove: jest.fn() };
+    scene.dropLoopController.restart(scene.gameState.dropSpeed);
+    const activeTimer = scene.dropLoopController.timer;
     jest.spyOn(scene.gameState, 'getGameOverStatsSnapshot').mockReturnValue({
       score: 2500,
       lines: 4,
@@ -279,7 +281,8 @@ describe('GameScene orchestration', () => {
 
     EventBus.emit(EVENTS.GAME_OVER);
 
-    expect(scene.verticalTimer.remove).toHaveBeenCalled();
+    expect(activeTimer.remove).toHaveBeenCalled();
+    expect(scene.dropLoopController.timer).toBeNull();
     expect(scene.gameState.getGameOverStatsSnapshot).toHaveBeenCalledTimes(1);
     expect(StorageManager.saveHighScore).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
     expect(StorageManager.updateStatistics).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));

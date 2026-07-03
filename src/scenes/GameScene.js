@@ -9,6 +9,7 @@ import GameState from '../logic/GameState.js';
 import GameStateMachine, { GAME_STATES } from '../logic/GameStateMachine.js';
 
 import BoardRenderer from './components/BoardRenderer.js';
+import DropLoopController from './components/DropLoopController.js';
 import InputController from './components/InputController.js';
 import UIRenderer from './components/UIRenderer.js';
 
@@ -25,6 +26,7 @@ export default class GameScene extends Phaser.Scene {
     
     this.boardRenderer = new BoardRenderer(this, this.gameState);
     this.uiRenderer = new UIRenderer(this, this.gameState);
+    this.dropLoopController = new DropLoopController(this, () => this.handleFallTick());
     
     this.setupAudio();
     this.setupInputs();
@@ -149,13 +151,13 @@ export default class GameScene extends Phaser.Scene {
   startSoftDrop() {
       this.handleFallTick();
       if (this.gameState.startSoftDrop()) {
-          this.startVerticalTimer();
+          this.dropLoopController.restart(this.gameState.dropSpeed);
       }
   }
 
   stopSoftDrop() {
       if (this.gameState.stopSoftDrop()) {
-          this.startVerticalTimer();
+          this.dropLoopController.restart(this.gameState.dropSpeed);
       }
   }
 
@@ -184,19 +186,8 @@ export default class GameScene extends Phaser.Scene {
       
       if (startResult.spawned) {
           this.boardRenderer.update();
-          this.startVerticalTimer();
+          this.dropLoopController.restart(this.gameState.dropSpeed);
       }
-  }
-
-  startVerticalTimer() {
-    if (this.verticalTimer) this.verticalTimer.remove();
-    this.verticalTimer = this.time.addEvent({
-      delay: this.gameState.dropSpeed,
-      callback: () => {
-        this.handleFallTick();
-      },
-      loop: true
-    });
   }
 
   showStartScreen() {
@@ -217,7 +208,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showPauseScreen() {
-    if (this.verticalTimer) this.verticalTimer.paused = true;
+    this.dropLoopController.pause();
     if (this.retroMusic) this.retroMusic.pause();
     
     const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.7);
@@ -226,7 +217,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   hidePauseScreen() {
-    if (this.verticalTimer) this.verticalTimer.paused = false;
+    this.dropLoopController.resume();
     if (this.retroMusic) this.retroMusic.resume();
     
     if (this.pauseUIElements) {
@@ -238,7 +229,7 @@ export default class GameScene extends Phaser.Scene {
   onGameOver() {
     this.stateMachine.markGameOver();
 
-    if (this.verticalTimer) this.verticalTimer.remove();
+    this.dropLoopController.stop();
 
     const stats = this.gameState.getGameOverStatsSnapshot();
     if (stats.score > StorageManager.getBestScore()) {
