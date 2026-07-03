@@ -1,4 +1,4 @@
-import EventBus, { EVENTS } from '../events/EventBus.js';
+import { EVENTS } from '../events/GameEvents.js';
 import Tetramino from '../classes/Tetramino.js';
 import Score from '../classes/Score.js';
 import { GRID_ROWS, GRID_COLS, TETRAMINOS, INITIAL_DROP_SPEED, FAST_DROP_SPEED, LEVEL_SPEED_MULTIPLIER } from '../config/settings.js';
@@ -12,6 +12,7 @@ export default class GameState {
     this.dropSpeed = INITIAL_DROP_SPEED;
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.softDropActive = false;
+    this.domainEvents = [];
     
     // Initialize next shapes queue (3 shapes)
     for (let i = 0; i < 3; i++) {
@@ -27,6 +28,7 @@ export default class GameState {
     this.dropSpeed = INITIAL_DROP_SPEED;
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.softDropActive = false;
+    this.domainEvents = [];
     for (let i = 0; i < 3; i++) {
         this.nextShapes.push(this.getRandomShapeType());
     }
@@ -55,6 +57,16 @@ export default class GameState {
       tetrises: stats.tetrises,
       gameTime: stats.gameTime
     };
+  }
+
+  recordEvent(type, payload) {
+    this.domainEvents.push({ type, payload });
+  }
+
+  consumeEvents() {
+    const events = [...this.domainEvents];
+    this.domainEvents = [];
+    return events;
   }
 
   getRandomShapeType() {
@@ -113,7 +125,7 @@ export default class GameState {
     this.currentTetramino = newTetramino;
     this.nextShapes.push(this.getRandomShapeType());
     
-    EventBus.emit(EVENTS.NEXT_SHAPE_UPDATED);
+    this.recordEvent(EVENTS.NEXT_SHAPE_UPDATED);
     
     return true;
   }
@@ -167,7 +179,7 @@ export default class GameState {
     const blocks = this.currentTetramino.blocks;
     this.currentTetramino = null;
     
-    EventBus.emit(EVENTS.TETRAMINO_LOCKED, blocks);
+    this.recordEvent(EVENTS.TETRAMINO_LOCKED, blocks);
     this.checkFinishedRows();
     
     const spawned = this.spawnTetramino();
@@ -179,7 +191,7 @@ export default class GameState {
     };
 
     if (!spawned) {
-        EventBus.emit(EVENTS.GAME_OVER);
+        this.recordEvent(EVENTS.GAME_OVER);
     }
 
     return lockResult;
@@ -203,7 +215,7 @@ export default class GameState {
     
     if (rowsToClear.length > 0) {
       // Pass the logically cleared rows down to whoever listens
-      EventBus.emit(EVENTS.LINES_CLEARED, rowsToClear);
+      this.recordEvent(EVENTS.LINES_CLEARED, rowsToClear);
       this.clearRowsAndApplyGravity(rowsToClear);
     }
   }
@@ -232,11 +244,11 @@ export default class GameState {
       });
       
       const levelIncreased = this.score.addScore(rowsToClear.length);
-      EventBus.emit(EVENTS.SCORE_UPDATED, this.score.getAllStats());
+      this.recordEvent(EVENTS.SCORE_UPDATED, this.score.getAllStats());
       if (levelIncreased) {
           this.baseDropSpeed = Math.max(50, this.baseDropSpeed * LEVEL_SPEED_MULTIPLIER);
           this.dropSpeed = this.baseDropSpeed;
-          EventBus.emit(EVENTS.LEVEL_UP, this.score.getLevel());
+          this.recordEvent(EVENTS.LEVEL_UP, this.score.getLevel());
       }
   }
 }

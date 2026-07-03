@@ -109,13 +109,17 @@ export default class GameScene extends Phaser.Scene {
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-            if (!this.justStarted) this.stateMachine.pause();
+            if (!this.justStarted) {
+                this.stateMachine.pause();
+                this.emitDomainEvents(this.stateMachine.consumeEvents());
+            }
         }
         
         this.handleGameplayInputs();
     } else if (this.stateMachine.isState(GAME_STATES.PAUSED)) {
         if (Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
             this.stateMachine.resume();
+            this.emitDomainEvents(this.stateMachine.consumeEvents());
         }
     }
     
@@ -172,14 +176,20 @@ export default class GameScene extends Phaser.Scene {
 
   handleFallTick() {
       const result = this.gameState.updateTick();
+      this.emitDomainEvents(this.gameState.consumeEvents());
       if (result.moved || result.locked || result.spawned || result.gameOver) {
           this.boardRenderer.update();
       }
       return result;
   }
 
+  emitDomainEvents(events) {
+      events.forEach(({ type, payload }) => EventBus.emit(type, payload));
+  }
+
   onGameStart() {
       const startResult = this.gameState.startGame();
+      this.emitDomainEvents(this.gameState.consumeEvents());
       this.uiRenderer.renderPreview();
       
       if (this.retroMusic && !this.musicMuted && !this.musicStarted) {
@@ -221,6 +231,7 @@ export default class GameScene extends Phaser.Scene {
         this.justStarted = true;
         this.startTime = this.time.now;
         this.stateMachine.start();
+        this.emitDomainEvents(this.stateMachine.consumeEvents());
     };
     this.input.keyboard.on('keydown', startTrigger);
     this.input.on('pointerdown', startTrigger);
@@ -286,5 +297,6 @@ export default class GameScene extends Phaser.Scene {
     }
     
     this.stateMachine.restart();
+    this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
 }

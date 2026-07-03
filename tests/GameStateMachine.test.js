@@ -1,5 +1,5 @@
 import GameStateMachine, { GAME_STATES } from '../src/logic/GameStateMachine.js';
-import EventBus, { EVENTS } from '../src/events/EventBus.js';
+import { EVENTS } from '../src/events/GameEvents.js';
 
 const createMachineInState = (state) => {
   const machine = new GameStateMachine();
@@ -21,30 +21,7 @@ const createMachineInState = (state) => {
   return machine;
 };
 
-const trackLifecycleEvents = () => {
-  const events = [];
-
-  [
-    EVENTS.GAME_START,
-    EVENTS.GAME_PAUSED,
-    EVENTS.GAME_RESUMED,
-    EVENTS.GAME_OVER
-  ].forEach(event => {
-    EventBus.on(event, () => events.push(event));
-  });
-
-  return events;
-};
-
 describe('GameStateMachine', () => {
-  beforeEach(() => {
-    EventBus.removeAllListeners();
-  });
-
-  afterEach(() => {
-    EventBus.removeAllListeners();
-  });
-
   test('starts on the start screen', () => {
     const machine = new GameStateMachine();
 
@@ -53,67 +30,66 @@ describe('GameStateMachine', () => {
     expect(machine.isState(GAME_STATES.PLAYING)).toBe(false);
   });
 
-  test('starts the game from the start screen and emits the start event', () => {
-    const events = trackLifecycleEvents();
+  test('starts the game from the start screen and records the start event', () => {
     const machine = createMachineInState(GAME_STATES.START_SCREEN);
 
     expect(machine.start()).toBe(true);
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
-    expect(events).toEqual([EVENTS.GAME_START]);
+    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_START, payload: undefined }]);
   });
 
-  test('restarts the game from game over and emits another start event', () => {
+  test('restarts the game from game over and records another start event', () => {
     const machine = createMachineInState(GAME_STATES.GAME_OVER);
-    const events = trackLifecycleEvents();
+    machine.consumeEvents();
 
     expect(machine.restart()).toBe(true);
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
-    expect(events).toEqual([EVENTS.GAME_START]);
+    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_START, payload: undefined }]);
   });
 
-  test('marks game over without emitting a duplicate game over event', () => {
+  test('marks game over without recording a duplicate game over event', () => {
     const machine = createMachineInState(GAME_STATES.PLAYING);
-    const events = trackLifecycleEvents();
+    machine.consumeEvents();
 
     expect(machine.markGameOver()).toBe(true);
 
     expect(machine.getState()).toBe(GAME_STATES.GAME_OVER);
-    expect(events).toEqual([]);
+    expect(machine.consumeEvents()).toEqual([]);
   });
 
-  test('pauses only while playing and emits the pause event', () => {
+  test('pauses only while playing and records the pause event', () => {
     const machine = createMachineInState(GAME_STATES.PLAYING);
-    const events = trackLifecycleEvents();
+    machine.consumeEvents();
 
     expect(machine.pause()).toBe(true);
 
     expect(machine.getState()).toBe(GAME_STATES.PAUSED);
-    expect(events).toEqual([EVENTS.GAME_PAUSED]);
+    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_PAUSED, payload: undefined }]);
   });
 
-  test('resumes only while paused and emits the resume event', () => {
+  test('resumes only while paused and records the resume event', () => {
     const machine = createMachineInState(GAME_STATES.PAUSED);
-    const events = trackLifecycleEvents();
+    machine.consumeEvents();
 
     expect(machine.resume()).toBe(true);
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
-    expect(events).toEqual([EVENTS.GAME_RESUMED]);
+    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_RESUMED, payload: undefined }]);
   });
 
-  test('enters game over only while playing and emits the game over event', () => {
+  test('enters game over only while playing and records the game over event', () => {
     const machine = createMachineInState(GAME_STATES.PLAYING);
-    const events = trackLifecycleEvents();
+    machine.consumeEvents();
 
     expect(machine.gameOver()).toBe(true);
 
     expect(machine.getState()).toBe(GAME_STATES.GAME_OVER);
-    expect(events).toEqual([EVENTS.GAME_OVER]);
+    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_OVER, payload: undefined }]);
   });
 
-  test('blocks invalid transitions without changing state or emitting lifecycle events', () => {
+  test('blocks invalid transitions without changing state or recording lifecycle events', () => {
     const invalidTransitions = [
       [GAME_STATES.START_SCREEN, ['pause', 'resume', 'gameOver']],
       [GAME_STATES.PLAYING, ['start', 'restart', 'resume']],
@@ -123,13 +99,12 @@ describe('GameStateMachine', () => {
 
     invalidTransitions.forEach(([state, actions]) => {
       actions.forEach(action => {
-        EventBus.removeAllListeners();
         const machine = createMachineInState(state);
-        const events = trackLifecycleEvents();
+        machine.consumeEvents();
 
         expect(machine[action]()).toBe(false);
         expect(machine.getState()).toBe(state);
-        expect(events).toEqual([]);
+        expect(machine.consumeEvents()).toEqual([]);
       });
     });
   });

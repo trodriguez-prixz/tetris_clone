@@ -1,4 +1,4 @@
-import EventBus, { EVENTS } from '../events/EventBus.js';
+import { EVENTS } from '../events/GameEvents.js';
 
 export const GAME_STATES = {
   START_SCREEN: 'START_SCREEN',
@@ -10,6 +10,17 @@ export const GAME_STATES = {
 export default class GameStateMachine {
   constructor() {
     this.currentState = GAME_STATES.START_SCREEN;
+    this.domainEvents = [];
+  }
+
+  recordEvent(type, payload) {
+    this.domainEvents.push({ type, payload });
+  }
+
+  consumeEvents() {
+    const events = [...this.domainEvents];
+    this.domainEvents = [];
+    return events;
   }
 
   getState() {
@@ -23,7 +34,7 @@ export default class GameStateMachine {
   start() {
     if (this.currentState === GAME_STATES.START_SCREEN || this.currentState === GAME_STATES.GAME_OVER) {
       this.currentState = GAME_STATES.PLAYING;
-      EventBus.emit(EVENTS.GAME_START);
+      this.recordEvent(EVENTS.GAME_START);
       return true;
     }
     return false;
@@ -32,7 +43,7 @@ export default class GameStateMachine {
   restart() {
     if (this.currentState === GAME_STATES.GAME_OVER) {
       this.currentState = GAME_STATES.PLAYING;
-      EventBus.emit(EVENTS.GAME_START);
+      this.recordEvent(EVENTS.GAME_START);
       return true;
     }
     return false;
@@ -49,7 +60,7 @@ export default class GameStateMachine {
   pause() {
     if (this.currentState === GAME_STATES.PLAYING) {
       this.currentState = GAME_STATES.PAUSED;
-      EventBus.emit(EVENTS.GAME_PAUSED);
+      this.recordEvent(EVENTS.GAME_PAUSED);
       return true;
     }
     return false;
@@ -58,7 +69,7 @@ export default class GameStateMachine {
   resume() {
     if (this.currentState === GAME_STATES.PAUSED) {
       this.currentState = GAME_STATES.PLAYING;
-      EventBus.emit(EVENTS.GAME_RESUMED);
+      this.recordEvent(EVENTS.GAME_RESUMED);
       return true;
     }
     return false;
@@ -67,7 +78,7 @@ export default class GameStateMachine {
   gameOver() {
     if (this.currentState === GAME_STATES.PLAYING) {
       this.currentState = GAME_STATES.GAME_OVER;
-      EventBus.emit(EVENTS.GAME_OVER);
+      this.recordEvent(EVENTS.GAME_OVER);
       return true;
     }
     return false;

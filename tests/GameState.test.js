@@ -1,5 +1,5 @@
 import GameState from '../src/logic/GameState.js';
-import EventBus, { EVENTS } from '../src/events/EventBus.js';
+import { EVENTS } from '../src/events/GameEvents.js';
 import Block from '../src/classes/Block.js';
 import { GRID_COLS, GRID_ROWS, INITIAL_DROP_SPEED, FAST_DROP_SPEED, LEVEL_SPEED_MULTIPLIER } from '../src/config/settings.js';
 
@@ -12,12 +12,10 @@ describe('GameState', () => {
 
   beforeEach(() => {
     jest.spyOn(Math, 'random').mockReturnValue(0);
-    EventBus.removeAllListeners();
     gameState = new GameState();
   });
 
   afterEach(() => {
-    EventBus.removeAllListeners();
     jest.restoreAllMocks();
   });
 
@@ -69,9 +67,7 @@ describe('GameState', () => {
     expect(gameState.stopSoftDrop()).toBe(false);
   });
 
-  test('spawnTetramino consumes the next shape, replenishes the queue, and emits a preview update', () => {
-    const previewUpdates = jest.fn();
-    EventBus.on(EVENTS.NEXT_SHAPE_UPDATED, previewUpdates);
+  test('spawnTetramino consumes the next shape, replenishes the queue, and records a preview update', () => {
     gameState.nextShapes = ['O', 'I', 'T'];
     Math.random.mockReturnValueOnce(5 / 7);
 
@@ -80,12 +76,10 @@ describe('GameState', () => {
     expect(spawned).toBe(true);
     expect(gameState.currentTetramino.type).toBe('O');
     expect(gameState.nextShapes).toEqual(['I', 'T', 'S']);
-    expect(previewUpdates).toHaveBeenCalledTimes(1);
+    expect(gameState.consumeEvents()).toEqual([{ type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined }]);
   });
 
   test('startGame starts score timing, spawns the initial piece, and returns a start result', () => {
-    const previewUpdates = jest.fn();
-    EventBus.on(EVENTS.NEXT_SHAPE_UPDATED, previewUpdates);
     jest.spyOn(gameState.score, 'startTimer');
     gameState.nextShapes = ['O', 'I', 'T'];
 
@@ -95,7 +89,7 @@ describe('GameState', () => {
     expect(gameState.score.startTimer).toHaveBeenCalledTimes(1);
     expect(gameState.currentTetramino.type).toBe('O');
     expect(gameState.nextShapes).toEqual(['I', 'T', 'T']);
-    expect(previewUpdates).toHaveBeenCalledTimes(1);
+    expect(gameState.consumeEvents()).toEqual([{ type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined }]);
   });
 
   test('startGame returns a game-over result when the initial piece cannot spawn', () => {
@@ -136,8 +130,6 @@ describe('GameState', () => {
   });
 
   test('spawnTetramino returns false and preserves the current state when the spawn area is blocked', () => {
-    const previewUpdates = jest.fn();
-    EventBus.on(EVENTS.NEXT_SHAPE_UPDATED, previewUpdates);
     gameState.nextShapes = ['O', 'I', 'T'];
     gameState.fieldData[1][4] = new Block(4, 1, 0xffffff);
 
@@ -146,7 +138,7 @@ describe('GameState', () => {
     expect(spawned).toBe(false);
     expect(gameState.currentTetramino).toBeNull();
     expect(gameState.nextShapes).toEqual(['I', 'T']);
-    expect(previewUpdates).not.toHaveBeenCalled();
+    expect(gameState.consumeEvents()).toEqual([]);
   });
 
   test('updateTick returns a moved result while moving the active piece down', () => {
@@ -163,8 +155,6 @@ describe('GameState', () => {
   });
 
   test('updateTick returns a lock result while locking and spawning the next piece', () => {
-    const locked = jest.fn();
-    EventBus.on(EVENTS.TETRAMINO_LOCKED, locked);
     gameState.nextShapes = ['O', 'I', 'T'];
     gameState.spawnTetramino();
     for (let i = 0; i < GRID_ROWS - 2; i++) {
@@ -174,7 +164,11 @@ describe('GameState', () => {
     const result = gameState.updateTick();
 
     expect(result).toEqual({ moved: false, locked: true, spawned: true, gameOver: false });
-    expect(locked).toHaveBeenCalledTimes(1);
+    expect(gameState.consumeEvents()).toEqual([
+      { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined },
+      { type: EVENTS.TETRAMINO_LOCKED, payload: expect.any(Array) },
+      { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined }
+    ]);
     expect(gameState.score.getAllStats().pieces).toBe(1);
     expect(gameState.currentTetramino.type).toBe('I');
     expect(gameState.fieldData[GRID_ROWS - 2][4]).not.toBeNull();
@@ -182,8 +176,6 @@ describe('GameState', () => {
   });
 
   test('updateTick returns a game-over result when locking cannot spawn a new piece', () => {
-    const gameOver = jest.fn();
-    EventBus.on(EVENTS.GAME_OVER, gameOver);
     gameState.nextShapes = ['O', 'O', 'T'];
     gameState.spawnTetramino();
     for (let i = 0; i < GRID_ROWS - 2; i++) {
@@ -194,33 +186,32 @@ describe('GameState', () => {
     const result = gameState.updateTick();
 
     expect(result).toEqual({ moved: false, locked: true, spawned: false, gameOver: true });
-    expect(gameOver).toHaveBeenCalledTimes(1);
+    expect(gameState.consumeEvents()).toEqual([
+      { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined },
+      { type: EVENTS.TETRAMINO_LOCKED, payload: expect.any(Array) },
+      { type: EVENTS.GAME_OVER, payload: undefined }
+    ]);
     expect(gameState.currentTetramino).toBeNull();
   });
 
-  test('checkFinishedRows clears completed rows, applies gravity, scores, and emits events', () => {
-    const linesCleared = jest.fn();
-    const scoreUpdated = jest.fn();
-    EventBus.on(EVENTS.LINES_CLEARED, linesCleared);
-    EventBus.on(EVENTS.SCORE_UPDATED, scoreUpdated);
+  test('checkFinishedRows clears completed rows, applies gravity, scores, and records events', () => {
     const fallingBlock = new Block(3, GRID_ROWS - 2, 0xff0000);
     gameState.fieldData[GRID_ROWS - 2][3] = fallingBlock;
     gameState.fieldData[GRID_ROWS - 1] = createFilledRow(GRID_ROWS - 1);
 
     gameState.checkFinishedRows();
 
-    expect(linesCleared).toHaveBeenCalledWith([GRID_ROWS - 1]);
     expect(gameState.fieldData[GRID_ROWS - 2][3]).toBeNull();
     expect(gameState.fieldData[GRID_ROWS - 1][3]).toBe(fallingBlock);
     expect(fallingBlock.getLogicalPosition()).toEqual({ x: 3, y: GRID_ROWS - 1 });
     expect(gameState.score.getAllStats()).toEqual(expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 }));
-    expect(scoreUpdated).toHaveBeenCalledWith(expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 }));
+    expect(gameState.consumeEvents()).toEqual([
+      { type: EVENTS.LINES_CLEARED, payload: [GRID_ROWS - 1] },
+      { type: EVENTS.SCORE_UPDATED, payload: expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 }) }
+    ]);
   });
 
   test('clearing enough lines updates level and drop speed', () => {
-    const levelUp = jest.fn();
-    EventBus.on(EVENTS.LEVEL_UP, levelUp);
-
     for (let i = 0; i < 9; i++) {
       gameState.score.addScore(1);
     }
@@ -231,6 +222,10 @@ describe('GameState', () => {
     expect(gameState.score.getLevel()).toBe(2);
     expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED * LEVEL_SPEED_MULTIPLIER);
     expect(gameState.dropSpeed).toBe(gameState.baseDropSpeed);
-    expect(levelUp).toHaveBeenCalledWith(2);
+    expect(gameState.consumeEvents()).toEqual([
+      { type: EVENTS.LINES_CLEARED, payload: [GRID_ROWS - 1] },
+      { type: EVENTS.SCORE_UPDATED, payload: expect.objectContaining({ level: 2 }) },
+      { type: EVENTS.LEVEL_UP, payload: 2 }
+    ]);
   });
 });

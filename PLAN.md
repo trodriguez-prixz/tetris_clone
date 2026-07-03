@@ -52,7 +52,8 @@ This plan is the single source of truth for improving the project's architecture
   - 2026-07-03: Added a `GameState.updateTick()` result wrapper for fall ticks (`moved`, `locked`, `spawned`, `gameOver`) and routed `GameScene` rendering through that result; task remains partial for start/restart transitions and game-over stats snapshot.
   - 2026-07-03: Added `GameState.startGame()` for score-timer/start-spawn setup and `GameStateMachine.restart()`/`markGameOver()` so restart no longer mutates `currentState` directly; task remains partial for game-over stats snapshot.
   - 2026-07-03: Added `GameState.getGameOverStatsSnapshot()` to finalize elapsed time and expose serializable game-over score stats while keeping storage persistence in `GameScene`; task 2 is complete.
-- [ ] Keep Phaser-specific objects out of core rule modules.
+- [x] Keep Phaser-specific objects out of core rule modules.
+  - 2026-07-03: Removed direct dependency on the Phaser-backed `EventBus` from core rule modules. `GameState` and `GameStateMachine` now record plain domain event descriptors for the scene/infrastructure layer to emit, and a regression test locks the Phaser boundary.
 - [ ] Ensure `GameState` and `GameStateMachine` expose clear state transitions.
 - [ ] Update tests alongside each extraction.
 
@@ -181,6 +182,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 1 task 3 completed by moving core rule modules off the Phaser-backed `EventBus`; `EventBus` remains an infrastructure boundary used by scene/rendering code. |
 | 2026-07-03 | Phase 1 task 2 completed with a stable game-over stats snapshot exposed from `GameState`; Phase 1 task 3/4/5 remain not started. |
 | 2026-07-03 | Phase 1 task 2 started with a safe soft-drop extraction into `GameState`; task remains partially complete. |
 | 2026-07-02 | Initial plan created from the latest architecture improvement plan. |
