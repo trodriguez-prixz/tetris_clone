@@ -19,7 +19,7 @@ This plan is the single source of truth for improving the project's architecture
 | 3. Rendering and UI design boundaries | `[x]` | Separate visual layout from game rules. |
 | 4. Event communication cleanup | `[x]` | Make module communication explicit and consistent. |
 | 5. Quality tooling | `[x]` | Add minimal automated checks for safer maintenance. |
-| 6. Platform and packaging verification | `[ ]` | Preserve web, Express, and Electron delivery paths. |
+| 6. Platform and packaging verification | `[~]` | Preserve web, Express, and Electron delivery paths. |
 | 7. Architecture documentation | `[ ]` | Record the final structure and update agent guidance if needed. |
 
 ## Phase 0 — Refactor safety baseline
@@ -161,14 +161,14 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Tasks**
 
-- [ ] Verify Vite still builds with `base: './'`.
+- [x] Verify Vite still builds with `base: './'`.
 - [ ] Verify Express still serves `dist/` through `server.js` and `Procfile`.
 - [ ] Verify Electron dev still expects Vite at `http://localhost:3000`.
 - [ ] Verify packaged Electron still loads `dist/index.html`.
 
 **Exit criteria**
 
-- [ ] `npm run build` succeeds.
+- [x] `npm run build` succeeds.
 - [ ] Web production serving assumptions remain valid.
 - [ ] Electron dev/package assumptions remain valid.
 
@@ -193,6 +193,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 6 task 1 completed by verifying Vite keeps `base: './'`, outputs to `dist/` with `assets/`, manually chunks Phaser, and `npm run build` succeeds. |
 | 2026-07-03 | Phase 5 task 4 completed by collecting coverage and deferring thresholds until coverage is stable and meaningful; Phase 5 exit criteria are now closed. |
 | 2026-07-03 | Phase 3 task 4 completed by pruning stale/noisy rendering comments; focused scene tests and full `npm test` pass, closing Phase 3 exit criteria. |
 | 2026-07-03 | Phase 3 task 3 completed by moving overlays out of `GameScene` and separating sidebar score, preview, and audio indicator rendering into focused scene components; Phase 3 task 4 and exit criteria remain open. |
