@@ -18,26 +18,41 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
+    this.drawBackground();
+    this.initializeGameState();
+    this.initializeSceneComponents();
+    this.initializeGameTimeTracking();
+    this.registerGameLifecycleEvents();
+    this.showStartScreen();
+  }
+
+  drawBackground() {
     this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x34495e);
-    
+  }
+
+  initializeGameState() {
     this.gameState = new GameState();
     this.stateMachine = new GameStateMachine();
-    
+  }
+
+  initializeSceneComponents() {
     this.boardRenderer = new BoardRenderer(this, this.gameState);
     this.uiRenderer = new UIRenderer(this, this.gameState);
     this.dropLoopController = new DropLoopController(this, () => this.handleFallTick());
-    
+
     this.setupAudio();
     this.setupInputs();
-    
+  }
+
+  initializeGameTimeTracking() {
     this.timeUpdateThrottle = 0;
-    
+  }
+
+  registerGameLifecycleEvents() {
     EventBus.on(EVENTS.GAME_START, this.onGameStart, this);
     EventBus.on(EVENTS.GAME_OVER, this.onGameOver, this);
     EventBus.on(EVENTS.GAME_PAUSED, this.showPauseScreen, this);
     EventBus.on(EVENTS.GAME_RESUMED, this.hidePauseScreen, this);
-    
-    this.showStartScreen();
   }
 
   setupAudio() {
@@ -69,21 +84,30 @@ export default class GameScene extends Phaser.Scene {
 
   update() {
     const now = this.time.now;
+    this.updateElapsedTime(now);
+    this.updateInputController();
+    this.clearStartGuardAfterDelay(now);
+  }
+
+  updateElapsedTime(now) {
     if (this.stateMachine.isState(GAME_STATES.PLAYING)) {
         if (now - this.timeUpdateThrottle >= 1000) {
             this.gameState.score.updateGameTime();
             this.uiRenderer.updateTime(this.gameState.score.getGameTime());
             this.timeUpdateThrottle = now;
         }
-
     }
+  }
 
+  updateInputController() {
     this.inputController.update({
         isPlaying: this.stateMachine.isState(GAME_STATES.PLAYING),
         isPaused: this.stateMachine.isState(GAME_STATES.PAUSED),
         justStarted: this.justStarted
     });
-    
+  }
+
+  clearStartGuardAfterDelay(now) {
     if (this.justStarted && now > (this.startTime || 0) + 200) {
         this.justStarted = false;
     }
@@ -155,35 +179,50 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showStartScreen() {
+    this.startUIElements = this.renderStartScreen();
+
+    this.inputController.bindStartInput(() => this.handleStartInput());
+  }
+
+  renderStartScreen() {
     const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.8);
     const titleText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 200, 'TETRIS', { fontSize: '64px', fill: '#e74c3c', fontStyle: 'bold' }).setOrigin(0.5);
     const startText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 100, 'Presiona cualquier tecla', { fontSize: '24px', fill: '#2ecc71', fontStyle: 'bold' }).setOrigin(0.5);
     this.tweens.add({ targets: startText, alpha: 0.3, duration: 800, yoyo: true, repeat: -1 });
-    
-    this.startUIElements = [overlay, titleText, startText];
-    
-    this.inputController.bindStartInput(() => {
-        this.startUIElements.forEach(el => el.destroy());
-        this.justStarted = true;
-        this.startTime = this.time.now;
-        this.stateMachine.start();
-        this.emitDomainEvents(this.stateMachine.consumeEvents());
-    });
+
+    return [overlay, titleText, startText];
+  }
+
+  handleStartInput() {
+    this.startUIElements.forEach(el => el.destroy());
+    this.justStarted = true;
+    this.startTime = this.time.now;
+    this.stateMachine.start();
+    this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
 
   showPauseScreen() {
     this.dropLoopController.pause();
     this.audioController.pauseMusic();
-    
+
+    this.pauseUIElements = this.renderPauseScreen();
+  }
+
+  renderPauseScreen() {
     const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.7);
     const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'PAUSED', { fontSize: '64px', fill: '#f39c12', fontStyle: 'bold' }).setOrigin(0.5);
-    this.pauseUIElements = [overlay, text];
+
+    return [overlay, text];
   }
 
   hidePauseScreen() {
     this.dropLoopController.resume();
     this.audioController.resumeMusic();
-    
+
+    this.clearPauseScreen();
+  }
+
+  clearPauseScreen() {
     if (this.pauseUIElements) {
         this.pauseUIElements.forEach(el => el.destroy());
         this.pauseUIElements = null;
@@ -192,38 +231,60 @@ export default class GameScene extends Phaser.Scene {
 
   onGameOver() {
     this.stateMachine.markGameOver();
-
     this.dropLoopController.stop();
 
+    this.persistGameOverStats();
+    this.showGameOverScreen();
+    this.bindRestartInput();
+  }
+
+  persistGameOverStats() {
     const stats = this.gameState.getGameOverStatsSnapshot();
     if (stats.score > StorageManager.getBestScore()) {
         StorageManager.saveHighScore(stats);
     }
     StorageManager.updateStatistics(stats);
-    
+  }
+
+  showGameOverScreen() {
     const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.7);
     const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 60, 'GAME OVER', { fontSize: '48px', fill: '#e74c3c', fontStyle: 'bold' }).setOrigin(0.5);
     const restartText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60, 'Press R to Restart', { fontSize: '20px', fill: '#95a5a6' }).setOrigin(0.5);
     this.gameOverUIElements = [overlay, text, restartText];
-    
+  }
+
+  bindRestartInput() {
     this.restartKey = this.inputController.bindRestartInput(() => this.restartGame());
   }
 
   restartGame() {
+    this.clearGameOverScreen();
+    this.clearRestartInput();
+    this.resetGameForRestart();
+    this.audioController.startMusic();
+    this.restartPlayingState();
+  }
+
+  clearGameOverScreen() {
     if (this.gameOverUIElements) {
       this.gameOverUIElements.forEach(el => el.destroy());
       this.gameOverUIElements = null;
     }
+  }
+
+  clearRestartInput() {
     this.inputController.clearRestartInput();
     this.restartKey = null;
-    
+  }
+
+  resetGameForRestart() {
     this.gameState.reset();
     this.uiRenderer.onScoreUpdated(this.gameState.score.getAllStats());
     this.uiRenderer.onLevelUp(1);
     this.boardRenderer.update();
-    
-    this.audioController.startMusic();
-    
+  }
+
+  restartPlayingState() {
     this.stateMachine.restart();
     this.emitDomainEvents(this.stateMachine.consumeEvents());
   }

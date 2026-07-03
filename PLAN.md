@@ -85,7 +85,8 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 - [x] Split input handling into a dedicated helper or scene component.
 - [x] Split timer/drop-loop coordination into a dedicated helper or scene component.
 - [x] Split audio coordination from gameplay decisions.
-- [ ] Keep scene lifecycle methods short and intention-revealing.
+- [x] Keep scene lifecycle methods short and intention-revealing.
+  - 2026-07-03: Extracted small orchestration helpers for `GameScene` create/update/start/pause/game-over/restart flows so lifecycle methods describe intent without moving responsibilities to new components.
 - [ ] Remove duplicated state derivation from `GameScene` where domain state already exists.
 
 **Exit criteria**
