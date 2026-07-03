@@ -175,8 +175,7 @@ describe('GameScene orchestration', () => {
     expect(scene.input.keyboard.off).toHaveBeenCalledWith('keydown', startTrigger);
     expect(scene.input.off).toHaveBeenCalledWith('pointerdown', startTrigger);
     startElements.forEach((element) => expect(element.destroy).toHaveBeenCalled());
-    expect(scene.justStarted).toBe(true);
-    expect(scene.startTime).toBe(100);
+    expect(scene.inputController.pauseGuardUntil).toBe(300);
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.PLAYING);
     expect(scene.gameState.currentTetramino).toBeDefined();
     expect(uiRenderer.renderPreview).toHaveBeenCalled();
@@ -221,7 +220,6 @@ describe('GameScene orchestration', () => {
     scene.stateMachine.consumeEvents();
     scene.dropLoopController.restart(scene.gameState.dropSpeed);
     const activeTimer = scene.dropLoopController.timer;
-    scene.justStarted = false;
     scene.time.now = 1000;
     jest.spyOn(scene.gameState.score, 'updateGameTime');
     jest.spyOn(scene.gameState.score, 'getGameTime').mockReturnValue(42);
@@ -310,7 +308,7 @@ describe('GameScene orchestration', () => {
     scene.stateMachine.consumeEvents();
     EventBus.emit(EVENTS.GAME_OVER);
     const gameOverElements = [...scene.gameOverUIElements];
-    const restartKey = scene.restartKey;
+    const restartKey = scene.inputController.restartKey;
     const restartHandler = restartKey.on.mock.calls.find(([event]) => event === 'down')[1];
     jest.spyOn(scene.gameState, 'reset');
     jest.spyOn(scene.stateMachine, 'restart');

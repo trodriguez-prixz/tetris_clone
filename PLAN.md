@@ -15,7 +15,7 @@ This plan is the single source of truth for improving the project's architecture
 |-------|--------|------|
 | 0. Refactor safety baseline | `[x]` | Protect current behavior before architecture changes. |
 | 1. Game domain extraction | `[x]` | Keep Tetris rules testable without Phaser. |
-| 2. Scene orchestration cleanup | `[~]` | Make `GameScene` coordinate instead of owning every concern. |
+| 2. Scene orchestration cleanup | `[x]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[ ]` | Separate visual layout from game rules. |
 | 4. Event communication cleanup | `[ ]` | Make module communication explicit and consistent. |
 | 5. Quality tooling | `[ ]` | Add minimal automated checks for safer maintenance. |
@@ -87,13 +87,14 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 - [x] Split audio coordination from gameplay decisions.
 - [x] Keep scene lifecycle methods short and intention-revealing.
   - 2026-07-03: Extracted small orchestration helpers for `GameScene` create/update/start/pause/game-over/restart flows so lifecycle methods describe intent without moving responsibilities to new components.
-- [ ] Remove duplicated state derivation from `GameScene` where domain state already exists.
+- [x] Remove duplicated state derivation from `GameScene` where domain state already exists.
+  - 2026-07-03: Moved the start-input pause guard into `InputController` and stopped mirroring the restart key on `GameScene`; verified overlay arrays remain scene-owned until rendering/UI boundaries are addressed in Phase 3.
 
 **Exit criteria**
 
-- [ ] `GameScene` mostly wires collaborators together.
-- [ ] Gameplay decisions remain in logic/domain modules.
-- [ ] Scene behavior tests still pass.
+- [x] `GameScene` mostly wires collaborators together.
+- [x] Gameplay decisions remain in logic/domain modules.
+- [x] Scene behavior tests still pass.
 
 ## Phase 3 — Rendering and UI design boundaries
 
@@ -184,6 +185,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 2 task 5 completed by removing duplicated start/restart input state from `GameScene`; focused scene tests and full `npm test` pass, closing Phase 2 exit criteria. |
 | 2026-07-03 | Phase 1 task 5 completed by verifying updated `GameState`, `GameStateMachine`, `GameScene`, and Phaser boundary tests; focused Phase 1 tests and full `npm test` pass, closing Phase 1 exit criteria. |
 | 2026-07-03 | Phase 1 task 4 completed by making lifecycle transitions explicit through `GameStateMachine` result objects and removing external direct state mutation seams from production/tests. |
 | 2026-07-03 | Phase 1 task 3 completed by moving core rule modules off the Phaser-backed `EventBus`; `EventBus` remains an infrastructure boundary used by scene/rendering code. |

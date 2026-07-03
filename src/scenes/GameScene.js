@@ -86,7 +86,6 @@ export default class GameScene extends Phaser.Scene {
     const now = this.time.now;
     this.updateElapsedTime(now);
     this.updateInputController();
-    this.clearStartGuardAfterDelay(now);
   }
 
   updateElapsedTime(now) {
@@ -102,15 +101,8 @@ export default class GameScene extends Phaser.Scene {
   updateInputController() {
     this.inputController.update({
         isPlaying: this.stateMachine.isState(GAME_STATES.PLAYING),
-        isPaused: this.stateMachine.isState(GAME_STATES.PAUSED),
-        justStarted: this.justStarted
+        isPaused: this.stateMachine.isState(GAME_STATES.PAUSED)
     });
-  }
-
-  clearStartGuardAfterDelay(now) {
-    if (this.justStarted && now > (this.startTime || 0) + 200) {
-        this.justStarted = false;
-    }
   }
 
   pauseGame() {
@@ -195,8 +187,6 @@ export default class GameScene extends Phaser.Scene {
 
   handleStartInput() {
     this.startUIElements.forEach(el => el.destroy());
-    this.justStarted = true;
-    this.startTime = this.time.now;
     this.stateMachine.start();
     this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
@@ -254,7 +244,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   bindRestartInput() {
-    this.restartKey = this.inputController.bindRestartInput(() => this.restartGame());
+    this.inputController.bindRestartInput(() => this.restartGame());
   }
 
   restartGame() {
@@ -274,7 +264,6 @@ export default class GameScene extends Phaser.Scene {
 
   clearRestartInput() {
     this.inputController.clearRestartInput();
-    this.restartKey = null;
   }
 
   resetGameForRestart() {
