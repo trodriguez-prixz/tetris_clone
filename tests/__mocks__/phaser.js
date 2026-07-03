@@ -80,7 +80,10 @@ export default {
         UP: 38,
         DOWN: 40,
         M: 77,
-        R: 82
+        S: 83,
+        P: 80,
+        R: 82,
+        SPACE: 32
       },
       JustDown: jest.fn(() => false),
       JustUp: jest.fn(() => false)
@@ -92,34 +95,36 @@ export default {
         this.listeners = new Map();
       }
 
-      on(event, callback) {
+      on(event, callback, context) {
         const callbacks = this.listeners.get(event) || [];
-        callbacks.push({ callback, once: false });
+        callbacks.push({ callback, context, once: false });
         this.listeners.set(event, callbacks);
         return this;
       }
 
-      once(event, callback) {
+      once(event, callback, context) {
         const callbacks = this.listeners.get(event) || [];
-        callbacks.push({ callback, once: true });
+        callbacks.push({ callback, context, once: true });
         this.listeners.set(event, callbacks);
         return this;
       }
 
-      off(event, callback) {
+      off(event, callback, context) {
         if (!this.listeners.has(event)) return this;
         if (!callback) {
           this.listeners.delete(event);
           return this;
         }
-        const callbacks = this.listeners.get(event).filter(listener => listener.callback !== callback);
+        const callbacks = this.listeners.get(event).filter(listener => (
+          listener.callback !== callback || (context && listener.context !== context)
+        ));
         this.listeners.set(event, callbacks);
         return this;
       }
 
       emit(event, ...args) {
         const callbacks = this.listeners.get(event) || [];
-        callbacks.forEach(listener => listener.callback(...args));
+        callbacks.forEach(listener => listener.callback.apply(listener.context, args));
         this.listeners.set(event, callbacks.filter(listener => !listener.once));
         return this;
       }
