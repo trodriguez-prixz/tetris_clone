@@ -105,7 +105,8 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 - [x] Consolidate grid, canvas, color, scoring, and timing constants in `src/config/settings.js`.
 - [x] Remove or justify magic numbers in rendering components.
   - 2026-07-03: Added shared rendered-block inset and panel-border width constants, named board particle/animation details locally, and grouped UI/overlay text and animation layout constants without moving overlay ownership.
-- [ ] Keep board rendering, active piece rendering, score display, preview, and overlays separated in `src/scenes/components/`.
+- [x] Keep board rendering, active piece rendering, score display, preview, and overlays separated in `src/scenes/components/`.
+  - 2026-07-03: Moved start/pause/game-over overlays into `OverlayRenderer` and split sidebar score, preview, and audio indicator rendering behind focused components while keeping `GameScene` as coordinator.
 - [ ] Keep code comments in English and focused on intent or non-obvious behavior.
 
 **Exit criteria**
@@ -186,6 +187,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 3 task 3 completed by moving overlays out of `GameScene` and separating sidebar score, preview, and audio indicator rendering into focused scene components; Phase 3 task 4 and exit criteria remain open. |
 | 2026-07-03 | Phase 3 task 2 completed by naming shared rendering measurements and local visual-effect/layout details in `GameScene`, `BoardRenderer`, and `UIRenderer`; Phase 3 task 3/4 and exit criteria remain open. |
 | 2026-07-03 | Phase 3 task 1 completed by consolidating shared color, preview-cell, elapsed-time, and input timing constants into `src/config/settings.js`; Phase 3 task 2/3/4 and exit criteria remain open. |
 | 2026-07-03 | Phase 2 task 5 completed by removing duplicated start/restart input state from `GameScene`; focused scene tests and full `npm test` pass, closing Phase 2 exit criteria. |

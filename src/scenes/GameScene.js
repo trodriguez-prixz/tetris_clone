@@ -10,22 +10,8 @@ import AudioController from './components/AudioController.js';
 import BoardRenderer from './components/BoardRenderer.js';
 import DropLoopController from './components/DropLoopController.js';
 import InputController from './components/InputController.js';
+import OverlayRenderer from './components/OverlayRenderer.js';
 import UIRenderer from './components/UIRenderer.js';
-
-const CENTER_ORIGIN = 0.5;
-const START_OVERLAY_ALPHA = 0.8;
-const MODAL_OVERLAY_ALPHA = 0.7;
-const START_PROMPT_FLASH_ALPHA = 0.3;
-const START_PROMPT_FLASH_DURATION = 800;
-const REPEAT_FOREVER = -1;
-
-const OVERLAY_TEXT_LAYOUT = {
-  startTitle: { offsetY: -200, fontSize: '64px' },
-  startPrompt: { offsetY: 100, fontSize: '24px' },
-  pauseTitle: { offsetY: 0, fontSize: '64px' },
-  gameOverTitle: { offsetY: -60, fontSize: '48px' },
-  restartPrompt: { offsetY: 60, fontSize: '20px' }
-};
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -53,6 +39,7 @@ export default class GameScene extends Phaser.Scene {
   initializeSceneComponents() {
     this.boardRenderer = new BoardRenderer(this, this.gameState);
     this.uiRenderer = new UIRenderer(this, this.gameState);
+    this.overlayRenderer = new OverlayRenderer(this);
     this.dropLoopController = new DropLoopController(this, () => this.handleFallTick());
 
     this.setupAudio();
@@ -186,22 +173,13 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showStartScreen() {
-    this.startUIElements = this.renderStartScreen();
+    this.overlayRenderer.renderStartScreen();
 
     this.inputController.bindStartInput(() => this.handleStartInput());
   }
 
-  renderStartScreen() {
-    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLORS.OVERLAY, START_OVERLAY_ALPHA);
-    const titleText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + OVERLAY_TEXT_LAYOUT.startTitle.offsetY, 'TETRIS', { fontSize: OVERLAY_TEXT_LAYOUT.startTitle.fontSize, fill: COLORS.DANGER, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
-    const startText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + OVERLAY_TEXT_LAYOUT.startPrompt.offsetY, 'Presiona cualquier tecla', { fontSize: OVERLAY_TEXT_LAYOUT.startPrompt.fontSize, fill: COLORS.SUCCESS, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
-    this.tweens.add({ targets: startText, alpha: START_PROMPT_FLASH_ALPHA, duration: START_PROMPT_FLASH_DURATION, yoyo: true, repeat: REPEAT_FOREVER });
-
-    return [overlay, titleText, startText];
-  }
-
   handleStartInput() {
-    this.startUIElements.forEach(el => el.destroy());
+    this.overlayRenderer.clearStartScreen();
     this.stateMachine.start();
     this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
@@ -210,14 +188,7 @@ export default class GameScene extends Phaser.Scene {
     this.dropLoopController.pause();
     this.audioController.pauseMusic();
 
-    this.pauseUIElements = this.renderPauseScreen();
-  }
-
-  renderPauseScreen() {
-    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLORS.OVERLAY, MODAL_OVERLAY_ALPHA);
-    const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + OVERLAY_TEXT_LAYOUT.pauseTitle.offsetY, 'PAUSED', { fontSize: OVERLAY_TEXT_LAYOUT.pauseTitle.fontSize, fill: COLORS.WARNING, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
-
-    return [overlay, text];
+    this.overlayRenderer.renderPauseScreen();
   }
 
   hidePauseScreen() {
@@ -228,10 +199,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   clearPauseScreen() {
-    if (this.pauseUIElements) {
-        this.pauseUIElements.forEach(el => el.destroy());
-        this.pauseUIElements = null;
-    }
+    this.overlayRenderer.clearPauseScreen();
   }
 
   onGameOver() {
@@ -252,10 +220,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showGameOverScreen() {
-    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLORS.OVERLAY, MODAL_OVERLAY_ALPHA);
-    const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + OVERLAY_TEXT_LAYOUT.gameOverTitle.offsetY, 'GAME OVER', { fontSize: OVERLAY_TEXT_LAYOUT.gameOverTitle.fontSize, fill: COLORS.DANGER, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
-    const restartText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + OVERLAY_TEXT_LAYOUT.restartPrompt.offsetY, 'Press R to Restart', { fontSize: OVERLAY_TEXT_LAYOUT.restartPrompt.fontSize, fill: COLORS.SECONDARY_TEXT }).setOrigin(CENTER_ORIGIN);
-    this.gameOverUIElements = [overlay, text, restartText];
+    this.overlayRenderer.renderGameOverScreen();
   }
 
   bindRestartInput() {
@@ -271,10 +236,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   clearGameOverScreen() {
-    if (this.gameOverUIElements) {
-      this.gameOverUIElements.forEach(el => el.destroy());
-      this.gameOverUIElements = null;
-    }
+    this.overlayRenderer.clearGameOverScreen();
   }
 
   clearRestartInput() {

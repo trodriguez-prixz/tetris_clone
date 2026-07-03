@@ -4,12 +4,14 @@ import EventBus, { EVENTS } from '../src/events/EventBus.js';
 import { FAST_DROP_SPEED } from '../src/config/settings.js';
 import { GAME_STATES } from '../src/logic/GameStateMachine.js';
 import BoardRenderer from '../src/scenes/components/BoardRenderer.js';
+import OverlayRenderer from '../src/scenes/components/OverlayRenderer.js';
 import UIRenderer from '../src/scenes/components/UIRenderer.js';
 import { RetroMusic } from '../src/utils/retroMusic.js';
 import { SoundEffects } from '../src/utils/soundEffects.js';
 import { StorageManager } from '../src/utils/storage.js';
 
 jest.mock('../src/scenes/components/BoardRenderer.js', () => jest.fn());
+jest.mock('../src/scenes/components/OverlayRenderer.js', () => jest.fn());
 jest.mock('../src/scenes/components/UIRenderer.js', () => jest.fn());
 jest.mock('../src/utils/retroMusic.js', () => ({
   RetroMusic: jest.fn()
@@ -89,6 +91,7 @@ const buildScene = () => {
 describe('GameScene orchestration', () => {
   let scene;
   let boardRenderer;
+  let overlayRenderer;
   let uiRenderer;
   let retroMusic;
   let soundEffects;
@@ -100,6 +103,14 @@ describe('GameScene orchestration', () => {
     Phaser.Input.Keyboard.JustUp.mockReturnValue(false);
 
     boardRenderer = { update: jest.fn(), destroy: jest.fn() };
+    overlayRenderer = {
+      renderStartScreen: jest.fn(),
+      clearStartScreen: jest.fn(),
+      renderPauseScreen: jest.fn(),
+      clearPauseScreen: jest.fn(),
+      renderGameOverScreen: jest.fn(),
+      clearGameOverScreen: jest.fn()
+    };
     uiRenderer = {
       updateAudioIndicators: jest.fn(),
       renderPreview: jest.fn(),
@@ -126,6 +137,7 @@ describe('GameScene orchestration', () => {
     };
 
     BoardRenderer.mockImplementation(() => boardRenderer);
+    OverlayRenderer.mockImplementation(() => overlayRenderer);
     UIRenderer.mockImplementation(() => uiRenderer);
     RetroMusic.mockImplementation(() => retroMusic);
     SoundEffects.mockImplementation(() => soundEffects);
@@ -145,6 +157,7 @@ describe('GameScene orchestration', () => {
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.START_SCREEN);
     expect(BoardRenderer).toHaveBeenCalledWith(scene, scene.gameState);
     expect(UIRenderer).toHaveBeenCalledWith(scene, scene.gameState);
+    expect(OverlayRenderer).toHaveBeenCalledWith(scene);
     expect(RetroMusic).toHaveBeenCalledWith(scene);
     expect(SoundEffects).toHaveBeenCalledWith(scene);
     expect(scene.audioController).toBeDefined();
@@ -156,25 +169,25 @@ describe('GameScene orchestration', () => {
     expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.SPACE);
     expect(scene.input.keyboard.on).toHaveBeenCalledWith('keydown', expect.any(Function));
     expect(scene.input.on).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+    expect(overlayRenderer.renderStartScreen).toHaveBeenCalledTimes(1);
   });
 
   test('start screen ignores pause key and starts gameplay from another input', () => {
     scene.create();
     const startTrigger = scene.input.keyboard.on.mock.calls.find(([event]) => event === 'keydown')[1];
-    const startElements = [...scene.startUIElements];
 
     startTrigger({ keyCode: Phaser.Input.Keyboard.KeyCodes.P });
 
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.START_SCREEN);
     expect(scene.input.keyboard.off).not.toHaveBeenCalled();
-    startElements.forEach((element) => expect(element.destroy).not.toHaveBeenCalled());
+    expect(overlayRenderer.clearStartScreen).not.toHaveBeenCalled();
 
     scene.time.now = 100;
     startTrigger({ keyCode: 65 });
 
     expect(scene.input.keyboard.off).toHaveBeenCalledWith('keydown', startTrigger);
     expect(scene.input.off).toHaveBeenCalledWith('pointerdown', startTrigger);
-    startElements.forEach((element) => expect(element.destroy).toHaveBeenCalled());
+    expect(overlayRenderer.clearStartScreen).toHaveBeenCalledTimes(1);
     expect(scene.inputController.pauseGuardUntil).toBe(300);
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.PLAYING);
     expect(scene.gameState.currentTetramino).toBeDefined();
@@ -232,7 +245,7 @@ describe('GameScene orchestration', () => {
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.PAUSED);
     expect(activeTimer.paused).toBe(true);
     expect(retroMusic.pause).toHaveBeenCalled();
-    expect(scene.pauseUIElements).toHaveLength(2);
+    expect(overlayRenderer.renderPauseScreen).toHaveBeenCalledTimes(1);
   });
 
   test('gameplay input delegates movement, rotation, and fast drop to game state and renderers', () => {
@@ -296,7 +309,7 @@ describe('GameScene orchestration', () => {
     expect(StorageManager.saveHighScore).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
     expect(StorageManager.updateStatistics).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.GAME_OVER);
-    expect(scene.gameOverUIElements).toHaveLength(3);
+    expect(overlayRenderer.renderGameOverScreen).toHaveBeenCalledTimes(1);
     expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.R);
     expect(soundEffects.playGameOver).toHaveBeenCalled();
     expect(retroMusic.stop).toHaveBeenCalled();
@@ -307,7 +320,6 @@ describe('GameScene orchestration', () => {
     scene.stateMachine.start();
     scene.stateMachine.consumeEvents();
     EventBus.emit(EVENTS.GAME_OVER);
-    const gameOverElements = [...scene.gameOverUIElements];
     const restartKey = scene.inputController.restartKey;
     const restartHandler = restartKey.on.mock.calls.find(([event]) => event === 'down')[1];
     jest.spyOn(scene.gameState, 'reset');
@@ -315,7 +327,7 @@ describe('GameScene orchestration', () => {
 
     restartHandler();
 
-    gameOverElements.forEach((element) => expect(element.destroy).toHaveBeenCalled());
+    expect(overlayRenderer.clearGameOverScreen).toHaveBeenCalledTimes(1);
     expect(restartKey.removeAllListeners).toHaveBeenCalled();
     expect(scene.gameState.reset).toHaveBeenCalledTimes(1);
     expect(uiRenderer.onScoreUpdated).toHaveBeenCalledWith(expect.objectContaining({ score: 0, level: 1 }));
