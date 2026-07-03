@@ -190,7 +190,8 @@ describe('GameScene orchestration', () => {
 
   test('update refreshes elapsed time and pauses active gameplay after the start guard expires', () => {
     scene.create();
-    scene.stateMachine.currentState = GAME_STATES.PLAYING;
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
     scene.verticalTimer = { paused: false, remove: jest.fn() };
     scene.justStarted = false;
     scene.time.now = 1000;
@@ -210,7 +211,8 @@ describe('GameScene orchestration', () => {
 
   test('gameplay input delegates movement, rotation, and fast drop to game state and renderers', () => {
     scene.create();
-    scene.stateMachine.currentState = GAME_STATES.PLAYING;
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
     scene.gameState.currentTetramino = { blocks: [] };
     jest.spyOn(scene.gameState, 'moveLeft').mockReturnValue(true);
     jest.spyOn(scene.gameState, 'rotate').mockReturnValue(true);
@@ -246,7 +248,8 @@ describe('GameScene orchestration', () => {
 
   test('game over stops the drop loop, saves score data, shows restart UI, and stops music', () => {
     scene.create();
-    scene.stateMachine.currentState = GAME_STATES.PLAYING;
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
     scene.verticalTimer = { remove: jest.fn() };
     jest.spyOn(scene.gameState, 'getGameOverStatsSnapshot').mockReturnValue({
       score: 2500,
@@ -273,7 +276,8 @@ describe('GameScene orchestration', () => {
 
   test('restart clears game-over UI, resets domain state, updates UI, and uses the restart transition', () => {
     scene.create();
-    scene.stateMachine.currentState = GAME_STATES.PLAYING;
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
     EventBus.emit(EVENTS.GAME_OVER);
     const gameOverElements = [...scene.gameOverUIElements];
     const restartKey = scene.restartKey;

@@ -8,8 +8,10 @@ export const GAME_STATES = {
 };
 
 export default class GameStateMachine {
+  #currentState;
+
   constructor() {
-    this.currentState = GAME_STATES.START_SCREEN;
+    this.#currentState = GAME_STATES.START_SCREEN;
     this.domainEvents = [];
   }
 
@@ -24,63 +26,53 @@ export default class GameStateMachine {
   }
 
   getState() {
-    return this.currentState;
+    return this.#currentState;
   }
 
   isState(state) {
-    return this.currentState === state;
+    return this.#currentState === state;
+  }
+
+  transitionResult(changed, from, to, event = null) {
+    return { changed, from, to, event };
+  }
+
+  transitionTo(allowedFromStates, to, event = null) {
+    const from = this.#currentState;
+
+    if (!allowedFromStates.includes(from)) {
+      return this.transitionResult(false, from, from);
+    }
+
+    this.#currentState = to;
+    if (event) {
+      this.recordEvent(event);
+    }
+
+    return this.transitionResult(true, from, to, event);
   }
 
   start() {
-    if (this.currentState === GAME_STATES.START_SCREEN || this.currentState === GAME_STATES.GAME_OVER) {
-      this.currentState = GAME_STATES.PLAYING;
-      this.recordEvent(EVENTS.GAME_START);
-      return true;
-    }
-    return false;
+    return this.transitionTo([GAME_STATES.START_SCREEN], GAME_STATES.PLAYING, EVENTS.GAME_START);
   }
 
   restart() {
-    if (this.currentState === GAME_STATES.GAME_OVER) {
-      this.currentState = GAME_STATES.PLAYING;
-      this.recordEvent(EVENTS.GAME_START);
-      return true;
-    }
-    return false;
+    return this.transitionTo([GAME_STATES.GAME_OVER], GAME_STATES.PLAYING, EVENTS.GAME_START);
   }
 
   markGameOver() {
-    if (this.currentState === GAME_STATES.PLAYING) {
-      this.currentState = GAME_STATES.GAME_OVER;
-      return true;
-    }
-    return false;
+    return this.transitionTo([GAME_STATES.PLAYING], GAME_STATES.GAME_OVER);
   }
 
   pause() {
-    if (this.currentState === GAME_STATES.PLAYING) {
-      this.currentState = GAME_STATES.PAUSED;
-      this.recordEvent(EVENTS.GAME_PAUSED);
-      return true;
-    }
-    return false;
+    return this.transitionTo([GAME_STATES.PLAYING], GAME_STATES.PAUSED, EVENTS.GAME_PAUSED);
   }
 
   resume() {
-    if (this.currentState === GAME_STATES.PAUSED) {
-      this.currentState = GAME_STATES.PLAYING;
-      this.recordEvent(EVENTS.GAME_RESUMED);
-      return true;
-    }
-    return false;
+    return this.transitionTo([GAME_STATES.PAUSED], GAME_STATES.PLAYING, EVENTS.GAME_RESUMED);
   }
 
   gameOver() {
-    if (this.currentState === GAME_STATES.PLAYING) {
-      this.currentState = GAME_STATES.GAME_OVER;
-      this.recordEvent(EVENTS.GAME_OVER);
-      return true;
-    }
-    return false;
+    return this.transitionTo([GAME_STATES.PLAYING], GAME_STATES.GAME_OVER, EVENTS.GAME_OVER);
   }
 }

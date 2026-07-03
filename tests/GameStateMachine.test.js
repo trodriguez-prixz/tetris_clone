@@ -33,7 +33,12 @@ describe('GameStateMachine', () => {
   test('starts the game from the start screen and records the start event', () => {
     const machine = createMachineInState(GAME_STATES.START_SCREEN);
 
-    expect(machine.start()).toBe(true);
+    expect(machine.start()).toEqual({
+      changed: true,
+      from: GAME_STATES.START_SCREEN,
+      to: GAME_STATES.PLAYING,
+      event: EVENTS.GAME_START
+    });
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
     expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_START, payload: undefined }]);
@@ -43,7 +48,12 @@ describe('GameStateMachine', () => {
     const machine = createMachineInState(GAME_STATES.GAME_OVER);
     machine.consumeEvents();
 
-    expect(machine.restart()).toBe(true);
+    expect(machine.restart()).toEqual({
+      changed: true,
+      from: GAME_STATES.GAME_OVER,
+      to: GAME_STATES.PLAYING,
+      event: EVENTS.GAME_START
+    });
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
     expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_START, payload: undefined }]);
@@ -53,7 +63,12 @@ describe('GameStateMachine', () => {
     const machine = createMachineInState(GAME_STATES.PLAYING);
     machine.consumeEvents();
 
-    expect(machine.markGameOver()).toBe(true);
+    expect(machine.markGameOver()).toEqual({
+      changed: true,
+      from: GAME_STATES.PLAYING,
+      to: GAME_STATES.GAME_OVER,
+      event: null
+    });
 
     expect(machine.getState()).toBe(GAME_STATES.GAME_OVER);
     expect(machine.consumeEvents()).toEqual([]);
@@ -63,7 +78,12 @@ describe('GameStateMachine', () => {
     const machine = createMachineInState(GAME_STATES.PLAYING);
     machine.consumeEvents();
 
-    expect(machine.pause()).toBe(true);
+    expect(machine.pause()).toEqual({
+      changed: true,
+      from: GAME_STATES.PLAYING,
+      to: GAME_STATES.PAUSED,
+      event: EVENTS.GAME_PAUSED
+    });
 
     expect(machine.getState()).toBe(GAME_STATES.PAUSED);
     expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_PAUSED, payload: undefined }]);
@@ -73,7 +93,12 @@ describe('GameStateMachine', () => {
     const machine = createMachineInState(GAME_STATES.PAUSED);
     machine.consumeEvents();
 
-    expect(machine.resume()).toBe(true);
+    expect(machine.resume()).toEqual({
+      changed: true,
+      from: GAME_STATES.PAUSED,
+      to: GAME_STATES.PLAYING,
+      event: EVENTS.GAME_RESUMED
+    });
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
     expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_RESUMED, payload: undefined }]);
@@ -83,7 +108,12 @@ describe('GameStateMachine', () => {
     const machine = createMachineInState(GAME_STATES.PLAYING);
     machine.consumeEvents();
 
-    expect(machine.gameOver()).toBe(true);
+    expect(machine.gameOver()).toEqual({
+      changed: true,
+      from: GAME_STATES.PLAYING,
+      to: GAME_STATES.GAME_OVER,
+      event: EVENTS.GAME_OVER
+    });
 
     expect(machine.getState()).toBe(GAME_STATES.GAME_OVER);
     expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_OVER, payload: undefined }]);
@@ -94,7 +124,7 @@ describe('GameStateMachine', () => {
       [GAME_STATES.START_SCREEN, ['pause', 'resume', 'gameOver']],
       [GAME_STATES.PLAYING, ['start', 'restart', 'resume']],
       [GAME_STATES.PAUSED, ['start', 'restart', 'pause', 'gameOver', 'markGameOver']],
-      [GAME_STATES.GAME_OVER, ['pause', 'resume', 'gameOver', 'markGameOver']]
+      [GAME_STATES.GAME_OVER, ['start', 'pause', 'resume', 'gameOver', 'markGameOver']]
     ];
 
     invalidTransitions.forEach(([state, actions]) => {
@@ -102,7 +132,12 @@ describe('GameStateMachine', () => {
         const machine = createMachineInState(state);
         machine.consumeEvents();
 
-        expect(machine[action]()).toBe(false);
+        expect(machine[action]()).toEqual({
+          changed: false,
+          from: state,
+          to: state,
+          event: null
+        });
         expect(machine.getState()).toBe(state);
         expect(machine.consumeEvents()).toEqual([]);
       });

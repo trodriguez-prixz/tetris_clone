@@ -54,7 +54,8 @@ This plan is the single source of truth for improving the project's architecture
   - 2026-07-03: Added `GameState.getGameOverStatsSnapshot()` to finalize elapsed time and expose serializable game-over score stats while keeping storage persistence in `GameScene`; task 2 is complete.
 - [x] Keep Phaser-specific objects out of core rule modules.
   - 2026-07-03: Removed direct dependency on the Phaser-backed `EventBus` from core rule modules. `GameState` and `GameStateMachine` now record plain domain event descriptors for the scene/infrastructure layer to emit, and a regression test locks the Phaser boundary.
-- [ ] Ensure `GameState` and `GameStateMachine` expose clear state transitions.
+- [x] Ensure `GameState` and `GameStateMachine` expose clear state transitions.
+  - 2026-07-03: Made `GameStateMachine` state private, routed lifecycle changes through a named transition helper, returned explicit transition result objects, and kept `start()` limited to the start screen while `restart()` owns game-over restarts.
 - [ ] Update tests alongside each extraction.
 
 **Rule-coupling inventory**
@@ -182,6 +183,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 1 task 4 completed by making lifecycle transitions explicit through `GameStateMachine` result objects and removing external direct state mutation seams from production/tests. |
 | 2026-07-03 | Phase 1 task 3 completed by moving core rule modules off the Phaser-backed `EventBus`; `EventBus` remains an infrastructure boundary used by scene/rendering code. |
 | 2026-07-03 | Phase 1 task 2 completed with a stable game-over stats snapshot exposed from `GameState`; Phase 1 task 3/4/5 remain not started. |
 | 2026-07-03 | Phase 1 task 2 started with a safe soft-drop extraction into `GameState`; task remains partially complete. |
