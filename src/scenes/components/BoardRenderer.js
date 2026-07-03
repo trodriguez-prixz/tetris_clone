@@ -29,12 +29,12 @@ export default class BoardRenderer {
   constructor(scene, gameState) {
     this.scene = scene;
     this.gameState = gameState;
-    this.visualBlocks = new Map(); // map logic Block reference -> Phaser Rectangle
-    this.activeBlocks = []; // Phaser Rectangles for the falling piece
+    // Track locked block objects so removed rows can animate before their rectangles are destroyed.
+    this.visualBlocks = new Map();
+    this.activeBlocks = [];
     
     this.drawBackground();
     
-    // Listeners
     EventBus.on(EVENTS.TETRAMINO_LOCKED, this.handleTetraminoLocked, this);
     EventBus.on(EVENTS.LINES_CLEARED, this.handleLinesCleared, this);
   }
@@ -86,11 +86,9 @@ export default class BoardRenderer {
   }
   
   update() {
-    // Clear old active blocks visually
     this.activeBlocks.forEach(b => b.destroy());
     this.activeBlocks = [];
     
-    // Draw falling piece
     const activeTetra = this.gameState.currentTetramino;
     if (activeTetra) {
       activeTetra.blocks.forEach(lb => {
@@ -120,12 +118,11 @@ export default class BoardRenderer {
          }
      }
      
-     // Remove old
-     for (const [lb, vb] of this.visualBlocks.entries()) {
-         if (!currentLogicBlocks.has(lb)) {
-             
-             // Animated destroy
-             this.scene.tweens.add({
+      for (const [lb, vb] of this.visualBlocks.entries()) {
+          if (!currentLogicBlocks.has(lb)) {
+              
+              // Animate removed locked blocks so cleared rows fade instead of disappearing.
+              this.scene.tweens.add({
                   targets: vb,
                   scaleX: CLEARED_BLOCK_SHRINK_SCALE,
                   scaleY: CLEARED_BLOCK_SHRINK_SCALE,
@@ -139,7 +136,6 @@ export default class BoardRenderer {
   }
 
   handleTetraminoLocked(blocks) {
-      // Visual feedback for locking could go here, e.g. a small flash
   }
   
   handleLinesCleared(rows) {

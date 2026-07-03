@@ -16,7 +16,7 @@ This plan is the single source of truth for improving the project's architecture
 | 0. Refactor safety baseline | `[x]` | Protect current behavior before architecture changes. |
 | 1. Game domain extraction | `[x]` | Keep Tetris rules testable without Phaser. |
 | 2. Scene orchestration cleanup | `[x]` | Make `GameScene` coordinate instead of owning every concern. |
-| 3. Rendering and UI design boundaries | `[~]` | Separate visual layout from game rules. |
+| 3. Rendering and UI design boundaries | `[x]` | Separate visual layout from game rules. |
 | 4. Event communication cleanup | `[ ]` | Make module communication explicit and consistent. |
 | 5. Quality tooling | `[ ]` | Add minimal automated checks for safer maintenance. |
 | 6. Platform and packaging verification | `[ ]` | Preserve web, Express, and Electron delivery paths. |
@@ -107,13 +107,14 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
   - 2026-07-03: Added shared rendered-block inset and panel-border width constants, named board particle/animation details locally, and grouped UI/overlay text and animation layout constants without moving overlay ownership.
 - [x] Keep board rendering, active piece rendering, score display, preview, and overlays separated in `src/scenes/components/`.
   - 2026-07-03: Moved start/pause/game-over overlays into `OverlayRenderer` and split sidebar score, preview, and audio indicator rendering behind focused components while keeping `GameScene` as coordinator.
-- [ ] Keep code comments in English and focused on intent or non-obvious behavior.
+- [x] Keep code comments in English and focused on intent or non-obvious behavior.
+  - 2026-07-03: Removed noisy rendering/settings comments and kept only intent-focused comments for non-obvious tetramino pivots and cleared-row animation behavior.
 
 **Exit criteria**
 
-- [ ] Visual layout can change without editing core gameplay rules.
-- [ ] Rendering components have clear ownership.
-- [ ] `npm test` passes.
+- [x] Visual layout can change without editing core gameplay rules.
+- [x] Rendering components have clear ownership.
+- [x] `npm test` passes.
 
 ## Phase 4 — Event communication cleanup
 
@@ -187,6 +188,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 3 task 4 completed by pruning stale/noisy rendering comments; focused scene tests and full `npm test` pass, closing Phase 3 exit criteria. |
 | 2026-07-03 | Phase 3 task 3 completed by moving overlays out of `GameScene` and separating sidebar score, preview, and audio indicator rendering into focused scene components; Phase 3 task 4 and exit criteria remain open. |
 | 2026-07-03 | Phase 3 task 2 completed by naming shared rendering measurements and local visual-effect/layout details in `GameScene`, `BoardRenderer`, and `UIRenderer`; Phase 3 task 3/4 and exit criteria remain open. |
 | 2026-07-03 | Phase 3 task 1 completed by consolidating shared color, preview-cell, elapsed-time, and input timing constants into `src/config/settings.js`; Phase 3 task 2/3/4 and exit criteria remain open. |
