@@ -63,7 +63,9 @@ export default class ScoreDisplayRenderer {
     this.timeText.setText(`Time: ${this.gameState.score.formatTime(time)}`);
   }
 
-  onScoreUpdated(stats) {
+  onScoreUpdated({ stats } = {}) {
+    if (!stats) return;
+
     if (this.scoreText.text !== `Score: ${this.formatNumber(stats.score)}`) {
       this.scoreText.setText(`Score: ${this.formatNumber(stats.score)}`);
       this.animateTextUpdate(this.scoreText);
@@ -79,8 +81,10 @@ export default class ScoreDisplayRenderer {
     }
   }
 
-  onLevelUp(newLevel) {
-    this.levelText.setText(`Level: ${newLevel}`);
+  onLevelUp({ level } = {}) {
+    if (level === undefined) return;
+
+    this.levelText.setText(`Level: ${level}`);
     this.animateLevelUp(this.levelText);
   }
 

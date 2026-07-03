@@ -46,12 +46,12 @@ export default class UIRenderer {
       this.scoreDisplayRenderer.updateTime(time);
   }
 
-  onScoreUpdated(stats) {
-      this.scoreDisplayRenderer.onScoreUpdated(stats);
+  onScoreUpdated(payload) {
+      this.scoreDisplayRenderer.onScoreUpdated(payload);
   }
 
-  onLevelUp(newLevel) {
-      this.scoreDisplayRenderer.onLevelUp(newLevel);
+  onLevelUp(payload) {
+      this.scoreDisplayRenderer.onLevelUp(payload);
   }
 
   updateAudioIndicators(musicMuted, soundEnabled) {

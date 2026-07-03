@@ -126,7 +126,8 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
   - 2026-07-03: Removed unused `PIECE_PLACED` and `HARD_DROP` constants from `GameEvents`. Active events now match current producers/consumers: lifecycle events use no payload, preview/game-over use no payload, `LINES_CLEARED` uses row indexes, `TETRAMINO_LOCKED` uses locked block objects, `SCORE_UPDATED` uses score stats, and `LEVEL_UP` uses the new level number.
 - [x] Centralize any remaining ad hoc event names.
   - 2026-07-03: Verified EventBus producers/consumers and domain `recordEvent` calls in `src/` and `tests/`; game-domain events already use `EVENTS` constants. Remaining string event names are Phaser input/API events or the explicit `GameEvents` inventory test.
-- [ ] Define predictable payload shapes for important events.
+- [x] Define predictable payload shapes for important events.
+  - 2026-07-03: Non-empty gameplay event payloads now use named object fields: `LINES_CLEARED` emits `{ rows }`, `TETRAMINO_LOCKED` emits `{ blocks }`, `SCORE_UPDATED` emits `{ stats }`, and `LEVEL_UP` emits `{ level }`. Lifecycle, preview, and game-over events remain no-payload (`undefined`) because consumers do not need event data.
 - [ ] Remove event flows that duplicate direct state reads without adding value.
 
 **Exit criteria**

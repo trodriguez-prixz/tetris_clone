@@ -166,7 +166,7 @@ describe('GameState', () => {
     expect(result).toEqual({ moved: false, locked: true, spawned: true, gameOver: false });
     expect(gameState.consumeEvents()).toEqual([
       { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined },
-      { type: EVENTS.TETRAMINO_LOCKED, payload: expect.any(Array) },
+      { type: EVENTS.TETRAMINO_LOCKED, payload: { blocks: expect.any(Array) } },
       { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined }
     ]);
     expect(gameState.score.getAllStats().pieces).toBe(1);
@@ -188,7 +188,7 @@ describe('GameState', () => {
     expect(result).toEqual({ moved: false, locked: true, spawned: false, gameOver: true });
     expect(gameState.consumeEvents()).toEqual([
       { type: EVENTS.NEXT_SHAPE_UPDATED, payload: undefined },
-      { type: EVENTS.TETRAMINO_LOCKED, payload: expect.any(Array) },
+      { type: EVENTS.TETRAMINO_LOCKED, payload: { blocks: expect.any(Array) } },
       { type: EVENTS.GAME_OVER, payload: undefined }
     ]);
     expect(gameState.currentTetramino).toBeNull();
@@ -206,8 +206,8 @@ describe('GameState', () => {
     expect(fallingBlock.getLogicalPosition()).toEqual({ x: 3, y: GRID_ROWS - 1 });
     expect(gameState.score.getAllStats()).toEqual(expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 }));
     expect(gameState.consumeEvents()).toEqual([
-      { type: EVENTS.LINES_CLEARED, payload: [GRID_ROWS - 1] },
-      { type: EVENTS.SCORE_UPDATED, payload: expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 }) }
+      { type: EVENTS.LINES_CLEARED, payload: { rows: [GRID_ROWS - 1] } },
+      { type: EVENTS.SCORE_UPDATED, payload: { stats: expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 }) } }
     ]);
   });
 
@@ -223,9 +223,9 @@ describe('GameState', () => {
     expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED * LEVEL_SPEED_MULTIPLIER);
     expect(gameState.dropSpeed).toBe(gameState.baseDropSpeed);
     expect(gameState.consumeEvents()).toEqual([
-      { type: EVENTS.LINES_CLEARED, payload: [GRID_ROWS - 1] },
-      { type: EVENTS.SCORE_UPDATED, payload: expect.objectContaining({ level: 2 }) },
-      { type: EVENTS.LEVEL_UP, payload: 2 }
+      { type: EVENTS.LINES_CLEARED, payload: { rows: [GRID_ROWS - 1] } },
+      { type: EVENTS.SCORE_UPDATED, payload: { stats: expect.objectContaining({ level: 2 }) } },
+      { type: EVENTS.LEVEL_UP, payload: { level: 2 } }
     ]);
   });
 });

@@ -220,8 +220,8 @@ describe('GameScene orchestration', () => {
   test('audio controller reacts to gameplay audio events', () => {
     scene.create();
 
-    EventBus.emit(EVENTS.LINES_CLEARED, [0, 1]);
-    EventBus.emit(EVENTS.LEVEL_UP, 2);
+    EventBus.emit(EVENTS.LINES_CLEARED, { rows: [0, 1] });
+    EventBus.emit(EVENTS.LEVEL_UP, { level: 2 });
 
     expect(soundEffects.playLineClear).toHaveBeenCalledWith(2);
     expect(soundEffects.playLevelUp).toHaveBeenCalled();
@@ -330,8 +330,8 @@ describe('GameScene orchestration', () => {
     expect(overlayRenderer.clearGameOverScreen).toHaveBeenCalledTimes(1);
     expect(restartKey.removeAllListeners).toHaveBeenCalled();
     expect(scene.gameState.reset).toHaveBeenCalledTimes(1);
-    expect(uiRenderer.onScoreUpdated).toHaveBeenCalledWith(expect.objectContaining({ score: 0, level: 1 }));
-    expect(uiRenderer.onLevelUp).toHaveBeenCalledWith(1);
+    expect(uiRenderer.onScoreUpdated).toHaveBeenCalledWith({ stats: expect.objectContaining({ score: 0, level: 1 }) });
+    expect(uiRenderer.onLevelUp).toHaveBeenCalledWith({ level: 1 });
     expect(scene.stateMachine.restart).toHaveBeenCalledTimes(1);
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.PLAYING);
     expect(scene.gameState.currentTetramino).toBeDefined();

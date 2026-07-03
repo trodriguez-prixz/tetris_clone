@@ -245,8 +245,8 @@ export default class GameScene extends Phaser.Scene {
 
   resetGameForRestart() {
     this.gameState.reset();
-    this.uiRenderer.onScoreUpdated(this.gameState.score.getAllStats());
-    this.uiRenderer.onLevelUp(1);
+    this.uiRenderer.onScoreUpdated({ stats: this.gameState.score.getAllStats() });
+    this.uiRenderer.onLevelUp({ level: 1 });
     this.boardRenderer.update();
   }
 

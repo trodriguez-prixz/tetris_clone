@@ -135,10 +135,11 @@ export default class BoardRenderer {
      }
   }
 
-  handleTetraminoLocked(blocks) {
+  handleTetraminoLocked({ blocks } = {}) {
   }
   
-  handleLinesCleared(rows) {
+  handleLinesCleared({ rows } = {}) {
+      if (!rows) return;
       rows.forEach(row => {
           this.createLineClearParticles(row, rows.length);
       });

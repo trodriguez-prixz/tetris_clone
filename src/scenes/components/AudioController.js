@@ -90,7 +90,9 @@ export default class AudioController {
     if (this.soundEffects) this.soundEffects.playRotate();
   }
 
-  onLinesCleared(rows) {
+  onLinesCleared({ rows } = {}) {
+    if (!rows) return;
+
     if (this.soundEffects) this.soundEffects.playLineClear(rows.length);
   }
 

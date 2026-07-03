@@ -179,7 +179,7 @@ export default class GameState {
     const blocks = this.currentTetramino.blocks;
     this.currentTetramino = null;
     
-    this.recordEvent(EVENTS.TETRAMINO_LOCKED, blocks);
+    this.recordEvent(EVENTS.TETRAMINO_LOCKED, { blocks });
     this.checkFinishedRows();
     
     const spawned = this.spawnTetramino();
@@ -215,7 +215,7 @@ export default class GameState {
     
     if (rowsToClear.length > 0) {
       // Pass the logically cleared rows down to whoever listens
-      this.recordEvent(EVENTS.LINES_CLEARED, rowsToClear);
+      this.recordEvent(EVENTS.LINES_CLEARED, { rows: rowsToClear });
       this.clearRowsAndApplyGravity(rowsToClear);
     }
   }
@@ -244,11 +244,11 @@ export default class GameState {
       });
       
       const levelIncreased = this.score.addScore(rowsToClear.length);
-      this.recordEvent(EVENTS.SCORE_UPDATED, this.score.getAllStats());
+      this.recordEvent(EVENTS.SCORE_UPDATED, { stats: this.score.getAllStats() });
       if (levelIncreased) {
           this.baseDropSpeed = Math.max(50, this.baseDropSpeed * LEVEL_SPEED_MULTIPLIER);
           this.dropSpeed = this.baseDropSpeed;
-          this.recordEvent(EVENTS.LEVEL_UP, this.score.getLevel());
+          this.recordEvent(EVENTS.LEVEL_UP, { level: this.score.getLevel() });
       }
   }
 }
