@@ -43,6 +43,20 @@ export default class GameState {
     };
   }
 
+  getGameOverStatsSnapshot() {
+    this.score.updateGameTime();
+    const stats = this.score.getAllStats();
+
+    return {
+      score: stats.score,
+      level: stats.level,
+      lines: stats.lines,
+      pieces: stats.pieces,
+      tetrises: stats.tetrises,
+      gameTime: stats.gameTime
+    };
+  }
+
   getRandomShapeType() {
     const types = Object.keys(TETRAMINOS);
     return types[Math.floor(Math.random() * types.length)];

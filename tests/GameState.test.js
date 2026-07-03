@@ -110,6 +110,31 @@ describe('GameState', () => {
     expect(gameState.currentTetramino).toBeNull();
   });
 
+  test('getGameOverStatsSnapshot finalizes time and returns stable serializable score stats', () => {
+    jest.spyOn(gameState.score, 'updateGameTime');
+    jest.spyOn(gameState.score, 'getAllStats').mockReturnValue({
+      score: 1200,
+      level: 3,
+      lines: 12,
+      pieces: 24,
+      tetrises: 2,
+      gameTime: 90,
+      ignored: 'not persisted'
+    });
+
+    const snapshot = gameState.getGameOverStatsSnapshot();
+
+    expect(gameState.score.updateGameTime).toHaveBeenCalledTimes(1);
+    expect(snapshot).toEqual({
+      score: 1200,
+      level: 3,
+      lines: 12,
+      pieces: 24,
+      tetrises: 2,
+      gameTime: 90
+    });
+  });
+
   test('spawnTetramino returns false and preserves the current state when the spawn area is blocked', () => {
     const previewUpdates = jest.fn();
     EventBus.on(EVENTS.NEXT_SHAPE_UPDATED, previewUpdates);

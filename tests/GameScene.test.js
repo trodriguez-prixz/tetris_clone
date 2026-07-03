@@ -248,8 +248,7 @@ describe('GameScene orchestration', () => {
     scene.create();
     scene.stateMachine.currentState = GAME_STATES.PLAYING;
     scene.verticalTimer = { remove: jest.fn() };
-    jest.spyOn(scene.gameState.score, 'updateGameTime');
-    jest.spyOn(scene.gameState.score, 'getAllStats').mockReturnValue({
+    jest.spyOn(scene.gameState, 'getGameOverStatsSnapshot').mockReturnValue({
       score: 2500,
       lines: 4,
       level: 2,
@@ -262,7 +261,7 @@ describe('GameScene orchestration', () => {
     EventBus.emit(EVENTS.GAME_OVER);
 
     expect(scene.verticalTimer.remove).toHaveBeenCalled();
-    expect(scene.gameState.score.updateGameTime).toHaveBeenCalled();
+    expect(scene.gameState.getGameOverStatsSnapshot).toHaveBeenCalledTimes(1);
     expect(StorageManager.saveHighScore).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
     expect(StorageManager.updateStatistics).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.GAME_OVER);

@@ -249,9 +249,8 @@ export default class GameScene extends Phaser.Scene {
     this.stateMachine.markGameOver();
 
     if (this.verticalTimer) this.verticalTimer.remove();
-    this.gameState.score.updateGameTime();
-    
-    const stats = this.gameState.score.getAllStats();
+
+    const stats = this.gameState.getGameOverStatsSnapshot();
     if (stats.score > StorageManager.getBestScore()) {
         StorageManager.saveHighScore(stats);
     }
