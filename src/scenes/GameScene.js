@@ -140,8 +140,7 @@ export default class GameScene extends Phaser.Scene {
     }
     
     if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
-        this.gameState.updateTick();
-        this.boardRenderer.update();
+        this.handleFallTick();
         if (this.gameState.startSoftDrop()) {
             this.startVerticalTimer();
         }
@@ -171,6 +170,14 @@ export default class GameScene extends Phaser.Scene {
       }
   }
 
+  handleFallTick() {
+      const result = this.gameState.updateTick();
+      if (result.moved || result.locked || result.spawned || result.gameOver) {
+          this.boardRenderer.update();
+      }
+      return result;
+  }
+
   onGameStart() {
       this.gameState.score.startTimer();
       this.uiRenderer.renderPreview();
@@ -190,8 +197,7 @@ export default class GameScene extends Phaser.Scene {
     this.verticalTimer = this.time.addEvent({
       delay: this.gameState.dropSpeed,
       callback: () => {
-        this.gameState.updateTick();
-        this.boardRenderer.update();
+        this.handleFallTick();
       },
       loop: true
     });

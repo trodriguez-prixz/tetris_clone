@@ -39,12 +39,23 @@ export default class GameState {
 
   // Core update cycle for falling piece
   updateTick() {
-    if (!this.currentTetramino) return;
+    const result = {
+      moved: false,
+      locked: false,
+      spawned: false,
+      gameOver: false
+    };
+
+    if (!this.currentTetramino) return result;
 
     if (this.currentTetramino.nextMoveVerticalCollide(this.fieldData)) {
-      this.lockTetramino();
+      return this.lockTetramino();
     } else {
       this.currentTetramino.moveDown();
+      return {
+        ...result,
+        moved: true
+      };
     }
   }
 
@@ -110,7 +121,14 @@ export default class GameState {
   }
 
   lockTetramino() {
-    if (!this.currentTetramino) return;
+    const result = {
+      moved: false,
+      locked: false,
+      spawned: false,
+      gameOver: false
+    };
+
+    if (!this.currentTetramino) return result;
     
     this.score.incrementPiecesPlaced();
     const positions = this.currentTetramino.getBlockPositions();
@@ -127,9 +145,19 @@ export default class GameState {
     EventBus.emit(EVENTS.TETRAMINO_LOCKED, blocks);
     this.checkFinishedRows();
     
-    if (!this.spawnTetramino()) {
+    const spawned = this.spawnTetramino();
+    const lockResult = {
+        ...result,
+        locked: true,
+        spawned,
+        gameOver: !spawned
+    };
+
+    if (!spawned) {
         EventBus.emit(EVENTS.GAME_OVER);
     }
+
+    return lockResult;
   }
 
   checkFinishedRows() {

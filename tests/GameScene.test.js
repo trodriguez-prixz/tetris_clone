@@ -214,7 +214,7 @@ describe('GameScene orchestration', () => {
     scene.gameState.currentTetramino = { blocks: [] };
     jest.spyOn(scene.gameState, 'moveLeft').mockReturnValue(true);
     jest.spyOn(scene.gameState, 'rotate').mockReturnValue(true);
-    jest.spyOn(scene.gameState, 'updateTick').mockImplementation(() => {});
+    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({ moved: true, locked: false, spawned: false, gameOver: false });
     Phaser.Input.Keyboard.JustDown.mockImplementation((key) => (
       key === scene.cursors.left || key === scene.cursors.up || key === scene.cursors.down
     ));
@@ -230,6 +230,18 @@ describe('GameScene orchestration', () => {
     expect(scene.gameState.dropSpeed).toBe(FAST_DROP_SPEED);
     expect(scene.gameState.softDropActive).toBe(true);
     expect(scene.time.addEvent).toHaveBeenCalledWith(expect.objectContaining({ delay: FAST_DROP_SPEED }));
+  });
+
+  test('vertical timer renders through the fall tick result wrapper', () => {
+    scene.create();
+    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({ moved: false, locked: true, spawned: true, gameOver: false });
+
+    scene.startVerticalTimer();
+    const timerConfig = scene.time.addEvent.mock.calls.at(-1)[0];
+    timerConfig.callback();
+
+    expect(scene.gameState.updateTick).toHaveBeenCalled();
+    expect(boardRenderer.update).toHaveBeenCalled();
   });
 
   test('game over stops the drop loop, saves score data, shows restart UI, and stops music', () => {

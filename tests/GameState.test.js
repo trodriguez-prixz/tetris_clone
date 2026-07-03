@@ -97,19 +97,20 @@ describe('GameState', () => {
     expect(previewUpdates).not.toHaveBeenCalled();
   });
 
-  test('updateTick moves the active piece down while no vertical collision exists', () => {
+  test('updateTick returns a moved result while moving the active piece down', () => {
     gameState.nextShapes = ['O', 'I', 'T'];
     gameState.spawnTetramino();
     const initialPositions = gameState.currentTetramino.getBlockPositions().map(pos => ({ ...pos }));
 
-    gameState.updateTick();
+    const result = gameState.updateTick();
 
+    expect(result).toEqual({ moved: true, locked: false, spawned: false, gameOver: false });
     expect(gameState.currentTetramino.getBlockPositions()).toEqual(
       initialPositions.map(pos => ({ x: pos.x, y: pos.y + 1 }))
     );
   });
 
-  test('updateTick locks a colliding piece, updates score state, and spawns the next piece', () => {
+  test('updateTick returns a lock result while locking and spawning the next piece', () => {
     const locked = jest.fn();
     EventBus.on(EVENTS.TETRAMINO_LOCKED, locked);
     gameState.nextShapes = ['O', 'I', 'T'];
@@ -118,13 +119,31 @@ describe('GameState', () => {
       gameState.currentTetramino.moveDown();
     }
 
-    gameState.updateTick();
+    const result = gameState.updateTick();
 
+    expect(result).toEqual({ moved: false, locked: true, spawned: true, gameOver: false });
     expect(locked).toHaveBeenCalledTimes(1);
     expect(gameState.score.getAllStats().pieces).toBe(1);
     expect(gameState.currentTetramino.type).toBe('I');
     expect(gameState.fieldData[GRID_ROWS - 2][4]).not.toBeNull();
     expect(gameState.fieldData[GRID_ROWS - 1][5]).not.toBeNull();
+  });
+
+  test('updateTick returns a game-over result when locking cannot spawn a new piece', () => {
+    const gameOver = jest.fn();
+    EventBus.on(EVENTS.GAME_OVER, gameOver);
+    gameState.nextShapes = ['O', 'O', 'T'];
+    gameState.spawnTetramino();
+    for (let i = 0; i < GRID_ROWS - 2; i++) {
+      gameState.currentTetramino.moveDown();
+    }
+    gameState.fieldData[1][4] = new Block(4, 1, 0xffffff);
+
+    const result = gameState.updateTick();
+
+    expect(result).toEqual({ moved: false, locked: true, spawned: false, gameOver: true });
+    expect(gameOver).toHaveBeenCalledTimes(1);
+    expect(gameState.currentTetramino).toBeNull();
   });
 
   test('checkFinishedRows clears completed rows, applies gravity, scores, and emits events', () => {
