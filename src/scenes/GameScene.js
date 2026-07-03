@@ -1,13 +1,12 @@
 import Phaser from 'phaser';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../config/settings.js';
-import { RetroMusic } from '../utils/retroMusic.js';
-import { SoundEffects } from '../utils/soundEffects.js';
 import { StorageManager } from '../utils/storage.js';
 
 import EventBus, { EVENTS } from '../events/EventBus.js';
 import GameState from '../logic/GameState.js';
 import GameStateMachine, { GAME_STATES } from '../logic/GameStateMachine.js';
 
+import AudioController from './components/AudioController.js';
 import BoardRenderer from './components/BoardRenderer.js';
 import DropLoopController from './components/DropLoopController.js';
 import InputController from './components/InputController.js';
@@ -40,28 +39,10 @@ export default class GameScene extends Phaser.Scene {
     
     this.showStartScreen();
   }
-  
-  setupAudio() {
-    this.musicMuted = false;
-    try {
-      this.retroMusic = new RetroMusic(this);
-      if (this.retroMusic.init()) this.musicStarted = false;
-      else this.retroMusic = null;
-    } catch (e) { this.retroMusic = null; }
-    
-    try {
-      this.soundEffects = new SoundEffects(this);
-      if (!this.soundEffects.init()) this.soundEffects = null;
-    } catch (e) { this.soundEffects = null; }
 
-    this.uiRenderer.updateAudioIndicators(this.musicMuted, this.soundEffects ? this.soundEffects.isEnabled() : false);
-    
-    EventBus.on(EVENTS.LINES_CLEARED, (r) => { if(this.soundEffects) this.soundEffects.playLineClear(r.length); }, this);
-    EventBus.on(EVENTS.LEVEL_UP, () => { if(this.soundEffects) this.soundEffects.playLevelUp(); }, this);
-    EventBus.on(EVENTS.GAME_OVER, () => { 
-        if(this.soundEffects) this.soundEffects.playGameOver(); 
-        if(this.retroMusic) this.retroMusic.stop();
-    }, this);
+  setupAudio() {
+    this.audioController = new AudioController(this, this.uiRenderer);
+    this.audioController.setup();
   }
 
   setupInputs() {
@@ -77,27 +58,13 @@ export default class GameScene extends Phaser.Scene {
     });
     this.inputController.setup();
   }
-  
+
   toggleMusic() {
-    this.musicMuted = !this.musicMuted;
-    if (this.retroMusic) {
-      if (this.musicMuted) {
-        this.retroMusic.stop();
-        this.musicStarted = false;
-      } else if (this.stateMachine.isState(GAME_STATES.PLAYING)) {
-        this.retroMusic.play();
-        this.musicStarted = true;
-      }
-    }
-    this.uiRenderer.updateAudioIndicators(this.musicMuted, this.soundEffects ? this.soundEffects.isEnabled() : false);
+    this.audioController.toggleMusic(this.stateMachine.isState(GAME_STATES.PLAYING));
   }
-  
+
   toggleSoundEffects() {
-    if (this.soundEffects) {
-      const enabled = this.soundEffects.toggle();
-      this.uiRenderer.updateAudioIndicators(this.musicMuted, enabled);
-      if (enabled) this.soundEffects.playMove();
-    }
+    this.audioController.toggleSoundEffects();
   }
 
   update() {
@@ -135,7 +102,7 @@ export default class GameScene extends Phaser.Scene {
   tryMove(dir) {
       const moved = dir === -1 ? this.gameState.moveLeft() : this.gameState.moveRight();
       if (moved) {
-          if (this.soundEffects) this.soundEffects.playMove();
+          this.audioController.playMove();
           this.boardRenderer.update();
       }
       return moved;
@@ -143,7 +110,7 @@ export default class GameScene extends Phaser.Scene {
 
   tryRotate() {
       if (this.gameState.rotate()) {
-          if (this.soundEffects) this.soundEffects.playRotate();
+          this.audioController.playRotate();
           this.boardRenderer.update();
       }
   }
@@ -179,10 +146,7 @@ export default class GameScene extends Phaser.Scene {
       this.emitDomainEvents(this.gameState.consumeEvents());
       this.uiRenderer.renderPreview();
       
-      if (this.retroMusic && !this.musicMuted && !this.musicStarted) {
-          this.retroMusic.play();
-          this.musicStarted = true;
-      }
+      this.audioController.startMusic();
       
       if (startResult.spawned) {
           this.boardRenderer.update();
@@ -209,7 +173,7 @@ export default class GameScene extends Phaser.Scene {
 
   showPauseScreen() {
     this.dropLoopController.pause();
-    if (this.retroMusic) this.retroMusic.pause();
+    this.audioController.pauseMusic();
     
     const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.7);
     const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'PAUSED', { fontSize: '64px', fill: '#f39c12', fontStyle: 'bold' }).setOrigin(0.5);
@@ -218,7 +182,7 @@ export default class GameScene extends Phaser.Scene {
 
   hidePauseScreen() {
     this.dropLoopController.resume();
-    if (this.retroMusic) this.retroMusic.resume();
+    this.audioController.resumeMusic();
     
     if (this.pauseUIElements) {
         this.pauseUIElements.forEach(el => el.destroy());
@@ -258,10 +222,7 @@ export default class GameScene extends Phaser.Scene {
     this.uiRenderer.onLevelUp(1);
     this.boardRenderer.update();
     
-    if (this.retroMusic && !this.musicMuted) {
-      this.retroMusic.play();
-      this.musicStarted = true;
-    }
+    this.audioController.startMusic();
     
     this.stateMachine.restart();
     this.emitDomainEvents(this.stateMachine.consumeEvents());

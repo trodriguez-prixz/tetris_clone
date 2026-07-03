@@ -147,6 +147,7 @@ describe('GameScene orchestration', () => {
     expect(UIRenderer).toHaveBeenCalledWith(scene, scene.gameState);
     expect(RetroMusic).toHaveBeenCalledWith(scene);
     expect(SoundEffects).toHaveBeenCalledWith(scene);
+    expect(scene.audioController).toBeDefined();
     expect(uiRenderer.updateAudioIndicators).toHaveBeenCalledWith(false, true);
     expect(scene.input.keyboard.createCursorKeys).toHaveBeenCalled();
     expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.M);
@@ -202,6 +203,16 @@ describe('GameScene orchestration', () => {
     expect(soundEffects.toggle).toHaveBeenCalledTimes(1);
     expect(uiRenderer.updateAudioIndicators).toHaveBeenCalledWith(true, true);
     expect(uiRenderer.updateAudioIndicators).toHaveBeenCalledWith(true, false);
+  });
+
+  test('audio controller reacts to gameplay audio events', () => {
+    scene.create();
+
+    EventBus.emit(EVENTS.LINES_CLEARED, [0, 1]);
+    EventBus.emit(EVENTS.LEVEL_UP, 2);
+
+    expect(soundEffects.playLineClear).toHaveBeenCalledWith(2);
+    expect(soundEffects.playLevelUp).toHaveBeenCalled();
   });
 
   test('update refreshes elapsed time and pauses active gameplay after the start guard expires', () => {
