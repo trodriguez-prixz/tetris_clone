@@ -17,7 +17,7 @@ This plan is the single source of truth for improving the project's architecture
 | 1. Game domain extraction | `[x]` | Keep Tetris rules testable without Phaser. |
 | 2. Scene orchestration cleanup | `[x]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[x]` | Separate visual layout from game rules. |
-| 4. Event communication cleanup | `[ ]` | Make module communication explicit and consistent. |
+| 4. Event communication cleanup | `[~]` | Make module communication explicit and consistent. |
 | 5. Quality tooling | `[ ]` | Add minimal automated checks for safer maintenance. |
 | 6. Platform and packaging verification | `[ ]` | Preserve web, Express, and Electron delivery paths. |
 | 7. Architecture documentation | `[ ]` | Record the final structure and update agent guidance if needed. |
@@ -122,7 +122,8 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Tasks**
 
-- [ ] Review `src/events/EventBus.js` for event names and payload consistency.
+- [x] Review `src/events/EventBus.js` for event names and payload consistency.
+  - 2026-07-03: Removed unused `PIECE_PLACED` and `HARD_DROP` constants from `GameEvents`. Active events now match current producers/consumers: lifecycle events use no payload, preview/game-over use no payload, `LINES_CLEARED` uses row indexes, `TETRAMINO_LOCKED` uses locked block objects, `SCORE_UPDATED` uses score stats, and `LEVEL_UP` uses the new level number.
 - [ ] Centralize any remaining ad hoc event names.
 - [ ] Define predictable payload shapes for important events.
 - [ ] Remove event flows that duplicate direct state reads without adding value.

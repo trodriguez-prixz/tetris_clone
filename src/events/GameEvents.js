@@ -7,7 +7,5 @@ export const EVENTS = {
   SCORE_UPDATED: 'score-updated',
   LINES_CLEARED: 'lines-cleared',
   TETRAMINO_LOCKED: 'tetramino-locked',
-  PIECE_PLACED: 'piece-placed',
-  HARD_DROP: 'hard-drop',
   NEXT_SHAPE_UPDATED: 'next-shape-updated'
 };
