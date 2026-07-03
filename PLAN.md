@@ -162,14 +162,14 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 **Tasks**
 
 - [x] Verify Vite still builds with `base: './'`.
-- [ ] Verify Express still serves `dist/` through `server.js` and `Procfile`.
+- [x] Verify Express still serves `dist/` through `server.js` and `Procfile`.
 - [ ] Verify Electron dev still expects Vite at `http://localhost:3000`.
 - [ ] Verify packaged Electron still loads `dist/index.html`.
 
 **Exit criteria**
 
 - [x] `npm run build` succeeds.
-- [ ] Web production serving assumptions remain valid.
+- [x] Web production serving assumptions remain valid.
 - [ ] Electron dev/package assumptions remain valid.
 
 ## Phase 7 — Architecture documentation
@@ -193,6 +193,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 6 task 2 completed by verifying `Procfile` runs `node server.js`, Express serves `dist/` statically, SPA fallback returns `dist/index.html`, and a local smoke test passes for `/`, a built asset, and a fallback route. |
 | 2026-07-03 | Phase 6 task 1 completed by verifying Vite keeps `base: './'`, outputs to `dist/` with `assets/`, manually chunks Phaser, and `npm run build` succeeds. |
 | 2026-07-03 | Phase 5 task 4 completed by collecting coverage and deferring thresholds until coverage is stable and meaningful; Phase 5 exit criteria are now closed. |
 | 2026-07-03 | Phase 3 task 4 completed by pruning stale/noisy rendering comments; focused scene tests and full `npm test` pass, closing Phase 3 exit criteria. |
