@@ -14,7 +14,7 @@ This plan is the single source of truth for improving the project's architecture
 | Phase | Status | Goal |
 |-------|--------|------|
 | 0. Refactor safety baseline | `[x]` | Protect current behavior before architecture changes. |
-| 1. Game domain extraction | `[~]` | Keep Tetris rules testable without Phaser. |
+| 1. Game domain extraction | `[x]` | Keep Tetris rules testable without Phaser. |
 | 2. Scene orchestration cleanup | `[ ]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[ ]` | Separate visual layout from game rules. |
 | 4. Event communication cleanup | `[ ]` | Make module communication explicit and consistent. |
@@ -56,7 +56,7 @@ This plan is the single source of truth for improving the project's architecture
   - 2026-07-03: Removed direct dependency on the Phaser-backed `EventBus` from core rule modules. `GameState` and `GameStateMachine` now record plain domain event descriptors for the scene/infrastructure layer to emit, and a regression test locks the Phaser boundary.
 - [x] Ensure `GameState` and `GameStateMachine` expose clear state transitions.
   - 2026-07-03: Made `GameStateMachine` state private, routed lifecycle changes through a named transition helper, returned explicit transition result objects, and kept `start()` limited to the start screen while `restart()` owns game-over restarts.
-- [ ] Update tests alongside each extraction.
+- [x] Update tests alongside each extraction.
 
 **Rule-coupling inventory**
 
@@ -72,9 +72,9 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Exit criteria**
 
-- [ ] Core game rules can be tested without constructing a Phaser scene.
-- [ ] `GameScene` delegates rule decisions to logic/domain modules.
-- [ ] `npm test` passes.
+- [x] Core game rules can be tested without constructing a Phaser scene.
+- [x] `GameScene` delegates rule decisions to logic/domain modules.
+- [x] `npm test` passes.
 
 ## Phase 2 — Scene orchestration cleanup
 
@@ -183,6 +183,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 1 task 5 completed by verifying updated `GameState`, `GameStateMachine`, `GameScene`, and Phaser boundary tests; focused Phase 1 tests and full `npm test` pass, closing Phase 1 exit criteria. |
 | 2026-07-03 | Phase 1 task 4 completed by making lifecycle transitions explicit through `GameStateMachine` result objects and removing external direct state mutation seams from production/tests. |
 | 2026-07-03 | Phase 1 task 3 completed by moving core rule modules off the Phaser-backed `EventBus`; `EventBus` remains an infrastructure boundary used by scene/rendering code. |
 | 2026-07-03 | Phase 1 task 2 completed with a stable game-over stats snapshot exposed from `GameState`; Phase 1 task 3/4/5 remain not started. |
