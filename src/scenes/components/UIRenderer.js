@@ -1,4 +1,4 @@
-import { SIDEBAR_X, SIDEBAR_Y, SIDEBAR_WIDTH, PREVIEW_AREA_HEIGHT, SCORE_AREA_HEIGHT, PADDING, CANVAS_HEIGHT, TETRAMINOS } from '../../config/settings.js';
+import { SIDEBAR_X, SIDEBAR_Y, SIDEBAR_WIDTH, PREVIEW_AREA_HEIGHT, SCORE_AREA_HEIGHT, PADDING, CANVAS_HEIGHT, TETRAMINOS, COLORS, PREVIEW_CELL_SIZE } from '../../config/settings.js';
 import EventBus, { EVENTS } from '../../events/EventBus.js';
 import { StorageManager } from '../../utils/storage.js';
 
@@ -33,7 +33,7 @@ export default class UIRenderer {
       SIDEBAR_Y + PREVIEW_AREA_HEIGHT / 2,
       SIDEBAR_WIDTH - PADDING,
       PREVIEW_AREA_HEIGHT,
-      0x2c3e50, 0xecf0f1
+      COLORS.PANEL_BACKGROUND, COLORS.PANEL_BORDER
     );
 
     const scoreAreaY = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING + SCORE_AREA_HEIGHT / 2;
@@ -42,7 +42,7 @@ export default class UIRenderer {
       scoreAreaY,
       SIDEBAR_WIDTH - PADDING,
       SCORE_AREA_HEIGHT,
-      0x2c3e50, 0xecf0f1
+      COLORS.PANEL_BACKGROUND, COLORS.PANEL_BORDER
     );
   }
 
@@ -57,22 +57,22 @@ export default class UIRenderer {
     const uiX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
     const scoreAreaTop = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING;
 
-    this.scene.add.text(uiX, scoreAreaTop + 15, 'STATS', { fontSize: '18px', fill: '#bdc3c7', fontStyle: 'bold' }).setOrigin(0.5);
-    this.scoreText = this.scene.add.text(uiX, scoreAreaTop + 45, 'Score: 0', { fontSize: '20px', fill: '#ecf0f1', fontStyle: 'bold' }).setOrigin(0.5);
-    this.levelText = this.scene.add.text(uiX, scoreAreaTop + 75, 'Level: 1', { fontSize: '20px', fill: '#ecf0f1', fontStyle: 'bold' }).setOrigin(0.5);
-    this.linesText = this.scene.add.text(uiX, scoreAreaTop + 100, 'Lines: 0', { fontSize: '20px', fill: '#ecf0f1', fontStyle: 'bold' }).setOrigin(0.5);
+    this.scene.add.text(uiX, scoreAreaTop + 15, 'STATS', { fontSize: '18px', fill: COLORS.HEADER_TEXT, fontStyle: 'bold' }).setOrigin(0.5);
+    this.scoreText = this.scene.add.text(uiX, scoreAreaTop + 45, 'Score: 0', { fontSize: '20px', fill: COLORS.PRIMARY_TEXT, fontStyle: 'bold' }).setOrigin(0.5);
+    this.levelText = this.scene.add.text(uiX, scoreAreaTop + 75, 'Level: 1', { fontSize: '20px', fill: COLORS.PRIMARY_TEXT, fontStyle: 'bold' }).setOrigin(0.5);
+    this.linesText = this.scene.add.text(uiX, scoreAreaTop + 100, 'Lines: 0', { fontSize: '20px', fill: COLORS.PRIMARY_TEXT, fontStyle: 'bold' }).setOrigin(0.5);
 
     const bestScore = StorageManager.getBestScore();
-    this.highScoreText = this.scene.add.text(uiX, scoreAreaTop + 130, `Best: ${this.formatNumber(bestScore)}`, { fontSize: '16px', fill: '#f39c12', fontStyle: 'bold' }).setOrigin(0.5);
+    this.highScoreText = this.scene.add.text(uiX, scoreAreaTop + 130, `Best: ${this.formatNumber(bestScore)}`, { fontSize: '16px', fill: COLORS.WARNING, fontStyle: 'bold' }).setOrigin(0.5);
     
-    this.timeText = this.scene.add.text(uiX, scoreAreaTop + 155, 'Time: 0:00', { fontSize: '16px', fill: '#95a5a6' }).setOrigin(0.5);
-    this.piecesText = this.scene.add.text(uiX, scoreAreaTop + 180, 'Pieces: 0', { fontSize: '16px', fill: '#95a5a6' }).setOrigin(0.5);
-    this.tetrisesText = this.scene.add.text(uiX, scoreAreaTop + 205, 'Tetrises: 0', { fontSize: '16px', fill: '#95a5a6' }).setOrigin(0.5);
+    this.timeText = this.scene.add.text(uiX, scoreAreaTop + 155, 'Time: 0:00', { fontSize: '16px', fill: COLORS.SECONDARY_TEXT }).setOrigin(0.5);
+    this.piecesText = this.scene.add.text(uiX, scoreAreaTop + 180, 'Pieces: 0', { fontSize: '16px', fill: COLORS.SECONDARY_TEXT }).setOrigin(0.5);
+    this.tetrisesText = this.scene.add.text(uiX, scoreAreaTop + 205, 'Tetrises: 0', { fontSize: '16px', fill: COLORS.SECONDARY_TEXT }).setOrigin(0.5);
 
     const sidebarBottom = CANVAS_HEIGHT - PADDING;
-    this.scene.add.text(uiX, sidebarBottom - 20, 'M: Música | S: Sonidos', { fontSize: '12px', fill: '#7f8c8d' }).setOrigin(0.5);
-    this.soundEffectsIndicator = this.scene.add.text(uiX, sidebarBottom - 50, '🔊 Sonidos: ON', { fontSize: '16px', fill: '#95a5a6' }).setOrigin(0.5);
-    this.musicIndicator = this.scene.add.text(uiX, sidebarBottom - 75, '🔊 Música: ON', { fontSize: '16px', fill: '#95a5a6' }).setOrigin(0.5);
+    this.scene.add.text(uiX, sidebarBottom - 20, 'M: Música | S: Sonidos', { fontSize: '12px', fill: COLORS.MUTED_TEXT }).setOrigin(0.5);
+    this.soundEffectsIndicator = this.scene.add.text(uiX, sidebarBottom - 50, '🔊 Sonidos: ON', { fontSize: '16px', fill: COLORS.SECONDARY_TEXT }).setOrigin(0.5);
+    this.musicIndicator = this.scene.add.text(uiX, sidebarBottom - 75, '🔊 Música: ON', { fontSize: '16px', fill: COLORS.SECONDARY_TEXT }).setOrigin(0.5);
   }
 
   formatNumber(num) {
@@ -98,7 +98,7 @@ export default class UIRenderer {
       const bestScore = StorageManager.getBestScore();
       if (stats.score > bestScore) {
           this.highScoreText.setText(`Best: ${this.formatNumber(stats.score)}`);
-          this.highScoreText.setFill('#e74c3c');
+          this.highScoreText.setFill(COLORS.DANGER);
       }
   }
 
@@ -110,11 +110,11 @@ export default class UIRenderer {
   updateAudioIndicators(musicMuted, soundEnabled) {
       if (this.musicIndicator) {
         this.musicIndicator.setText(musicMuted ? '🔇 Música: OFF' : '🔊 Música: ON');
-        this.musicIndicator.setFill(musicMuted ? '#e74c3c' : '#2ecc71');
+        this.musicIndicator.setFill(musicMuted ? COLORS.DANGER : COLORS.SUCCESS);
       }
       if (this.soundEffectsIndicator) {
         this.soundEffectsIndicator.setText(!soundEnabled ? '🔇 Sonidos: OFF' : '🔊 Sonidos: ON');
-        this.soundEffectsIndicator.setFill(!soundEnabled ? '#e74c3c' : '#2ecc71');
+        this.soundEffectsIndicator.setFill(!soundEnabled ? COLORS.DANGER : COLORS.SUCCESS);
       }
   }
 
@@ -125,7 +125,7 @@ export default class UIRenderer {
     const previewAreaWidth = SIDEBAR_WIDTH - PADDING;
     const previewAreaLeft = SIDEBAR_X + PADDING / 2;
     const segmentHeight = (PREVIEW_AREA_HEIGHT - PADDING * 2) / 3;
-    const cellSize = 20;
+    const cellSize = PREVIEW_CELL_SIZE;
     
     this.gameState.nextShapes.forEach((shapeType, index) => {
       const tetData = TETRAMINOS[shapeType];

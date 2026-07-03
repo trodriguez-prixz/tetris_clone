@@ -24,6 +24,23 @@ export const SIDEBAR_Y = PADDING;
 // Preview area dimensions (within sidebar)
 export const PREVIEW_AREA_HEIGHT = 200;
 export const SCORE_AREA_HEIGHT = 280;
+export const PREVIEW_CELL_SIZE = CELL_SIZE / 2;
+
+// Shared colors
+export const COLORS = {
+  BACKGROUND: 0x34495e,
+  PANEL_BACKGROUND: 0x2c3e50,
+  PANEL_BORDER: 0xecf0f1,
+  OVERLAY: 0x000000,
+  GRID_LINE: 0x34495e,
+  PRIMARY_TEXT: '#ecf0f1',
+  SECONDARY_TEXT: '#95a5a6',
+  MUTED_TEXT: '#7f8c8d',
+  HEADER_TEXT: '#bdc3c7',
+  DANGER: '#e74c3c',
+  SUCCESS: '#2ecc71',
+  WARNING: '#f39c12'
+};
 
 // Tetraminos definitions
 // Each tetramino is defined by relative positions from a pivot point (0, 0)
@@ -113,3 +130,8 @@ export const LEVEL_SPEED_MULTIPLIER = 0.75;
 // Lines per level
 export const LINES_PER_LEVEL = 10;
 
+// Scene timing (milliseconds)
+export const ELAPSED_TIME_UPDATE_INTERVAL = 1000;
+export const HORIZONTAL_MOVE_DELAY = 200;
+export const ROTATE_DELAY = 150;
+export const START_INPUT_PAUSE_GUARD_DURATION = 200;

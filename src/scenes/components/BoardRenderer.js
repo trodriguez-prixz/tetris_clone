@@ -1,4 +1,4 @@
-import { CELL_SIZE, GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, GRID_COLS, GRID_ROWS } from '../../config/settings.js';
+import { CELL_SIZE, COLORS, GAME_AREA_X, GAME_AREA_Y, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, GRID_COLS, GRID_ROWS } from '../../config/settings.js';
 import EventBus, { EVENTS } from '../../events/EventBus.js';
 
 export default class BoardRenderer {
@@ -21,8 +21,8 @@ export default class BoardRenderer {
       GAME_AREA_Y + GAME_AREA_HEIGHT / 2,
       GAME_AREA_WIDTH,
       GAME_AREA_HEIGHT,
-      0x2c3e50,
-      0xecf0f1
+      COLORS.PANEL_BACKGROUND,
+      COLORS.PANEL_BORDER
     );
     this.drawGridLines();
   }
@@ -36,7 +36,7 @@ export default class BoardRenderer {
 
   drawGridLines() {
     const graphics = this.scene.add.graphics();
-    const gridLineColor = 0x34495e;
+    const gridLineColor = COLORS.GRID_LINE;
     const gridLineAlpha = 0.3;
     const gridLineWidth = 1;
 

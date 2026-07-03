@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../config/settings.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, ELAPSED_TIME_UPDATE_INTERVAL } from '../config/settings.js';
 import { StorageManager } from '../utils/storage.js';
 
 import EventBus, { EVENTS } from '../events/EventBus.js';
@@ -27,7 +27,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   drawBackground() {
-    this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x34495e);
+    this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLORS.BACKGROUND);
   }
 
   initializeGameState() {
@@ -90,7 +90,7 @@ export default class GameScene extends Phaser.Scene {
 
   updateElapsedTime(now) {
     if (this.stateMachine.isState(GAME_STATES.PLAYING)) {
-        if (now - this.timeUpdateThrottle >= 1000) {
+        if (now - this.timeUpdateThrottle >= ELAPSED_TIME_UPDATE_INTERVAL) {
             this.gameState.score.updateGameTime();
             this.uiRenderer.updateTime(this.gameState.score.getGameTime());
             this.timeUpdateThrottle = now;
@@ -177,9 +177,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   renderStartScreen() {
-    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.8);
-    const titleText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 200, 'TETRIS', { fontSize: '64px', fill: '#e74c3c', fontStyle: 'bold' }).setOrigin(0.5);
-    const startText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 100, 'Presiona cualquier tecla', { fontSize: '24px', fill: '#2ecc71', fontStyle: 'bold' }).setOrigin(0.5);
+    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLORS.OVERLAY, 0.8);
+    const titleText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 200, 'TETRIS', { fontSize: '64px', fill: COLORS.DANGER, fontStyle: 'bold' }).setOrigin(0.5);
+    const startText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 100, 'Presiona cualquier tecla', { fontSize: '24px', fill: COLORS.SUCCESS, fontStyle: 'bold' }).setOrigin(0.5);
     this.tweens.add({ targets: startText, alpha: 0.3, duration: 800, yoyo: true, repeat: -1 });
 
     return [overlay, titleText, startText];
@@ -199,8 +199,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   renderPauseScreen() {
-    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.7);
-    const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'PAUSED', { fontSize: '64px', fill: '#f39c12', fontStyle: 'bold' }).setOrigin(0.5);
+    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLORS.OVERLAY, 0.7);
+    const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 'PAUSED', { fontSize: '64px', fill: COLORS.WARNING, fontStyle: 'bold' }).setOrigin(0.5);
 
     return [overlay, text];
   }
@@ -237,9 +237,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showGameOverScreen() {
-    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, 0x000000, 0.7);
-    const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 60, 'GAME OVER', { fontSize: '48px', fill: '#e74c3c', fontStyle: 'bold' }).setOrigin(0.5);
-    const restartText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60, 'Press R to Restart', { fontSize: '20px', fill: '#95a5a6' }).setOrigin(0.5);
+    const overlay = this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLORS.OVERLAY, 0.7);
+    const text = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 60, 'GAME OVER', { fontSize: '48px', fill: COLORS.DANGER, fontStyle: 'bold' }).setOrigin(0.5);
+    const restartText = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60, 'Press R to Restart', { fontSize: '20px', fill: COLORS.SECONDARY_TEXT }).setOrigin(0.5);
     this.gameOverUIElements = [overlay, text, restartText];
   }
 
