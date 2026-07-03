@@ -144,7 +144,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 **Tasks**
 
 - [x] Add a formatter configuration.
-- [ ] Add a linter configuration.
+- [x] Add a linter configuration.
 - [ ] Add a simple CI workflow that runs install, tests, and build.
 - [ ] Decide whether coverage thresholds are useful after the safety baseline exists.
 
