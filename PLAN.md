@@ -13,7 +13,7 @@ This plan is the single source of truth for improving the project's architecture
 
 | Phase | Status | Goal |
 |-------|--------|------|
-| 0. Refactor safety baseline | `[ ]` | Protect current behavior before architecture changes. |
+| 0. Refactor safety baseline | `[x]` | Protect current behavior before architecture changes. |
 | 1. Game domain extraction | `[ ]` | Keep Tetris rules testable without Phaser. |
 | 2. Scene orchestration cleanup | `[ ]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[ ]` | Separate visual layout from game rules. |
@@ -36,9 +36,9 @@ This plan is the single source of truth for improving the project's architecture
 
 **Exit criteria**
 
-- [ ] `npm test` passes.
-- [ ] Focused scene tests can run with `npm test -- tests/GameScene.test.js`.
-- [ ] Main gameplay behavior is protected before structural refactors begin.
+- [x] `npm test` passes.
+- [x] Focused scene tests can run with `npm test -- tests/GameScene.test.js`.
+- [x] Main gameplay behavior is protected before structural refactors begin.
 
 ## Phase 1 — Game domain extraction
 

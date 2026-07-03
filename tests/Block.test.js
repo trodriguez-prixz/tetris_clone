@@ -1,59 +1,42 @@
 import Block from '../src/classes/Block.js';
-import { CELL_SIZE, GAME_AREA_X, GAME_AREA_Y } from '../src/config/settings.js';
 
 describe('Block', () => {
-  let scene;
   let block;
 
   beforeEach(() => {
-    // Mock Phaser scene
-    scene = {
-      add: {
-        existing: jest.fn()
-      }
-    };
-    
-    block = new Block(scene, 5, 10, 0xff0000);
+    block = new Block(5, 10, 0xff0000);
   });
 
-  test('Block is instantiated with correct logical position', () => {
-    expect(block.logicalPos.x).toBe(5);
-    expect(block.logicalPos.y).toBe(10);
+  test('stores the initial logical position and color', () => {
+    expect(block.x).toBe(5);
+    expect(block.y).toBe(10);
+    expect(block.color).toBe(0xff0000);
   });
 
-  test('Block calculates pixel position correctly', () => {
-    const expectedX = GAME_AREA_X + (5 * CELL_SIZE) + (CELL_SIZE / 2);
-    const expectedY = GAME_AREA_Y + (10 * CELL_SIZE) + (CELL_SIZE / 2);
-    
-    expect(block.x).toBe(expectedX);
-    expect(block.y).toBe(expectedY);
-  });
-
-  test('setLogicalPosition updates both logical and pixel positions', () => {
+  test('setLogicalPosition updates the logical position without changing color', () => {
     block.setLogicalPosition(3, 7);
-    
-    expect(block.logicalPos.x).toBe(3);
-    expect(block.logicalPos.y).toBe(7);
-    
-    const expectedX = GAME_AREA_X + (3 * CELL_SIZE) + (CELL_SIZE / 2);
-    const expectedY = GAME_AREA_Y + (7 * CELL_SIZE) + (CELL_SIZE / 2);
-    
-    expect(block.x).toBe(expectedX);
-    expect(block.y).toBe(expectedY);
+
+    expect(block.x).toBe(3);
+    expect(block.y).toBe(7);
+    expect(block.color).toBe(0xff0000);
   });
 
-  test('getLogicalPosition returns logical position reference', () => {
-    const pos = block.getLogicalPosition();
-    expect(pos.x).toBe(5);
-    expect(pos.y).toBe(10);
-    expect(pos).toBe(block.logicalPos); // Returns reference for performance
+  test('getLogicalPosition returns the current logical position', () => {
+    expect(block.getLogicalPosition()).toEqual({ x: 5, y: 10 });
+
+    block.setLogicalPosition(3, 7);
+
+    expect(block.getLogicalPosition()).toEqual({ x: 3, y: 7 });
   });
 
-  test('getLogicalPositionCopy returns a clone of logical position', () => {
+  test('getLogicalPositionCopy returns an independent logical position value', () => {
     const pos = block.getLogicalPositionCopy();
-    expect(pos.x).toBe(5);
-    expect(pos.y).toBe(10);
-    expect(pos).not.toBe(block.logicalPos); // Should be a clone
+
+    expect(pos).toEqual({ x: 5, y: 10 });
+
+    pos.x = 1;
+    pos.y = 2;
+
+    expect(block.getLogicalPosition()).toEqual({ x: 5, y: 10 });
   });
 });
-
