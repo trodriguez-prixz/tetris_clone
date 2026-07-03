@@ -18,7 +18,7 @@ This plan is the single source of truth for improving the project's architecture
 | 2. Scene orchestration cleanup | `[x]` | Make `GameScene` coordinate instead of owning every concern. |
 | 3. Rendering and UI design boundaries | `[x]` | Separate visual layout from game rules. |
 | 4. Event communication cleanup | `[x]` | Make module communication explicit and consistent. |
-| 5. Quality tooling | `[~]` | Add minimal automated checks for safer maintenance. |
+| 5. Quality tooling | `[x]` | Add minimal automated checks for safer maintenance. |
 | 6. Platform and packaging verification | `[ ]` | Preserve web, Express, and Electron delivery paths. |
 | 7. Architecture documentation | `[ ]` | Record the final structure and update agent guidance if needed. |
 
@@ -145,14 +145,15 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 - [x] Add a formatter configuration.
 - [x] Add a linter configuration.
-- [ ] Add a simple CI workflow that runs install, tests, and build.
-- [ ] Decide whether coverage thresholds are useful after the safety baseline exists.
+- [x] Add a simple CI workflow that runs install, tests, and build.
+- [x] Decide whether coverage thresholds are useful after the safety baseline exists.
+  - 2026-07-03: Deferred coverage thresholds for now. Coverage collection passes, but aggregate coverage is pulled down by intentionally untested renderer/platform utility modules, so a global threshold would be arbitrary and could block useful architecture work instead of protecting meaningful behavior. Revisit after those modules have focused tests or after stable per-scope thresholds are justified.
 
 **Exit criteria**
 
-- [ ] Contributors have a documented verification path.
-- [ ] CI catches broken tests or builds.
-- [ ] Tooling does not conflict with Vite, Jest, Express, or Electron packaging.
+- [x] Contributors have a documented verification path.
+- [x] CI catches broken tests or builds.
+- [x] Tooling does not conflict with Vite, Jest, Express, or Electron packaging.
 
 ## Phase 6 — Platform and packaging verification
 
@@ -192,6 +193,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 5 task 4 completed by collecting coverage and deferring thresholds until coverage is stable and meaningful; Phase 5 exit criteria are now closed. |
 | 2026-07-03 | Phase 3 task 4 completed by pruning stale/noisy rendering comments; focused scene tests and full `npm test` pass, closing Phase 3 exit criteria. |
 | 2026-07-03 | Phase 3 task 3 completed by moving overlays out of `GameScene` and separating sidebar score, preview, and audio indicator rendering into focused scene components; Phase 3 task 4 and exit criteria remain open. |
 | 2026-07-03 | Phase 3 task 2 completed by naming shared rendering measurements and local visual-effect/layout details in `GameScene`, `BoardRenderer`, and `UIRenderer`; Phase 3 task 3/4 and exit criteria remain open. |
