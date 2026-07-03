@@ -46,11 +46,23 @@ This plan is the single source of truth for improving the project's architecture
 
 **Tasks**
 
-- [ ] Identify rule logic currently coupled to `GameScene`.
+- [x] Identify rule logic currently coupled to `GameScene`.
 - [ ] Move board state, collision, rotation, line clearing, scoring, and falling behavior into `src/logic/` or existing domain classes.
 - [ ] Keep Phaser-specific objects out of core rule modules.
 - [ ] Ensure `GameState` and `GameStateMachine` expose clear state transitions.
 - [ ] Update tests alongside each extraction.
+
+**Rule-coupling inventory**
+
+| Area in `GameScene` | Current coupling | Proposed extraction target/order |
+|---------------------|------------------|----------------------------------|
+| Input repeat gates | Horizontal move and rotation throttles live in scene time checks (`horizontalMoveDelay`, `rotateDelay`, `lastMoveTime`, `lastRotateTime`). | 1. Extract input intent/rate decisions after preserving scene input behavior. |
+| Soft drop behavior | Down key directly mutates `gameState.dropSpeed`, restarts the Phaser timer, and tracks `isFastDrop`. | 2. Move drop-mode state and speed selection behind logic methods; scene keeps timer wiring. |
+| Fall tick orchestration | Scene timer callback decides when to call `gameState.updateTick()` and render. | 3. Keep Phaser timer in scene, but route falling intent through a clear logic transition/result. |
+| Start/restart spawn flow | Scene starts score timer, spawns the first tetramino, resets score/UI state, and manually sets machine state on restart. | 4. Add explicit start/restart transitions in logic/state machine; scene reacts to results. |
+| Game-over persistence boundary | Scene reads score stats and decides high-score/statistics updates immediately after game over. | 5. Keep storage in scene/platform layer, but expose a stable game-over stats snapshot from logic. |
+
+Existing pure-rule homes: board occupancy, collision, rotation, line clearing, scoring, level speed updates, and piece locking already primarily live in `GameState`, `Tetramino`, and `Score`. Future extraction should avoid moving Phaser rendering, keyboard APIs, audio, storage APIs, or timers into rule modules.
 
 **Exit criteria**
 
