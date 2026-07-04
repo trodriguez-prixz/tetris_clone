@@ -252,6 +252,43 @@ describe('GameState', () => {
     ]);
   });
 
+  test('checkFinishedRows clears all completed rows in a multi-line clear', () => {
+    const fallingBlock = new Block(3, GRID_ROWS - 3, 0xff0000);
+    gameState.fieldData[GRID_ROWS - 3][3] = fallingBlock;
+    gameState.fieldData[GRID_ROWS - 2] = createFilledRow(GRID_ROWS - 2);
+    gameState.fieldData[GRID_ROWS - 1] = createFilledRow(GRID_ROWS - 1);
+
+    gameState.checkFinishedRows();
+
+    expect(gameState.fieldData[GRID_ROWS - 3][3]).toBeNull();
+    expect(gameState.fieldData[GRID_ROWS - 2][3]).toBeNull();
+    expect(gameState.fieldData[GRID_ROWS - 1][3]).toBe(fallingBlock);
+    expect(fallingBlock.getLogicalPosition()).toEqual({
+      x: 3,
+      y: GRID_ROWS - 1
+    });
+    expect(gameState.score.getAllStats()).toEqual(
+      expect.objectContaining({ score: 100, level: 1, lines: 2, pieces: 0 })
+    );
+    expect(gameState.consumeEvents()).toEqual([
+      {
+        type: EVENTS.LINES_CLEARED,
+        payload: { rows: [GRID_ROWS - 1, GRID_ROWS - 2] }
+      },
+      {
+        type: EVENTS.SCORE_UPDATED,
+        payload: {
+          stats: expect.objectContaining({
+            score: 100,
+            level: 1,
+            lines: 2,
+            pieces: 0
+          })
+        }
+      }
+    ]);
+  });
+
   test('clearing enough lines updates level and drop speed', () => {
     for (let i = 0; i < 9; i++) {
       gameState.score.addScore(1);

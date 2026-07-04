@@ -240,27 +240,27 @@ export default class GameState {
   }
 
   clearRowsAndApplyGravity(rowsToClear) {
-    // 1. Logically nullify those rows
-    rowsToClear.forEach((row) => {
-      for (var col = 0; col < GRID_COLS; col++) {
-        this.fieldData[row][col] = null;
-      }
-    });
+    const clearedRows = new Set(rowsToClear);
+    const compactedFieldData = Array(GRID_ROWS)
+      .fill(null)
+      .map(() => Array(GRID_COLS).fill(null));
+    let writeRow = GRID_ROWS - 1;
 
-    // 2. Cascade down blocks above the cleared rows
-    rowsToClear.sort((a, b) => b - a);
-    rowsToClear.forEach((clearedRow) => {
-      for (let row = clearedRow - 1; row >= 0; row--) {
-        for (let col = 0; col < GRID_COLS; col++) {
-          if (this.fieldData[row][col] !== null) {
-            const block = this.fieldData[row][col];
-            block.setLogicalPosition(block.x, block.y + 1);
-            this.fieldData[row + 1][col] = block;
-            this.fieldData[row][col] = null;
-          }
+    for (let row = GRID_ROWS - 1; row >= 0; row--) {
+      if (clearedRows.has(row)) continue;
+
+      for (let col = 0; col < GRID_COLS; col++) {
+        const block = this.fieldData[row][col];
+        if (block !== null) {
+          block.setLogicalPosition(col, writeRow);
+          compactedFieldData[writeRow][col] = block;
         }
       }
-    });
+
+      writeRow--;
+    }
+
+    this.fieldData = compactedFieldData;
 
     const levelIncreased = this.score.addScore(rowsToClear.length);
     this.recordEvent(EVENTS.SCORE_UPDATED, { stats: this.score.getAllStats() });
