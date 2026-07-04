@@ -11,11 +11,11 @@
 ## High-value paths
 
 - `src/config/settings.js` — grid, canvas, tetraminos, colors, scoring, timing constants.
-- `src/classes/` — `Block`, `Tetramino`, `Score` domain classes.
-- `src/logic/` — `GameState` and `GameStateMachine`; core gameplay state outside Phaser rendering.
-- `src/events/EventBus.js` — singleton Phaser event bus and event names.
-- `src/scenes/GameScene.js` — Phaser scene orchestration: audio, input, timers, renderers.
-- `src/scenes/components/` — board and UI rendering helpers.
+- `src/classes/` — small pure domain models: `Block`, `Tetramino`, and `Score`.
+- `src/logic/` — pure gameplay flow/rules, state transitions, and plain domain event descriptors; no Phaser, rendering, timers, audio, storage, or EventBus emission.
+- `src/events/` — shared event contract (`GameEvents.js`) and Phaser-backed singleton bus (`EventBus.js`).
+- `src/scenes/GameScene.js` — Phaser runtime orchestration: state wiring, storage, audio, input, timers, rendering updates, and domain-event emission.
+- `src/scenes/components/` — Phaser-facing collaborators for rendering/effects, UI, overlays, input, audio control, and drop-loop timers; no durable game rules or event-name definitions.
 - `tests/__mocks__/phaser.js` and `tests/setup.js` — Phaser/browser API mocks for Jest.
 
 ## Commands
@@ -24,6 +24,8 @@
 - Dev server: `npm run dev` (Vite opens port 3000)
 - Unit tests: `npm test`
 - Watch tests: `npm run test:watch`
+- Lint: `npm run lint`
+- Format check/write: `npm run format:check` / `npm run format`
 - Build web app: `npm run build`
 - Electron dev: run `npm run dev` first, then `NODE_ENV=development npm run electron` if you need the dev URL path.
 - Electron package: run `npm run build` first, then `npm run build:electron:mac` or `npm run build:electron:linux`.
@@ -36,12 +38,15 @@
 - Jest maps `phaser` to `tests/__mocks__/phaser.js`; add mock APIs there when production code uses new Phaser APIs.
 - Jest maps `@/` to `src/`, but Vite does not. Do not use `@/` imports in application source.
 - Coverage excludes `src/main.js` and `src/utils/retroMusic.js`.
-- No lint, formatter, typecheck, CI, or pre-commit config is currently present.
+- CI runs on Node 20 with `npm ci`, `npm run lint`, `npm test`, and `npm run build`.
+- Prettier ignores `.atl/` and `package-lock.json`; do not use formatter output to rewrite those files.
+- No typecheck or pre-commit config is currently present.
 
 ## Code rules
 
 - Use relative ES module imports with explicit `.js` extensions in `src/`.
 - Keep game constants and layout numbers in `src/config/settings.js`; avoid scattering magic numbers.
+- Keep EventBus names centralized in `src/events/GameEvents.js`; non-empty gameplay payloads use named object fields such as `{ rows }`, `{ stats }`, or `{ level }`.
 - Keep code comments in English and focused on intent or non-obvious behavior.
 - Preserve CommonJS in `electron/main.cjs`; do not convert it to ESM.
 - Add or update Jest tests when changing `src/classes/`, `src/logic/`, `src/utils/`, or scene behavior.

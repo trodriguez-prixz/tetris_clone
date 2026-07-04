@@ -179,7 +179,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 **Tasks**
 
 - [x] Document the final ownership of `src/logic/`, `src/classes/`, `src/scenes/`, `src/scenes/components/`, and `src/events/`.
-- [ ] Update `AGENTS.md` if new repo-specific rules or gotchas were introduced.
+- [x] Update `AGENTS.md` if new repo-specific rules or gotchas were introduced.
 - [ ] Keep documentation compact and focused on facts future agents would likely miss.
 
 **Final ownership**
