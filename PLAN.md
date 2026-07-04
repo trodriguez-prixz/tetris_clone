@@ -20,7 +20,7 @@ This plan is the single source of truth for improving the project's architecture
 | 4. Event communication cleanup | `[x]` | Make module communication explicit and consistent. |
 | 5. Quality tooling | `[x]` | Add minimal automated checks for safer maintenance. |
 | 6. Platform and packaging verification | `[x]` | Preserve web, Express, and Electron delivery paths. |
-| 7. Architecture documentation | `[~]` | Record the final structure and update agent guidance if needed. |
+| 7. Architecture documentation | `[x]` | Record the final structure and update agent guidance if needed. |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -180,7 +180,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 - [x] Document the final ownership of `src/logic/`, `src/classes/`, `src/scenes/`, `src/scenes/components/`, and `src/events/`.
 - [x] Update `AGENTS.md` if new repo-specific rules or gotchas were introduced.
-- [ ] Keep documentation compact and focused on facts future agents would likely miss.
+- [x] Keep documentation compact and focused on facts future agents would likely miss.
 
 **Final ownership**
 
@@ -194,8 +194,8 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Exit criteria**
 
-- [ ] Architecture notes match the implemented code.
-- [ ] Future work can start from this plan and `AGENTS.md` without rediscovering core constraints.
+- [x] Architecture notes match the implemented code.
+- [x] Future work can start from this plan and `AGENTS.md` without rediscovering core constraints.
 
 ## Progress notes
 
@@ -203,6 +203,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date | Update |
 |------|--------|
+| 2026-07-03 | Phase 7 task 3 completed by reviewing `PLAN.md` and `AGENTS.md` for compactness, preserving high-signal ownership/tooling notes, and closing Phase 7 exit criteria. |
 | 2026-07-03 | Phase 6 task 4 completed by statically verifying packaged Electron resolves `electron/main.cjs` to `dist/index.html`, electron-builder includes both `electron/**/*` and `dist/**/*`, and `npm run build` produces the expected relative asset paths; Phase 6 exit criteria are now closed. |
 | 2026-07-03 | Phase 6 task 3 completed by statically verifying Electron development mode loads `http://localhost:3000`, Vite dev server is configured for port 3000, and package scripts support `npm run dev` before `NODE_ENV=development npm run electron`. |
 | 2026-07-03 | Phase 6 task 2 completed by verifying `Procfile` runs `node server.js`, Express serves `dist/` statically, SPA fallback returns `dist/index.html`, and a local smoke test passes for `/`, a built asset, and a fallback route. |
