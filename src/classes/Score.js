@@ -5,7 +5,7 @@ export default class Score {
     this.currentScore = 0;
     this.currentLevel = 1;
     this.linesCleared = 0;
-    
+
     // Additional statistics
     this.piecesPlaced = 0;
     this.tetrises = 0; // 4-line clears
@@ -18,25 +18,25 @@ export default class Score {
 
   addScore(lines) {
     if (lines < 1 || lines > 4) return;
-    
+
     const basePoints = SCORE_DATA[lines] || 0;
     const points = basePoints * this.currentLevel;
     this.currentScore += points;
     this.linesCleared += lines;
-    
+
     // Track line clear types
     if (lines === 1) this.singles++;
     else if (lines === 2) this.doubles++;
     else if (lines === 3) this.triples++;
     else if (lines === 4) this.tetrises++;
-    
+
     // Check for level increase
     const newLevel = Math.floor(this.linesCleared / LINES_PER_LEVEL) + 1;
     if (newLevel > this.currentLevel) {
       this.currentLevel = newLevel;
       return true; // Level increased
     }
-    
+
     return false; // Level did not increase
   }
 
@@ -124,4 +124,3 @@ export default class Score {
     this.gameTime = 0;
   }
 }
-

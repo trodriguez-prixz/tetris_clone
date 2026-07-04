@@ -76,7 +76,9 @@ describe('Score', () => {
     score.addScore(1);
     score.incrementPiecesPlaced();
     score.incrementPiecesPlaced();
-    jest.spyOn(Date.prototype, 'toISOString').mockReturnValue('2026-07-02T00:00:00.000Z');
+    jest
+      .spyOn(Date.prototype, 'toISOString')
+      .mockReturnValue('2026-07-02T00:00:00.000Z');
 
     expect(score.getPiecesPlaced()).toBe(2);
     expect(score.getAllStats()).toEqual({
@@ -94,7 +96,8 @@ describe('Score', () => {
   });
 
   test('updates and formats elapsed game time after the timer starts', () => {
-    jest.spyOn(Date, 'now')
+    jest
+      .spyOn(Date, 'now')
       .mockReturnValueOnce(1_000)
       .mockReturnValueOnce(66_000);
 
@@ -106,7 +109,8 @@ describe('Score', () => {
   });
 
   test('reset restores all score, stats, and timer values', () => {
-    jest.spyOn(Date, 'now')
+    jest
+      .spyOn(Date, 'now')
       .mockReturnValueOnce(1_000)
       .mockReturnValueOnce(3_000);
     score.addScore(4);

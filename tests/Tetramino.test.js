@@ -1,12 +1,13 @@
 import Tetramino from '../src/classes/Tetramino.js';
 import { TETRAMINOS, GRID_COLS, GRID_ROWS } from '../src/config/settings.js';
 
-const clonePositions = tetramino => tetramino.getBlockPositions().map(pos => ({ ...pos }));
+const clonePositions = (tetramino) =>
+  tetramino.getBlockPositions().map((pos) => ({ ...pos }));
 
-const emptyField = () => Array.from(
-  { length: GRID_ROWS },
-  () => Array.from({ length: GRID_COLS }, () => null)
-);
+const emptyField = () =>
+  Array.from({ length: GRID_ROWS }, () =>
+    Array.from({ length: GRID_COLS }, () => null)
+  );
 
 describe('Tetramino', () => {
   test('creates four blocks for a requested type at the centered spawn position', () => {
@@ -16,7 +17,7 @@ describe('Tetramino', () => {
     expect(tetramino.type).toBe('T');
     expect(tetramino.color).toBe(TETRAMINOS.T.color);
     expect(clonePositions(tetramino)).toEqual(
-      TETRAMINOS.T.blocks.map(pos => ({
+      TETRAMINOS.T.blocks.map((pos) => ({
         x: startX + pos.x,
         y: pos.y
       }))
@@ -74,7 +75,11 @@ describe('Tetramino', () => {
       fallingTetramino.moveDown();
     }
 
-    expect(fallingTetramino.getBlockPositions().some(pos => pos.y === GRID_ROWS - 1)).toBe(true);
+    expect(
+      fallingTetramino
+        .getBlockPositions()
+        .some((pos) => pos.y === GRID_ROWS - 1)
+    ).toBe(true);
     expect(fallingTetramino.nextMoveVerticalCollide()).toBe(true);
   });
 

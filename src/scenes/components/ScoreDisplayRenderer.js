@@ -1,4 +1,11 @@
-import { SIDEBAR_X, SIDEBAR_Y, SIDEBAR_WIDTH, PREVIEW_AREA_HEIGHT, PADDING, COLORS } from '../../config/settings.js';
+import {
+  SIDEBAR_X,
+  SIDEBAR_Y,
+  SIDEBAR_WIDTH,
+  PREVIEW_AREA_HEIGHT,
+  PADDING,
+  COLORS
+} from '../../config/settings.js';
 import EventBus, { EVENTS } from '../../events/EventBus.js';
 import { StorageManager } from '../../utils/storage.js';
 
@@ -39,23 +46,79 @@ export default class ScoreDisplayRenderer {
     const uiX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
     const scoreAreaTop = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING;
 
-    this.scene.add.text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.title.offsetY, 'STATS', { fontSize: SCORE_TEXT_LAYOUT.title.fontSize, fill: COLORS.HEADER_TEXT, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
-    this.scoreText = this.scene.add.text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.score.offsetY, 'Score: 0', { fontSize: SCORE_TEXT_LAYOUT.score.fontSize, fill: COLORS.PRIMARY_TEXT, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
-    this.levelText = this.scene.add.text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.level.offsetY, 'Level: 1', { fontSize: SCORE_TEXT_LAYOUT.level.fontSize, fill: COLORS.PRIMARY_TEXT, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
-    this.linesText = this.scene.add.text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.lines.offsetY, 'Lines: 0', { fontSize: SCORE_TEXT_LAYOUT.lines.fontSize, fill: COLORS.PRIMARY_TEXT, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
+    this.scene.add
+      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.title.offsetY, 'STATS', {
+        fontSize: SCORE_TEXT_LAYOUT.title.fontSize,
+        fill: COLORS.HEADER_TEXT,
+        fontStyle: 'bold'
+      })
+      .setOrigin(CENTER_ORIGIN);
+    this.scoreText = this.scene.add
+      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.score.offsetY, 'Score: 0', {
+        fontSize: SCORE_TEXT_LAYOUT.score.fontSize,
+        fill: COLORS.PRIMARY_TEXT,
+        fontStyle: 'bold'
+      })
+      .setOrigin(CENTER_ORIGIN);
+    this.levelText = this.scene.add
+      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.level.offsetY, 'Level: 1', {
+        fontSize: SCORE_TEXT_LAYOUT.level.fontSize,
+        fill: COLORS.PRIMARY_TEXT,
+        fontStyle: 'bold'
+      })
+      .setOrigin(CENTER_ORIGIN);
+    this.linesText = this.scene.add
+      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.lines.offsetY, 'Lines: 0', {
+        fontSize: SCORE_TEXT_LAYOUT.lines.fontSize,
+        fill: COLORS.PRIMARY_TEXT,
+        fontStyle: 'bold'
+      })
+      .setOrigin(CENTER_ORIGIN);
 
     const bestScore = StorageManager.getBestScore();
-    this.highScoreText = this.scene.add.text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.highScore.offsetY, `Best: ${this.formatNumber(bestScore)}`, { fontSize: SCORE_TEXT_LAYOUT.highScore.fontSize, fill: COLORS.WARNING, fontStyle: 'bold' }).setOrigin(CENTER_ORIGIN);
+    this.highScoreText = this.scene.add
+      .text(
+        uiX,
+        scoreAreaTop + SCORE_TEXT_LAYOUT.highScore.offsetY,
+        `Best: ${this.formatNumber(bestScore)}`,
+        {
+          fontSize: SCORE_TEXT_LAYOUT.highScore.fontSize,
+          fill: COLORS.WARNING,
+          fontStyle: 'bold'
+        }
+      )
+      .setOrigin(CENTER_ORIGIN);
 
-    this.timeText = this.scene.add.text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.time.offsetY, 'Time: 0:00', { fontSize: SCORE_TEXT_LAYOUT.time.fontSize, fill: COLORS.SECONDARY_TEXT }).setOrigin(CENTER_ORIGIN);
-    this.piecesText = this.scene.add.text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.pieces.offsetY, 'Pieces: 0', { fontSize: SCORE_TEXT_LAYOUT.pieces.fontSize, fill: COLORS.SECONDARY_TEXT }).setOrigin(CENTER_ORIGIN);
-    this.tetrisesText = this.scene.add.text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.tetrises.offsetY, 'Tetrises: 0', { fontSize: SCORE_TEXT_LAYOUT.tetrises.fontSize, fill: COLORS.SECONDARY_TEXT }).setOrigin(CENTER_ORIGIN);
+    this.timeText = this.scene.add
+      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.time.offsetY, 'Time: 0:00', {
+        fontSize: SCORE_TEXT_LAYOUT.time.fontSize,
+        fill: COLORS.SECONDARY_TEXT
+      })
+      .setOrigin(CENTER_ORIGIN);
+    this.piecesText = this.scene.add
+      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.pieces.offsetY, 'Pieces: 0', {
+        fontSize: SCORE_TEXT_LAYOUT.pieces.fontSize,
+        fill: COLORS.SECONDARY_TEXT
+      })
+      .setOrigin(CENTER_ORIGIN);
+    this.tetrisesText = this.scene.add
+      .text(
+        uiX,
+        scoreAreaTop + SCORE_TEXT_LAYOUT.tetrises.offsetY,
+        'Tetrises: 0',
+        {
+          fontSize: SCORE_TEXT_LAYOUT.tetrises.fontSize,
+          fill: COLORS.SECONDARY_TEXT
+        }
+      )
+      .setOrigin(CENTER_ORIGIN);
   }
 
   formatNumber(num) {
     if (this.formatNumberCache.has(num)) return this.formatNumberCache.get(num);
     const formatted = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    if (this.formatNumberCache.size < NUMBER_FORMAT_CACHE_LIMIT) this.formatNumberCache.set(num, formatted);
+    if (this.formatNumberCache.size < NUMBER_FORMAT_CACHE_LIMIT)
+      this.formatNumberCache.set(num, formatted);
     return formatted;
   }
 
@@ -89,13 +152,31 @@ export default class ScoreDisplayRenderer {
   }
 
   animateTextUpdate(textObject) {
-    this.scene.tweens.add({ targets: textObject, scaleX: TEXT_UPDATE_SCALE, scaleY: TEXT_UPDATE_SCALE, duration: TEXT_UPDATE_DURATION, yoyo: true, ease: TEXT_ANIMATION_EASE });
+    this.scene.tweens.add({
+      targets: textObject,
+      scaleX: TEXT_UPDATE_SCALE,
+      scaleY: TEXT_UPDATE_SCALE,
+      duration: TEXT_UPDATE_DURATION,
+      yoyo: true,
+      ease: TEXT_ANIMATION_EASE
+    });
   }
 
   animateLevelUp(textObject) {
     this.scene.tweens.add({
-      targets: textObject, scaleX: LEVEL_UP_SCALE, scaleY: LEVEL_UP_SCALE, duration: LEVEL_UP_DURATION, yoyo: true, ease: TEXT_ANIMATION_EASE,
-      onComplete: () => this.scene.tweens.add({ targets: textObject, alpha: LEVEL_UP_FLASH_ALPHA, duration: LEVEL_UP_FLASH_DURATION, yoyo: true })
+      targets: textObject,
+      scaleX: LEVEL_UP_SCALE,
+      scaleY: LEVEL_UP_SCALE,
+      duration: LEVEL_UP_DURATION,
+      yoyo: true,
+      ease: TEXT_ANIMATION_EASE,
+      onComplete: () =>
+        this.scene.tweens.add({
+          targets: textObject,
+          alpha: LEVEL_UP_FLASH_ALPHA,
+          duration: LEVEL_UP_FLASH_DURATION,
+          yoyo: true
+        })
     });
   }
 

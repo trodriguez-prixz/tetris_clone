@@ -1,11 +1,16 @@
 import GameState from '../src/logic/GameState.js';
 import { EVENTS } from '../src/events/GameEvents.js';
 import Block from '../src/classes/Block.js';
-import { GRID_COLS, GRID_ROWS, INITIAL_DROP_SPEED, FAST_DROP_SPEED, LEVEL_SPEED_MULTIPLIER } from '../src/config/settings.js';
+import {
+  GRID_COLS,
+  GRID_ROWS,
+  INITIAL_DROP_SPEED,
+  FAST_DROP_SPEED,
+  LEVEL_SPEED_MULTIPLIER
+} from '../src/config/settings.js';
 
-const createFilledRow = (row, color = 0xffffff) => (
-  Array.from({ length: GRID_COLS }, (_, col) => new Block(col, row, color))
-);
+const createFilledRow = (row, color = 0xffffff) =>
+  Array.from({ length: GRID_COLS }, (_, col) => new Block(col, row, color));
 
 describe('GameState', () => {
   let gameState;
@@ -21,13 +26,19 @@ describe('GameState', () => {
 
   test('initializes an empty board with default timing, score, and preview queue', () => {
     expect(gameState.fieldData).toHaveLength(GRID_ROWS);
-    expect(gameState.fieldData.every(row => row.length === GRID_COLS)).toBe(true);
-    expect(gameState.fieldData.flat().every(cell => cell === null)).toBe(true);
+    expect(gameState.fieldData.every((row) => row.length === GRID_COLS)).toBe(
+      true
+    );
+    expect(gameState.fieldData.flat().every((cell) => cell === null)).toBe(
+      true
+    );
     expect(gameState.currentTetramino).toBeNull();
     expect(gameState.dropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.softDropActive).toBe(false);
-    expect(gameState.score.getAllStats()).toEqual(expect.objectContaining({ score: 0, level: 1, lines: 0, pieces: 0 }));
+    expect(gameState.score.getAllStats()).toEqual(
+      expect.objectContaining({ score: 0, level: 1, lines: 0, pieces: 0 })
+    );
     expect(gameState.nextShapes).toEqual(['T', 'T', 'T']);
   });
 
@@ -43,9 +54,13 @@ describe('GameState', () => {
 
     gameState.reset();
 
-    expect(gameState.fieldData.flat().every(cell => cell === null)).toBe(true);
+    expect(gameState.fieldData.flat().every((cell) => cell === null)).toBe(
+      true
+    );
     expect(gameState.currentTetramino).toBeNull();
-    expect(gameState.score.getAllStats()).toEqual(expect.objectContaining({ score: 0, level: 1, lines: 0, pieces: 0 }));
+    expect(gameState.score.getAllStats()).toEqual(
+      expect.objectContaining({ score: 0, level: 1, lines: 0, pieces: 0 })
+    );
     expect(gameState.dropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.softDropActive).toBe(false);
@@ -144,13 +159,20 @@ describe('GameState', () => {
   test('updateTick returns a moved result while moving the active piece down', () => {
     gameState.nextShapes = ['O', 'I', 'T'];
     gameState.spawnTetramino();
-    const initialPositions = gameState.currentTetramino.getBlockPositions().map(pos => ({ ...pos }));
+    const initialPositions = gameState.currentTetramino
+      .getBlockPositions()
+      .map((pos) => ({ ...pos }));
 
     const result = gameState.updateTick();
 
-    expect(result).toEqual({ moved: true, locked: false, spawned: false, gameOver: false });
+    expect(result).toEqual({
+      moved: true,
+      locked: false,
+      spawned: false,
+      gameOver: false
+    });
     expect(gameState.currentTetramino.getBlockPositions()).toEqual(
-      initialPositions.map(pos => ({ x: pos.x, y: pos.y + 1 }))
+      initialPositions.map((pos) => ({ x: pos.x, y: pos.y + 1 }))
     );
   });
 
@@ -163,7 +185,12 @@ describe('GameState', () => {
 
     const result = gameState.updateTick();
 
-    expect(result).toEqual({ moved: false, locked: true, spawned: true, gameOver: false });
+    expect(result).toEqual({
+      moved: false,
+      locked: true,
+      spawned: true,
+      gameOver: false
+    });
     expect(gameState.consumeEvents()).toEqual([]);
     expect(gameState.score.getAllStats().pieces).toBe(1);
     expect(gameState.currentTetramino.type).toBe('I');
@@ -181,7 +208,12 @@ describe('GameState', () => {
 
     const result = gameState.updateTick();
 
-    expect(result).toEqual({ moved: false, locked: true, spawned: false, gameOver: true });
+    expect(result).toEqual({
+      moved: false,
+      locked: true,
+      spawned: false,
+      gameOver: true
+    });
     expect(gameState.consumeEvents()).toEqual([
       { type: EVENTS.GAME_OVER, payload: undefined }
     ]);
@@ -197,11 +229,26 @@ describe('GameState', () => {
 
     expect(gameState.fieldData[GRID_ROWS - 2][3]).toBeNull();
     expect(gameState.fieldData[GRID_ROWS - 1][3]).toBe(fallingBlock);
-    expect(fallingBlock.getLogicalPosition()).toEqual({ x: 3, y: GRID_ROWS - 1 });
-    expect(gameState.score.getAllStats()).toEqual(expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 }));
+    expect(fallingBlock.getLogicalPosition()).toEqual({
+      x: 3,
+      y: GRID_ROWS - 1
+    });
+    expect(gameState.score.getAllStats()).toEqual(
+      expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 })
+    );
     expect(gameState.consumeEvents()).toEqual([
       { type: EVENTS.LINES_CLEARED, payload: { rows: [GRID_ROWS - 1] } },
-      { type: EVENTS.SCORE_UPDATED, payload: { stats: expect.objectContaining({ score: 40, level: 1, lines: 1, pieces: 0 }) } }
+      {
+        type: EVENTS.SCORE_UPDATED,
+        payload: {
+          stats: expect.objectContaining({
+            score: 40,
+            level: 1,
+            lines: 1,
+            pieces: 0
+          })
+        }
+      }
     ]);
   });
 
@@ -214,11 +261,16 @@ describe('GameState', () => {
     gameState.checkFinishedRows();
 
     expect(gameState.score.getLevel()).toBe(2);
-    expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED * LEVEL_SPEED_MULTIPLIER);
+    expect(gameState.baseDropSpeed).toBe(
+      INITIAL_DROP_SPEED * LEVEL_SPEED_MULTIPLIER
+    );
     expect(gameState.dropSpeed).toBe(gameState.baseDropSpeed);
     expect(gameState.consumeEvents()).toEqual([
       { type: EVENTS.LINES_CLEARED, payload: { rows: [GRID_ROWS - 1] } },
-      { type: EVENTS.SCORE_UPDATED, payload: { stats: expect.objectContaining({ level: 2 }) } },
+      {
+        type: EVENTS.SCORE_UPDATED,
+        payload: { stats: expect.objectContaining({ level: 2 }) }
+      },
       { type: EVENTS.LEVEL_UP, payload: { level: 2 } }
     ]);
   });

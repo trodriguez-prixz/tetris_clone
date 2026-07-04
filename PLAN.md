@@ -11,17 +11,17 @@ This plan is the single source of truth for improving the project's architecture
 
 ## Phase overview
 
-| Phase | Status | Goal |
-|-------|--------|------|
-| 0. Refactor safety baseline | `[x]` | Protect current behavior before architecture changes. |
-| 1. Game domain extraction | `[x]` | Keep Tetris rules testable without Phaser. |
-| 2. Scene orchestration cleanup | `[x]` | Make `GameScene` coordinate instead of owning every concern. |
-| 3. Rendering and UI design boundaries | `[x]` | Separate visual layout from game rules. |
-| 4. Event communication cleanup | `[x]` | Make module communication explicit and consistent. |
-| 5. Quality tooling | `[x]` | Add minimal automated checks for safer maintenance. |
-| 6. Platform and packaging verification | `[x]` | Preserve web, Express, and Electron delivery paths. |
-| 7. Architecture documentation | `[x]` | Record the final structure and update agent guidance if needed. |
-| 8. Formatting cleanup | `[ ]` | Make Prettier checks pass without mixing formatting with behavior changes. |
+| Phase                                  | Status | Goal                                                                       |
+| -------------------------------------- | ------ | -------------------------------------------------------------------------- |
+| 0. Refactor safety baseline            | `[x]`  | Protect current behavior before architecture changes.                      |
+| 1. Game domain extraction              | `[x]`  | Keep Tetris rules testable without Phaser.                                 |
+| 2. Scene orchestration cleanup         | `[x]`  | Make `GameScene` coordinate instead of owning every concern.               |
+| 3. Rendering and UI design boundaries  | `[x]`  | Separate visual layout from game rules.                                    |
+| 4. Event communication cleanup         | `[x]`  | Make module communication explicit and consistent.                         |
+| 5. Quality tooling                     | `[x]`  | Add minimal automated checks for safer maintenance.                        |
+| 6. Platform and packaging verification | `[x]`  | Preserve web, Express, and Electron delivery paths.                        |
+| 7. Architecture documentation          | `[x]`  | Record the final structure and update agent guidance if needed.            |
+| 8. Formatting cleanup                  | `[x]`  | Make Prettier checks pass without mixing formatting with behavior changes. |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -61,13 +61,13 @@ This plan is the single source of truth for improving the project's architecture
 
 **Rule-coupling inventory**
 
-| Area in `GameScene` | Current coupling | Proposed extraction target/order |
-|---------------------|------------------|----------------------------------|
-| Input repeat gates | Horizontal move and rotation throttles live in scene time checks (`horizontalMoveDelay`, `rotateDelay`, `lastMoveTime`, `lastRotateTime`). | 1. Extract input intent/rate decisions after preserving scene input behavior. |
-| Soft drop behavior | Down key directly mutates `gameState.dropSpeed`, restarts the Phaser timer, and tracks `isFastDrop`. | 2. Move drop-mode state and speed selection behind logic methods; scene keeps timer wiring. |
-| Fall tick orchestration | Scene timer callback decides when to call `gameState.updateTick()` and render. | 3. Keep Phaser timer in scene, but route falling intent through a clear logic transition/result. |
-| Start/restart spawn flow | Scene starts score timer, spawns the first tetramino, resets score/UI state, and manually sets machine state on restart. | 4. Add explicit start/restart transitions in logic/state machine; scene reacts to results. |
-| Game-over persistence boundary | Scene reads score stats and decides high-score/statistics updates immediately after game over. | 5. Keep storage in scene/platform layer, but expose a stable game-over stats snapshot from logic. |
+| Area in `GameScene`            | Current coupling                                                                                                                           | Proposed extraction target/order                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Input repeat gates             | Horizontal move and rotation throttles live in scene time checks (`horizontalMoveDelay`, `rotateDelay`, `lastMoveTime`, `lastRotateTime`). | 1. Extract input intent/rate decisions after preserving scene input behavior.                     |
+| Soft drop behavior             | Down key directly mutates `gameState.dropSpeed`, restarts the Phaser timer, and tracks `isFastDrop`.                                       | 2. Move drop-mode state and speed selection behind logic methods; scene keeps timer wiring.       |
+| Fall tick orchestration        | Scene timer callback decides when to call `gameState.updateTick()` and render.                                                             | 3. Keep Phaser timer in scene, but route falling intent through a clear logic transition/result.  |
+| Start/restart spawn flow       | Scene starts score timer, spawns the first tetramino, resets score/UI state, and manually sets machine state on restart.                   | 4. Add explicit start/restart transitions in logic/state machine; scene reacts to results.        |
+| Game-over persistence boundary | Scene reads score stats and decides high-score/statistics updates immediately after game over.                                             | 5. Keep storage in scene/platform layer, but expose a stable game-over stats snapshot from logic. |
 
 Existing pure-rule homes: board occupancy, collision, rotation, line clearing, scoring, level speed updates, and piece locking already primarily live in `GameState`, `Tetramino`, and `Score`. Future extraction should avoid moving Phaser rendering, keyboard APIs, audio, storage APIs, or timers into rule modules.
 
@@ -185,13 +185,13 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Final ownership**
 
-| Area | Owns | Does not own |
-|------|------|--------------|
-| `src/logic/` | Pure game flow and rule coordination: board state, spawning, movement/collision decisions, soft-drop speed state, line clearing, scoring triggers, game-over stats snapshots, state-machine transitions, and plain domain event descriptors. | Phaser scene objects, rendering, keyboard/input APIs, audio, timers, storage, or direct EventBus emission. |
-| `src/classes/` | Small domain models used by logic: `Block` logical coordinates/color, `Tetramino` shape movement/rotation/collision helpers, and `Score` scoring/stat/timer calculations. | Scene orchestration, persistence, rendering, platform APIs, or global event wiring. |
-| `src/scenes/` | Phaser scene composition and runtime orchestration. `GameScene` wires game state, state machine, components, storage, audio, input, timers, rendering updates, and domain-event emission to the infrastructure EventBus. | Core gameplay rule ownership that belongs in `src/logic/` or domain classes. |
-| `src/scenes/components/` | Focused scene collaborators for Phaser-facing concerns: board rendering/effects, sidebar UI, preview, score display, audio indicators/control, overlays, input handling, and drop-loop timer control. | Pure Tetris rules, durable game state transitions, storage policy, or event-name definitions. |
-| `src/events/` | Shared event contract and Phaser-backed infrastructure bus: `GameEvents.js` defines event names; `EventBus.js` exposes the singleton emitter for scene/component communication. | Business decisions, state mutation, payload derivation beyond the named event contract, or duplicate ad hoc event names. |
+| Area                     | Owns                                                                                                                                                                                                                                         | Does not own                                                                                                             |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `src/logic/`             | Pure game flow and rule coordination: board state, spawning, movement/collision decisions, soft-drop speed state, line clearing, scoring triggers, game-over stats snapshots, state-machine transitions, and plain domain event descriptors. | Phaser scene objects, rendering, keyboard/input APIs, audio, timers, storage, or direct EventBus emission.               |
+| `src/classes/`           | Small domain models used by logic: `Block` logical coordinates/color, `Tetramino` shape movement/rotation/collision helpers, and `Score` scoring/stat/timer calculations.                                                                    | Scene orchestration, persistence, rendering, platform APIs, or global event wiring.                                      |
+| `src/scenes/`            | Phaser scene composition and runtime orchestration. `GameScene` wires game state, state machine, components, storage, audio, input, timers, rendering updates, and domain-event emission to the infrastructure EventBus.                     | Core gameplay rule ownership that belongs in `src/logic/` or domain classes.                                             |
+| `src/scenes/components/` | Focused scene collaborators for Phaser-facing concerns: board rendering/effects, sidebar UI, preview, score display, audio indicators/control, overlays, input handling, and drop-loop timer control.                                        | Pure Tetris rules, durable game state transitions, storage policy, or event-name definitions.                            |
+| `src/events/`            | Shared event contract and Phaser-backed infrastructure bus: `GameEvents.js` defines event names; `EventBus.js` exposes the singleton emitter for scene/component communication.                                                              | Business decisions, state mutation, payload derivation beyond the named event contract, or duplicate ad hoc event names. |
 
 **Exit criteria**
 
@@ -204,42 +204,43 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Tasks**
 
-- [ ] Inventory the current formatting drift with `npm run format:check` and identify the affected files.
-- [ ] Split formatting work into safe review slices if the diff is large.
+- [x] Inventory the current formatting drift with `npm run format:check` and identify the affected files.
+- [x] Split formatting work into safe review slices if the diff is large.
   - Suggested slices: docs/config first, tests second, source files last.
   - Keep generated or intentionally ignored files out of scope, including `.atl/` and `package-lock.json`.
-- [ ] Run Prettier on only the selected slice for each review unit.
-- [ ] Verify each slice with `npm run format:check` or a focused Prettier check for the changed paths.
-- [ ] Run `npm run lint`, `npm test`, and `npm run build` after the final formatting slice.
-- [ ] Decide whether CI should add `npm run format:check` once the repository is fully formatted.
+- [x] Run Prettier on only the selected slice for each review unit.
+- [x] Verify each slice with `npm run format:check` or a focused Prettier check for the changed paths.
+- [x] Run `npm run lint`, `npm test`, and `npm run build` after the final formatting slice.
+- [x] Decide whether CI should add `npm run format:check` once the repository is fully formatted.
 
 **Exit criteria**
 
-- [ ] `npm run format:check` passes for the full repository.
-- [ ] Formatting-only commits do not include behavior, architecture, or dependency changes.
-- [ ] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
-- [ ] CI either includes `npm run format:check` or this plan records why it remains excluded.
+- [x] `npm run format:check` passes for the full repository.
+- [x] Formatting-only commits do not include behavior, architecture, or dependency changes.
+- [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
+- [x] CI either includes `npm run format:check` or this plan records why it remains excluded.
 
 ## Progress notes
 
 Use this section for short dated updates. Keep detailed implementation notes in the relevant PR or commit.
 
-| Date | Update |
-|------|--------|
-| 2026-07-03 | Phase 7 task 3 completed by reviewing `PLAN.md` and `AGENTS.md` for compactness, preserving high-signal ownership/tooling notes, and closing Phase 7 exit criteria. |
+| Date       | Update                                                                                                                                                                                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-03 | Phase 8 completed by applying Prettier in docs/config, tests, and source slices, verifying `npm run format:check`, `npm run lint`, `npm test`, `npm run build`, and `git diff --check`, and adding `npm run format:check` to CI after the baseline passed.                                  |
+| 2026-07-03 | Phase 7 task 3 completed by reviewing `PLAN.md` and `AGENTS.md` for compactness, preserving high-signal ownership/tooling notes, and closing Phase 7 exit criteria.                                                                                                                         |
 | 2026-07-03 | Phase 6 task 4 completed by statically verifying packaged Electron resolves `electron/main.cjs` to `dist/index.html`, electron-builder includes both `electron/**/*` and `dist/**/*`, and `npm run build` produces the expected relative asset paths; Phase 6 exit criteria are now closed. |
-| 2026-07-03 | Phase 6 task 3 completed by statically verifying Electron development mode loads `http://localhost:3000`, Vite dev server is configured for port 3000, and package scripts support `npm run dev` before `NODE_ENV=development npm run electron`. |
-| 2026-07-03 | Phase 6 task 2 completed by verifying `Procfile` runs `node server.js`, Express serves `dist/` statically, SPA fallback returns `dist/index.html`, and a local smoke test passes for `/`, a built asset, and a fallback route. |
-| 2026-07-03 | Phase 6 task 1 completed by verifying Vite keeps `base: './'`, outputs to `dist/` with `assets/`, manually chunks Phaser, and `npm run build` succeeds. |
-| 2026-07-03 | Phase 5 task 4 completed by collecting coverage and deferring thresholds until coverage is stable and meaningful; Phase 5 exit criteria are now closed. |
-| 2026-07-03 | Phase 3 task 4 completed by pruning stale/noisy rendering comments; focused scene tests and full `npm test` pass, closing Phase 3 exit criteria. |
-| 2026-07-03 | Phase 3 task 3 completed by moving overlays out of `GameScene` and separating sidebar score, preview, and audio indicator rendering into focused scene components; Phase 3 task 4 and exit criteria remain open. |
-| 2026-07-03 | Phase 3 task 2 completed by naming shared rendering measurements and local visual-effect/layout details in `GameScene`, `BoardRenderer`, and `UIRenderer`; Phase 3 task 3/4 and exit criteria remain open. |
-| 2026-07-03 | Phase 3 task 1 completed by consolidating shared color, preview-cell, elapsed-time, and input timing constants into `src/config/settings.js`; Phase 3 task 2/3/4 and exit criteria remain open. |
-| 2026-07-03 | Phase 2 task 5 completed by removing duplicated start/restart input state from `GameScene`; focused scene tests and full `npm test` pass, closing Phase 2 exit criteria. |
-| 2026-07-03 | Phase 1 task 5 completed by verifying updated `GameState`, `GameStateMachine`, `GameScene`, and Phaser boundary tests; focused Phase 1 tests and full `npm test` pass, closing Phase 1 exit criteria. |
-| 2026-07-03 | Phase 1 task 4 completed by making lifecycle transitions explicit through `GameStateMachine` result objects and removing external direct state mutation seams from production/tests. |
-| 2026-07-03 | Phase 1 task 3 completed by moving core rule modules off the Phaser-backed `EventBus`; `EventBus` remains an infrastructure boundary used by scene/rendering code. |
-| 2026-07-03 | Phase 1 task 2 completed with a stable game-over stats snapshot exposed from `GameState`; Phase 1 task 3/4/5 remain not started. |
-| 2026-07-03 | Phase 1 task 2 started with a safe soft-drop extraction into `GameState`; task remains partially complete. |
-| 2026-07-02 | Initial plan created from the latest architecture improvement plan. |
+| 2026-07-03 | Phase 6 task 3 completed by statically verifying Electron development mode loads `http://localhost:3000`, Vite dev server is configured for port 3000, and package scripts support `npm run dev` before `NODE_ENV=development npm run electron`.                                            |
+| 2026-07-03 | Phase 6 task 2 completed by verifying `Procfile` runs `node server.js`, Express serves `dist/` statically, SPA fallback returns `dist/index.html`, and a local smoke test passes for `/`, a built asset, and a fallback route.                                                              |
+| 2026-07-03 | Phase 6 task 1 completed by verifying Vite keeps `base: './'`, outputs to `dist/` with `assets/`, manually chunks Phaser, and `npm run build` succeeds.                                                                                                                                     |
+| 2026-07-03 | Phase 5 task 4 completed by collecting coverage and deferring thresholds until coverage is stable and meaningful; Phase 5 exit criteria are now closed.                                                                                                                                     |
+| 2026-07-03 | Phase 3 task 4 completed by pruning stale/noisy rendering comments; focused scene tests and full `npm test` pass, closing Phase 3 exit criteria.                                                                                                                                            |
+| 2026-07-03 | Phase 3 task 3 completed by moving overlays out of `GameScene` and separating sidebar score, preview, and audio indicator rendering into focused scene components; Phase 3 task 4 and exit criteria remain open.                                                                            |
+| 2026-07-03 | Phase 3 task 2 completed by naming shared rendering measurements and local visual-effect/layout details in `GameScene`, `BoardRenderer`, and `UIRenderer`; Phase 3 task 3/4 and exit criteria remain open.                                                                                  |
+| 2026-07-03 | Phase 3 task 1 completed by consolidating shared color, preview-cell, elapsed-time, and input timing constants into `src/config/settings.js`; Phase 3 task 2/3/4 and exit criteria remain open.                                                                                             |
+| 2026-07-03 | Phase 2 task 5 completed by removing duplicated start/restart input state from `GameScene`; focused scene tests and full `npm test` pass, closing Phase 2 exit criteria.                                                                                                                    |
+| 2026-07-03 | Phase 1 task 5 completed by verifying updated `GameState`, `GameStateMachine`, `GameScene`, and Phaser boundary tests; focused Phase 1 tests and full `npm test` pass, closing Phase 1 exit criteria.                                                                                       |
+| 2026-07-03 | Phase 1 task 4 completed by making lifecycle transitions explicit through `GameStateMachine` result objects and removing external direct state mutation seams from production/tests.                                                                                                        |
+| 2026-07-03 | Phase 1 task 3 completed by moving core rule modules off the Phaser-backed `EventBus`; `EventBus` remains an infrastructure boundary used by scene/rendering code.                                                                                                                          |
+| 2026-07-03 | Phase 1 task 2 completed with a stable game-over stats snapshot exposed from `GameState`; Phase 1 task 3/4/5 remain not started.                                                                                                                                                            |
+| 2026-07-03 | Phase 1 task 2 started with a safe soft-drop extraction into `GameState`; task remains partially complete.                                                                                                                                                                                  |
+| 2026-07-02 | Initial plan created from the latest architecture improvement plan.                                                                                                                                                                                                                         |

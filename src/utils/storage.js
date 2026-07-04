@@ -22,17 +22,20 @@ export class StorageManager {
   static saveHighScore(scoreData) {
     try {
       let highScores = this.getHighScores();
-      
+
       // Add new score
       highScores.push(scoreData);
-      
+
       // Sort by score (descending)
       highScores.sort((a, b) => b.score - a.score);
-      
+
       // Keep only top 10
       highScores = highScores.slice(0, 10);
-      
-      localStorage.setItem(STORAGE_KEYS.HIGH_SCORES, JSON.stringify(highScores));
+
+      localStorage.setItem(
+        STORAGE_KEYS.HIGH_SCORES,
+        JSON.stringify(highScores)
+      );
       return true;
     } catch (error) {
       console.warn('Error saving high score:', error);
@@ -69,18 +72,18 @@ export class StorageManager {
   static updateStatistics(gameStats) {
     try {
       const stats = this.getStatistics();
-      
+
       stats.totalGames++;
       stats.totalScore += gameStats.score;
       stats.totalLines += gameStats.lines;
       stats.totalPieces += gameStats.pieces;
       stats.totalTetrises += gameStats.tetrises;
       stats.totalTime += gameStats.time;
-      
+
       if (gameStats.level > stats.bestLevel) {
         stats.bestLevel = gameStats.level;
       }
-      
+
       localStorage.setItem(STORAGE_KEYS.STATISTICS, JSON.stringify(stats));
       return true;
     } catch (error) {
@@ -100,4 +103,3 @@ export class StorageManager {
     }
   }
 }
-

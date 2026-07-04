@@ -1,11 +1,20 @@
 import { EVENTS } from '../events/GameEvents.js';
 import Tetramino from '../classes/Tetramino.js';
 import Score from '../classes/Score.js';
-import { GRID_ROWS, GRID_COLS, TETRAMINOS, INITIAL_DROP_SPEED, FAST_DROP_SPEED, LEVEL_SPEED_MULTIPLIER } from '../config/settings.js';
+import {
+  GRID_ROWS,
+  GRID_COLS,
+  TETRAMINOS,
+  INITIAL_DROP_SPEED,
+  FAST_DROP_SPEED,
+  LEVEL_SPEED_MULTIPLIER
+} from '../config/settings.js';
 
 export default class GameState {
   constructor() {
-    this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
+    this.fieldData = Array(GRID_ROWS)
+      .fill(null)
+      .map(() => Array(GRID_COLS).fill(null));
     this.currentTetramino = null;
     this.score = new Score();
     this.nextShapes = [];
@@ -13,15 +22,17 @@ export default class GameState {
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.softDropActive = false;
     this.domainEvents = [];
-    
+
     // Initialize next shapes queue (3 shapes)
     for (let i = 0; i < 3; i++) {
-        this.nextShapes.push(this.getRandomShapeType());
+      this.nextShapes.push(this.getRandomShapeType());
     }
   }
 
   reset() {
-    this.fieldData = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
+    this.fieldData = Array(GRID_ROWS)
+      .fill(null)
+      .map(() => Array(GRID_COLS).fill(null));
     this.currentTetramino = null;
     this.score.reset();
     this.nextShapes = [];
@@ -30,7 +41,7 @@ export default class GameState {
     this.softDropActive = false;
     this.domainEvents = [];
     for (let i = 0; i < 3; i++) {
-        this.nextShapes.push(this.getRandomShapeType());
+      this.nextShapes.push(this.getRandomShapeType());
     }
   }
 
@@ -116,20 +127,23 @@ export default class GameState {
   spawnTetramino() {
     const nextType = this.nextShapes.shift();
     const newTetramino = new Tetramino(nextType);
-    
+
     // Check if it fits (Game Over condition at spawn)
     if (newTetramino.nextMoveVerticalCollide(this.fieldData)) {
-        return false;
+      return false;
     }
-    
+
     this.currentTetramino = newTetramino;
     this.nextShapes.push(this.getRandomShapeType());
-    
+
     return true;
   }
 
   moveLeft() {
-    if (this.currentTetramino && !this.currentTetramino.nextMoveHorizontalCollide(-1, this.fieldData)) {
+    if (
+      this.currentTetramino &&
+      !this.currentTetramino.nextMoveHorizontalCollide(-1, this.fieldData)
+    ) {
       this.currentTetramino.moveLeft();
       return true;
     }
@@ -137,7 +151,10 @@ export default class GameState {
   }
 
   moveRight() {
-    if (this.currentTetramino && !this.currentTetramino.nextMoveHorizontalCollide(1, this.fieldData)) {
+    if (
+      this.currentTetramino &&
+      !this.currentTetramino.nextMoveHorizontalCollide(1, this.fieldData)
+    ) {
       this.currentTetramino.moveRight();
       return true;
     }
@@ -145,11 +162,17 @@ export default class GameState {
   }
 
   rotate() {
-    if (!this.currentTetramino || this.currentTetramino.type === 'O') return false;
-    
-    const wallKickOffset = this.currentTetramino.tryRotateWithWallKick(this.fieldData);
+    if (!this.currentTetramino || this.currentTetramino.type === 'O')
+      return false;
+
+    const wallKickOffset = this.currentTetramino.tryRotateWithWallKick(
+      this.fieldData
+    );
     if (wallKickOffset !== null) {
-      this.currentTetramino.rotateWithOffset(wallKickOffset.x, wallKickOffset.y);
+      this.currentTetramino.rotateWithOffset(
+        wallKickOffset.x,
+        wallKickOffset.y
+      );
       return true;
     }
     return false;
@@ -164,30 +187,30 @@ export default class GameState {
     };
 
     if (!this.currentTetramino) return result;
-    
+
     this.score.incrementPiecesPlaced();
     const positions = this.currentTetramino.getBlockPositions();
     for (let i = 0; i < positions.length; i++) {
-        const pos = positions[i];
-        if (pos.y >= 0 && pos.y < GRID_ROWS && pos.x >= 0 && pos.x < GRID_COLS) {
-            this.fieldData[pos.y][pos.x] = this.currentTetramino.blocks[i];
-        }
+      const pos = positions[i];
+      if (pos.y >= 0 && pos.y < GRID_ROWS && pos.x >= 0 && pos.x < GRID_COLS) {
+        this.fieldData[pos.y][pos.x] = this.currentTetramino.blocks[i];
+      }
     }
-    
+
     this.currentTetramino = null;
 
     this.checkFinishedRows();
-    
+
     const spawned = this.spawnTetramino();
     const lockResult = {
-        ...result,
-        locked: true,
-        spawned,
-        gameOver: !spawned
+      ...result,
+      locked: true,
+      spawned,
+      gameOver: !spawned
     };
 
     if (!spawned) {
-        this.recordEvent(EVENTS.GAME_OVER);
+      this.recordEvent(EVENTS.GAME_OVER);
     }
 
     return lockResult;
@@ -195,7 +218,7 @@ export default class GameState {
 
   checkFinishedRows() {
     const rowsToClear = [];
-    
+
     for (let row = GRID_ROWS - 1; row >= 0; row--) {
       let isComplete = true;
       for (let col = 0; col < GRID_COLS; col++) {
@@ -208,7 +231,7 @@ export default class GameState {
         rowsToClear.push(row);
       }
     }
-    
+
     if (rowsToClear.length > 0) {
       // Pass the logically cleared rows down to whoever listens
       this.recordEvent(EVENTS.LINES_CLEARED, { rows: rowsToClear });
@@ -217,34 +240,37 @@ export default class GameState {
   }
 
   clearRowsAndApplyGravity(rowsToClear) {
-      // 1. Logically nullify those rows
-      rowsToClear.forEach(row => {
-          for (var col=0; col<GRID_COLS; col++){
-              this.fieldData[row][col] = null;
-          }
-      });
-      
-      // 2. Cascade down blocks above the cleared rows
-      rowsToClear.sort((a,b) => b-a);
-      rowsToClear.forEach(clearedRow => {
-          for(let row = clearedRow-1; row>=0; row--){
-              for(let col = 0; col<GRID_COLS; col++){
-                  if(this.fieldData[row][col] !== null) {
-                      const block = this.fieldData[row][col];
-                      block.setLogicalPosition(block.x, block.y + 1);
-                      this.fieldData[row+1][col] = block;
-                      this.fieldData[row][col] = null;
-                  }
-              }
-          }
-      });
-      
-      const levelIncreased = this.score.addScore(rowsToClear.length);
-      this.recordEvent(EVENTS.SCORE_UPDATED, { stats: this.score.getAllStats() });
-      if (levelIncreased) {
-          this.baseDropSpeed = Math.max(50, this.baseDropSpeed * LEVEL_SPEED_MULTIPLIER);
-          this.dropSpeed = this.baseDropSpeed;
-          this.recordEvent(EVENTS.LEVEL_UP, { level: this.score.getLevel() });
+    // 1. Logically nullify those rows
+    rowsToClear.forEach((row) => {
+      for (var col = 0; col < GRID_COLS; col++) {
+        this.fieldData[row][col] = null;
       }
+    });
+
+    // 2. Cascade down blocks above the cleared rows
+    rowsToClear.sort((a, b) => b - a);
+    rowsToClear.forEach((clearedRow) => {
+      for (let row = clearedRow - 1; row >= 0; row--) {
+        for (let col = 0; col < GRID_COLS; col++) {
+          if (this.fieldData[row][col] !== null) {
+            const block = this.fieldData[row][col];
+            block.setLogicalPosition(block.x, block.y + 1);
+            this.fieldData[row + 1][col] = block;
+            this.fieldData[row][col] = null;
+          }
+        }
+      }
+    });
+
+    const levelIncreased = this.score.addScore(rowsToClear.length);
+    this.recordEvent(EVENTS.SCORE_UPDATED, { stats: this.score.getAllStats() });
+    if (levelIncreased) {
+      this.baseDropSpeed = Math.max(
+        50,
+        this.baseDropSpeed * LEVEL_SPEED_MULTIPLIER
+      );
+      this.dropSpeed = this.baseDropSpeed;
+      this.recordEvent(EVENTS.LEVEL_UP, { level: this.score.getLevel() });
+    }
   }
 }

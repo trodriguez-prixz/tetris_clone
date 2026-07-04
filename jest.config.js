@@ -13,8 +13,5 @@ export default {
     '!src/main.js',
     '!src/utils/retroMusic.js'
   ],
-  testMatch: [
-    '**/tests/**/*.test.js'
-  ]
+  testMatch: ['**/tests/**/*.test.js']
 };
-

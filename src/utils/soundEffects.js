@@ -13,36 +13,46 @@ export class SoundEffects {
 
   init() {
     try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
       this.audioContext = new AudioContextClass();
-      
+
       this.masterGain = this.audioContext.createGain();
-      this.masterGain.gain.setValueAtTime(this.volume, this.audioContext.currentTime);
+      this.masterGain.gain.setValueAtTime(
+        this.volume,
+        this.audioContext.currentTime
+      );
       this.masterGain.connect(this.audioContext.destination);
-      
+
       return true;
     } catch (error) {
-      console.warn('Web Audio API no disponible para efectos de sonido:', error);
+      console.warn(
+        'Web Audio API no disponible para efectos de sonido:',
+        error
+      );
       return false;
     }
   }
 
   playSound(frequency, duration, type = 'square', envelope = 'short') {
     if (!this.enabled || !this.audioContext || !this.masterGain) return;
-    
+
     try {
       if (this.audioContext.state === 'suspended') {
         this.audioContext.resume().catch(() => {});
       }
-      
+
       const oscillator = this.audioContext.createOscillator();
       const gainNode = this.audioContext.createGain();
-      
+
       oscillator.type = type;
-      oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-      
+      oscillator.frequency.setValueAtTime(
+        frequency,
+        this.audioContext.currentTime
+      );
+
       const now = this.audioContext.currentTime;
-      
+
       // Diferentes envelopes según el tipo de sonido
       if (envelope === 'short') {
         // Sonido corto y agudo (movimiento, rotación)
@@ -62,10 +72,10 @@ export class SoundEffects {
         gainNode.gain.linearRampToValueAtTime(0.2, now + duration * 0.7);
         gainNode.gain.linearRampToValueAtTime(0, now + duration);
       }
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(this.masterGain);
-      
+
       oscillator.start(now);
       oscillator.stop(now + duration);
     } catch (error) {
@@ -179,4 +189,3 @@ export class SoundEffects {
     return this.enabled;
   }
 }
-

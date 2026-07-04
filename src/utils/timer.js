@@ -43,4 +43,3 @@ export class CustomTimer {
     return this.timerEvent && this.timerEvent.getProgress() < 1;
   }
 }
-

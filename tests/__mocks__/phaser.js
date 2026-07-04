@@ -115,17 +115,26 @@ export default {
           this.listeners.delete(event);
           return this;
         }
-        const callbacks = this.listeners.get(event).filter(listener => (
-          listener.callback !== callback || (context && listener.context !== context)
-        ));
+        const callbacks = this.listeners
+          .get(event)
+          .filter(
+            (listener) =>
+              listener.callback !== callback ||
+              (context && listener.context !== context)
+          );
         this.listeners.set(event, callbacks);
         return this;
       }
 
       emit(event, ...args) {
         const callbacks = this.listeners.get(event) || [];
-        callbacks.forEach(listener => listener.callback.apply(listener.context, args));
-        this.listeners.set(event, callbacks.filter(listener => !listener.once));
+        callbacks.forEach((listener) =>
+          listener.callback.apply(listener.context, args)
+        );
+        this.listeners.set(
+          event,
+          callbacks.filter((listener) => !listener.once)
+        );
         return this;
       }
 

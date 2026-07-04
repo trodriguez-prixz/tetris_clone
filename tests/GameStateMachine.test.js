@@ -1,4 +1,6 @@
-import GameStateMachine, { GAME_STATES } from '../src/logic/GameStateMachine.js';
+import GameStateMachine, {
+  GAME_STATES
+} from '../src/logic/GameStateMachine.js';
 import { EVENTS } from '../src/events/GameEvents.js';
 
 const createMachineInState = (state) => {
@@ -41,7 +43,9 @@ describe('GameStateMachine', () => {
     });
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
-    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_START, payload: undefined }]);
+    expect(machine.consumeEvents()).toEqual([
+      { type: EVENTS.GAME_START, payload: undefined }
+    ]);
   });
 
   test('restarts the game from game over and records another start event', () => {
@@ -56,7 +60,9 @@ describe('GameStateMachine', () => {
     });
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
-    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_START, payload: undefined }]);
+    expect(machine.consumeEvents()).toEqual([
+      { type: EVENTS.GAME_START, payload: undefined }
+    ]);
   });
 
   test('marks game over without recording a duplicate game over event', () => {
@@ -86,7 +92,9 @@ describe('GameStateMachine', () => {
     });
 
     expect(machine.getState()).toBe(GAME_STATES.PAUSED);
-    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_PAUSED, payload: undefined }]);
+    expect(machine.consumeEvents()).toEqual([
+      { type: EVENTS.GAME_PAUSED, payload: undefined }
+    ]);
   });
 
   test('resumes only while paused and records the resume event', () => {
@@ -101,7 +109,9 @@ describe('GameStateMachine', () => {
     });
 
     expect(machine.getState()).toBe(GAME_STATES.PLAYING);
-    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_RESUMED, payload: undefined }]);
+    expect(machine.consumeEvents()).toEqual([
+      { type: EVENTS.GAME_RESUMED, payload: undefined }
+    ]);
   });
 
   test('enters game over only while playing and records the game over event', () => {
@@ -116,19 +126,27 @@ describe('GameStateMachine', () => {
     });
 
     expect(machine.getState()).toBe(GAME_STATES.GAME_OVER);
-    expect(machine.consumeEvents()).toEqual([{ type: EVENTS.GAME_OVER, payload: undefined }]);
+    expect(machine.consumeEvents()).toEqual([
+      { type: EVENTS.GAME_OVER, payload: undefined }
+    ]);
   });
 
   test('blocks invalid transitions without changing state or recording lifecycle events', () => {
     const invalidTransitions = [
       [GAME_STATES.START_SCREEN, ['pause', 'resume', 'gameOver']],
       [GAME_STATES.PLAYING, ['start', 'restart', 'resume']],
-      [GAME_STATES.PAUSED, ['start', 'restart', 'pause', 'gameOver', 'markGameOver']],
-      [GAME_STATES.GAME_OVER, ['start', 'pause', 'resume', 'gameOver', 'markGameOver']]
+      [
+        GAME_STATES.PAUSED,
+        ['start', 'restart', 'pause', 'gameOver', 'markGameOver']
+      ],
+      [
+        GAME_STATES.GAME_OVER,
+        ['start', 'pause', 'resume', 'gameOver', 'markGameOver']
+      ]
     ];
 
     invalidTransitions.forEach(([state, actions]) => {
-      actions.forEach(action => {
+      actions.forEach((action) => {
         const machine = createMachineInState(state);
         machine.consumeEvents();
 

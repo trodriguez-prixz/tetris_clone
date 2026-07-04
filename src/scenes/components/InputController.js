@@ -1,5 +1,9 @@
 import Phaser from 'phaser';
-import { HORIZONTAL_MOVE_DELAY, ROTATE_DELAY, START_INPUT_PAUSE_GUARD_DURATION } from '../../config/settings.js';
+import {
+  HORIZONTAL_MOVE_DELAY,
+  ROTATE_DELAY,
+  START_INPUT_PAUSE_GUARD_DURATION
+} from '../../config/settings.js';
 
 export default class InputController {
   constructor(scene, actions) {
@@ -12,14 +16,22 @@ export default class InputController {
   setup() {
     this.cursors = this.scene.input.keyboard.createCursorKeys();
 
-    this.muteKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+    this.muteKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.M
+    );
     this.muteKey.on('down', () => this.actions.toggleMusic());
 
-    this.soundEffectsKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    this.soundEffectsKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.S
+    );
     this.soundEffectsKey.on('down', () => this.actions.toggleSoundEffects());
 
-    this.pauseKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
-    this.spaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.pauseKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.P
+    );
+    this.spaceKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.SPACE
+    );
   }
 
   update({ isPlaying, isPaused }) {
@@ -42,7 +54,8 @@ export default class InputController {
       if (evt && evt.keyCode === Phaser.Input.Keyboard.KeyCodes.P) return;
       this.scene.input.keyboard.off('keydown', startTrigger);
       this.scene.input.off('pointerdown', startTrigger);
-      this.pauseGuardUntil = this.scene.time.now + START_INPUT_PAUSE_GUARD_DURATION;
+      this.pauseGuardUntil =
+        this.scene.time.now + START_INPUT_PAUSE_GUARD_DURATION;
       onStart();
     };
 
@@ -52,7 +65,9 @@ export default class InputController {
   }
 
   bindRestartInput(onRestart) {
-    this.restartKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+    this.restartKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.R
+    );
     this.restartKey.on('down', onRestart);
     return this.restartKey;
   }
@@ -65,11 +80,15 @@ export default class InputController {
   }
 
   handleGameplayInputs() {
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.left)) this.moveHorizontally(-1);
-    else if (this.cursors.left.isDown && this.canMoveHorizontally()) this.moveHorizontally(-1);
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.left))
+      this.moveHorizontally(-1);
+    else if (this.cursors.left.isDown && this.canMoveHorizontally())
+      this.moveHorizontally(-1);
 
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.right)) this.moveHorizontally(1);
-    else if (this.cursors.right.isDown && this.canMoveHorizontally()) this.moveHorizontally(1);
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.right))
+      this.moveHorizontally(1);
+    else if (this.cursors.right.isDown && this.canMoveHorizontally())
+      this.moveHorizontally(1);
 
     if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && this.canRotate()) {
       this.actions.rotate();
@@ -90,7 +109,10 @@ export default class InputController {
   }
 
   isPausePressed() {
-    return Phaser.Input.Keyboard.JustDown(this.pauseKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey);
+    return (
+      Phaser.Input.Keyboard.JustDown(this.pauseKey) ||
+      Phaser.Input.Keyboard.JustDown(this.spaceKey)
+    );
   }
 
   isPauseGuardActive() {

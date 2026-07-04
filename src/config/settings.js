@@ -7,13 +7,13 @@ export const PADDING = 20;
 
 export const GAME_AREA_WIDTH = GRID_COLS * CELL_SIZE;
 export const GAME_AREA_HEIGHT = GRID_ROWS * CELL_SIZE;
-export const CANVAS_WIDTH = GAME_AREA_WIDTH + SIDEBAR_WIDTH + (PADDING * 3);
-export const CANVAS_HEIGHT = GAME_AREA_HEIGHT + (PADDING * 2);
+export const CANVAS_WIDTH = GAME_AREA_WIDTH + SIDEBAR_WIDTH + PADDING * 3;
+export const CANVAS_HEIGHT = GAME_AREA_HEIGHT + PADDING * 2;
 
 export const GAME_AREA_X = PADDING;
 export const GAME_AREA_Y = PADDING;
 
-export const SIDEBAR_X = GAME_AREA_WIDTH + (PADDING * 2);
+export const SIDEBAR_X = GAME_AREA_WIDTH + PADDING * 2;
 export const SIDEBAR_Y = PADDING;
 
 export const PREVIEW_AREA_HEIGHT = 200;

@@ -21,7 +21,11 @@ const mockContext = {
   setTransform: jest.fn(),
   getImageData: jest.fn(() => ({ data: new Uint8ClampedArray(4) })),
   putImageData: jest.fn(),
-  createImageData: jest.fn(() => ({ data: new Uint8ClampedArray(4), width: 1, height: 1 })),
+  createImageData: jest.fn(() => ({
+    data: new Uint8ClampedArray(4),
+    width: 1,
+    height: 1
+  })),
   measureText: jest.fn(() => ({ width: 0 })),
   fillText: jest.fn(),
   strokeText: jest.fn(),
@@ -63,7 +67,7 @@ MockHTMLCanvasElement.prototype.getContext = jest.fn(() => mockContext);
 // Setup global objects before Phaser loads
 if (typeof global !== 'undefined') {
   global.HTMLCanvasElement = MockHTMLCanvasElement;
-  
+
   global.window = global.window || {};
   global.window.HTMLCanvasElement = MockHTMLCanvasElement;
   global.window.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 16));
@@ -97,7 +101,7 @@ if (typeof global !== 'undefined') {
     close: jest.fn()
   }));
   global.window.webkitAudioContext = global.window.AudioContext;
-  
+
   global.document = global.document || {};
   global.document.createElement = jest.fn((tag) => {
     if (tag === 'canvas') {
@@ -113,8 +117,7 @@ if (typeof global !== 'undefined') {
     appendChild: jest.fn(),
     removeChild: jest.fn()
   };
-  
+
   // Make Phaser available globally
   global.Phaser = require('./__mocks__/phaser.js').default;
 }
-

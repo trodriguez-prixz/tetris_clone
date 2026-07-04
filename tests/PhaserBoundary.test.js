@@ -14,7 +14,10 @@ const coreRuleModules = [
 describe('Phaser boundary', () => {
   test('core rule modules do not import Phaser or the Phaser-backed EventBus', () => {
     coreRuleModules.forEach((modulePath) => {
-      const source = fs.readFileSync(path.join(projectRoot, modulePath), 'utf8');
+      const source = fs.readFileSync(
+        path.join(projectRoot, modulePath),
+        'utf8'
+      );
 
       expect(source).not.toMatch(/from ['"]phaser['"]/);
       expect(source).not.toMatch(/from ['"]\.\.\/events\/EventBus\.js['"]/);

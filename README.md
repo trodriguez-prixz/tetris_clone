@@ -26,16 +26,16 @@ npm install
 
 ## Comandos principales
 
-| Tarea | Comando |
-|-------|---------|
-| Servidor de desarrollo | `npm run dev` |
-| Tests | `npm test` |
-| Tests en watch mode | `npm run test:watch` |
-| Lint | `npm run lint` |
-| Verificar formato | `npm run format:check` |
-| Aplicar formato | `npm run format` |
-| Build web | `npm run build` |
-| Preview del build | `npm run preview` |
+| Tarea                  | Comando                |
+| ---------------------- | ---------------------- |
+| Servidor de desarrollo | `npm run dev`          |
+| Tests                  | `npm test`             |
+| Tests en watch mode    | `npm run test:watch`   |
+| Lint                   | `npm run lint`         |
+| Verificar formato      | `npm run format:check` |
+| Aplicar formato        | `npm run format`       |
+| Build web              | `npm run build`        |
+| Preview del build      | `npm run preview`      |
 
 El servidor de desarrollo de Vite usa `http://localhost:3000`.
 
@@ -98,12 +98,12 @@ Los artefactos se generan en `dist-electron/`.
 
 ### Puntuación
 
-| Líneas eliminadas | Puntos |
-|-------------------|--------|
-| 1 línea | 40 × nivel |
-| 2 líneas | 100 × nivel |
-| 3 líneas | 300 × nivel |
-| 4 líneas | 1200 × nivel |
+| Líneas eliminadas | Puntos       |
+| ----------------- | ------------ |
+| 1 línea           | 40 × nivel   |
+| 2 líneas          | 100 × nivel  |
+| 3 líneas          | 300 × nivel  |
+| 4 líneas          | 1200 × nivel |
 
 Cada 10 líneas completadas aumenta el nivel y la velocidad de caída.
 
@@ -121,16 +121,16 @@ El juego termina cuando una nueva pieza no puede generarse en la parte superior 
 
 La lógica del juego está separada de Phaser. `GameScene` coordina el runtime y delega reglas, renderizado, audio, entrada y timers a módulos enfocados.
 
-| Área | Responsabilidad |
-|------|-----------------|
-| `src/config/settings.js` | Constantes de grilla, canvas, piezas, colores, puntuación y tiempos. |
-| `src/classes/` | Modelos puros de dominio: `Block`, `Tetramino` y `Score`. |
-| `src/logic/` | Reglas y flujo de juego puros: estado de tablero, colisiones, caída, limpieza de líneas, snapshots de Game Over y transiciones. No importa Phaser ni EventBus. |
-| `src/events/GameEvents.js` | Nombres centralizados de eventos. |
-| `src/events/EventBus.js` | Bus singleton respaldado por `Phaser.Events.EventEmitter`. |
-| `src/scenes/GameScene.js` | Coordinador Phaser: estado, storage, audio, input, timers, render updates y emisión de eventos de dominio. |
-| `src/scenes/components/` | Colaboradores Phaser para render, UI, overlays, preview, score, indicadores de audio, entrada, audio y drop loop. |
-| `src/utils/` | Storage, temporizadores, música retro y efectos de sonido. |
+| Área                       | Responsabilidad                                                                                                                                                |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/config/settings.js`   | Constantes de grilla, canvas, piezas, colores, puntuación y tiempos.                                                                                           |
+| `src/classes/`             | Modelos puros de dominio: `Block`, `Tetramino` y `Score`.                                                                                                      |
+| `src/logic/`               | Reglas y flujo de juego puros: estado de tablero, colisiones, caída, limpieza de líneas, snapshots de Game Over y transiciones. No importa Phaser ni EventBus. |
+| `src/events/GameEvents.js` | Nombres centralizados de eventos.                                                                                                                              |
+| `src/events/EventBus.js`   | Bus singleton respaldado por `Phaser.Events.EventEmitter`.                                                                                                     |
+| `src/scenes/GameScene.js`  | Coordinador Phaser: estado, storage, audio, input, timers, render updates y emisión de eventos de dominio.                                                     |
+| `src/scenes/components/`   | Colaboradores Phaser para render, UI, overlays, preview, score, indicadores de audio, entrada, audio y drop loop.                                              |
+| `src/utils/`               | Storage, temporizadores, música retro y efectos de sonido.                                                                                                     |
 
 Eventos actuales importantes:
 

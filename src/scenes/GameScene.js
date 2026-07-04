@@ -1,5 +1,10 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, ELAPSED_TIME_UPDATE_INTERVAL } from '../config/settings.js';
+import {
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+  COLORS,
+  ELAPSED_TIME_UPDATE_INTERVAL
+} from '../config/settings.js';
 import { StorageManager } from '../utils/storage.js';
 
 import EventBus, { EVENTS } from '../events/EventBus.js';
@@ -28,7 +33,13 @@ export default class GameScene extends Phaser.Scene {
   }
 
   drawBackground() {
-    this.add.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLORS.BACKGROUND);
+    this.add.rectangle(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2,
+      CANVAS_WIDTH,
+      CANVAS_HEIGHT,
+      COLORS.BACKGROUND
+    );
   }
 
   initializeGameState() {
@@ -40,7 +51,9 @@ export default class GameScene extends Phaser.Scene {
     this.boardRenderer = new BoardRenderer(this, this.gameState);
     this.uiRenderer = new UIRenderer(this, this.gameState);
     this.overlayRenderer = new OverlayRenderer(this);
-    this.dropLoopController = new DropLoopController(this, () => this.handleFallTick());
+    this.dropLoopController = new DropLoopController(this, () =>
+      this.handleFallTick()
+    );
 
     this.setupAudio();
     this.setupInputs();
@@ -77,7 +90,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   toggleMusic() {
-    this.audioController.toggleMusic(this.stateMachine.isState(GAME_STATES.PLAYING));
+    this.audioController.toggleMusic(
+      this.stateMachine.isState(GAME_STATES.PLAYING)
+    );
   }
 
   toggleSoundEffects() {
@@ -92,87 +107,88 @@ export default class GameScene extends Phaser.Scene {
 
   updateElapsedTime(now) {
     if (this.stateMachine.isState(GAME_STATES.PLAYING)) {
-        if (now - this.timeUpdateThrottle >= ELAPSED_TIME_UPDATE_INTERVAL) {
-            this.gameState.score.updateGameTime();
-            this.uiRenderer.updateTime(this.gameState.score.getGameTime());
-            this.timeUpdateThrottle = now;
-        }
+      if (now - this.timeUpdateThrottle >= ELAPSED_TIME_UPDATE_INTERVAL) {
+        this.gameState.score.updateGameTime();
+        this.uiRenderer.updateTime(this.gameState.score.getGameTime());
+        this.timeUpdateThrottle = now;
+      }
     }
   }
 
   updateInputController() {
     this.inputController.update({
-        isPlaying: this.stateMachine.isState(GAME_STATES.PLAYING),
-        isPaused: this.stateMachine.isState(GAME_STATES.PAUSED)
+      isPlaying: this.stateMachine.isState(GAME_STATES.PLAYING),
+      isPaused: this.stateMachine.isState(GAME_STATES.PAUSED)
     });
   }
 
   pauseGame() {
-      this.stateMachine.pause();
-      this.emitDomainEvents(this.stateMachine.consumeEvents());
+    this.stateMachine.pause();
+    this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
 
   resumeGame() {
-      this.stateMachine.resume();
-      this.emitDomainEvents(this.stateMachine.consumeEvents());
+    this.stateMachine.resume();
+    this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
 
   tryMove(dir) {
-      const moved = dir === -1 ? this.gameState.moveLeft() : this.gameState.moveRight();
-      if (moved) {
-          this.audioController.playMove();
-          this.boardRenderer.update();
-      }
-      return moved;
+    const moved =
+      dir === -1 ? this.gameState.moveLeft() : this.gameState.moveRight();
+    if (moved) {
+      this.audioController.playMove();
+      this.boardRenderer.update();
+    }
+    return moved;
   }
 
   tryRotate() {
-      if (this.gameState.rotate()) {
-          this.audioController.playRotate();
-          this.boardRenderer.update();
-      }
+    if (this.gameState.rotate()) {
+      this.audioController.playRotate();
+      this.boardRenderer.update();
+    }
   }
 
   startSoftDrop() {
-      this.handleFallTick();
-      if (this.gameState.startSoftDrop()) {
-          this.dropLoopController.restart(this.gameState.dropSpeed);
-      }
+    this.handleFallTick();
+    if (this.gameState.startSoftDrop()) {
+      this.dropLoopController.restart(this.gameState.dropSpeed);
+    }
   }
 
   stopSoftDrop() {
-      if (this.gameState.stopSoftDrop()) {
-          this.dropLoopController.restart(this.gameState.dropSpeed);
-      }
+    if (this.gameState.stopSoftDrop()) {
+      this.dropLoopController.restart(this.gameState.dropSpeed);
+    }
   }
 
   handleFallTick() {
-      const result = this.gameState.updateTick();
-      this.emitDomainEvents(this.gameState.consumeEvents());
-      if (result.moved || result.locked || result.spawned || result.gameOver) {
-          this.boardRenderer.update();
-      }
-      if (result.spawned) {
-          this.uiRenderer.renderPreview();
-      }
-      return result;
+    const result = this.gameState.updateTick();
+    this.emitDomainEvents(this.gameState.consumeEvents());
+    if (result.moved || result.locked || result.spawned || result.gameOver) {
+      this.boardRenderer.update();
+    }
+    if (result.spawned) {
+      this.uiRenderer.renderPreview();
+    }
+    return result;
   }
 
   emitDomainEvents(events) {
-      events.forEach(({ type, payload }) => EventBus.emit(type, payload));
+    events.forEach(({ type, payload }) => EventBus.emit(type, payload));
   }
 
   onGameStart() {
-      const startResult = this.gameState.startGame();
-      this.emitDomainEvents(this.gameState.consumeEvents());
-      this.uiRenderer.renderPreview();
-      
-      this.audioController.startMusic();
-      
-      if (startResult.spawned) {
-          this.boardRenderer.update();
-          this.dropLoopController.restart(this.gameState.dropSpeed);
-      }
+    const startResult = this.gameState.startGame();
+    this.emitDomainEvents(this.gameState.consumeEvents());
+    this.uiRenderer.renderPreview();
+
+    this.audioController.startMusic();
+
+    if (startResult.spawned) {
+      this.boardRenderer.update();
+      this.dropLoopController.restart(this.gameState.dropSpeed);
+    }
   }
 
   showStartScreen() {
@@ -217,7 +233,7 @@ export default class GameScene extends Phaser.Scene {
   persistGameOverStats() {
     const stats = this.gameState.getGameOverStatsSnapshot();
     if (stats.score > StorageManager.getBestScore()) {
-        StorageManager.saveHighScore(stats);
+      StorageManager.saveHighScore(stats);
     }
     StorageManager.updateStatistics(stats);
   }
@@ -248,7 +264,9 @@ export default class GameScene extends Phaser.Scene {
 
   resetGameForRestart() {
     this.gameState.reset();
-    this.uiRenderer.onScoreUpdated({ stats: this.gameState.score.getAllStats() });
+    this.uiRenderer.onScoreUpdated({
+      stats: this.gameState.score.getAllStats()
+    });
     this.uiRenderer.onLevelUp({ level: 1 });
     this.boardRenderer.update();
   }

@@ -163,18 +163,34 @@ describe('GameScene orchestration', () => {
     expect(scene.audioController).toBeDefined();
     expect(uiRenderer.updateAudioIndicators).toHaveBeenCalledWith(false, true);
     expect(scene.input.keyboard.createCursorKeys).toHaveBeenCalled();
-    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.M);
-    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.S);
-    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.P);
-    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    expect(scene.input.keyboard.on).toHaveBeenCalledWith('keydown', expect.any(Function));
-    expect(scene.input.on).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(
+      Phaser.Input.Keyboard.KeyCodes.M
+    );
+    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(
+      Phaser.Input.Keyboard.KeyCodes.S
+    );
+    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(
+      Phaser.Input.Keyboard.KeyCodes.P
+    );
+    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(
+      Phaser.Input.Keyboard.KeyCodes.SPACE
+    );
+    expect(scene.input.keyboard.on).toHaveBeenCalledWith(
+      'keydown',
+      expect.any(Function)
+    );
+    expect(scene.input.on).toHaveBeenCalledWith(
+      'pointerdown',
+      expect.any(Function)
+    );
     expect(overlayRenderer.renderStartScreen).toHaveBeenCalledTimes(1);
   });
 
   test('start screen ignores pause key and starts gameplay from another input', () => {
     scene.create();
-    const startTrigger = scene.input.keyboard.on.mock.calls.find(([event]) => event === 'keydown')[1];
+    const startTrigger = scene.input.keyboard.on.mock.calls.find(
+      ([event]) => event === 'keydown'
+    )[1];
 
     startTrigger({ keyCode: Phaser.Input.Keyboard.KeyCodes.P });
 
@@ -185,7 +201,10 @@ describe('GameScene orchestration', () => {
     scene.time.now = 100;
     startTrigger({ keyCode: 65 });
 
-    expect(scene.input.keyboard.off).toHaveBeenCalledWith('keydown', startTrigger);
+    expect(scene.input.keyboard.off).toHaveBeenCalledWith(
+      'keydown',
+      startTrigger
+    );
     expect(scene.input.off).toHaveBeenCalledWith('pointerdown', startTrigger);
     expect(overlayRenderer.clearStartScreen).toHaveBeenCalledTimes(1);
     expect(scene.inputController.pauseGuardUntil).toBe(300);
@@ -193,11 +212,13 @@ describe('GameScene orchestration', () => {
     expect(scene.gameState.currentTetramino).toBeDefined();
     expect(uiRenderer.renderPreview).toHaveBeenCalled();
     expect(boardRenderer.update).toHaveBeenCalled();
-    expect(scene.time.addEvent).toHaveBeenCalledWith(expect.objectContaining({
-      delay: scene.gameState.dropSpeed,
-      loop: true,
-      callback: expect.any(Function)
-    }));
+    expect(scene.time.addEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        delay: scene.gameState.dropSpeed,
+        loop: true,
+        callback: expect.any(Function)
+      })
+    );
     expect(retroMusic.play).toHaveBeenCalled();
   });
 
@@ -205,8 +226,12 @@ describe('GameScene orchestration', () => {
     scene.create();
     const muteKey = scene.input.keyboard.addKey.mock.results[0].value;
     const soundEffectsKey = scene.input.keyboard.addKey.mock.results[1].value;
-    const muteHandler = muteKey.on.mock.calls.find(([event]) => event === 'down')[1];
-    const soundEffectsHandler = soundEffectsKey.on.mock.calls.find(([event]) => event === 'down')[1];
+    const muteHandler = muteKey.on.mock.calls.find(
+      ([event]) => event === 'down'
+    )[1];
+    const soundEffectsHandler = soundEffectsKey.on.mock.calls.find(
+      ([event]) => event === 'down'
+    )[1];
 
     muteHandler();
     soundEffectsHandler();
@@ -236,7 +261,9 @@ describe('GameScene orchestration', () => {
     scene.time.now = 1000;
     jest.spyOn(scene.gameState.score, 'updateGameTime');
     jest.spyOn(scene.gameState.score, 'getGameTime').mockReturnValue(42);
-    Phaser.Input.Keyboard.JustDown.mockImplementation((key) => key === scene.inputController.pauseKey);
+    Phaser.Input.Keyboard.JustDown.mockImplementation(
+      (key) => key === scene.inputController.pauseKey
+    );
 
     scene.update();
 
@@ -255,10 +282,18 @@ describe('GameScene orchestration', () => {
     scene.gameState.currentTetramino = { blocks: [] };
     jest.spyOn(scene.gameState, 'moveLeft').mockReturnValue(true);
     jest.spyOn(scene.gameState, 'rotate').mockReturnValue(true);
-    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({ moved: true, locked: false, spawned: false, gameOver: false });
-    Phaser.Input.Keyboard.JustDown.mockImplementation((key) => (
-      key === scene.inputController.cursors.left || key === scene.inputController.cursors.up || key === scene.inputController.cursors.down
-    ));
+    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({
+      moved: true,
+      locked: false,
+      spawned: false,
+      gameOver: false
+    });
+    Phaser.Input.Keyboard.JustDown.mockImplementation(
+      (key) =>
+        key === scene.inputController.cursors.left ||
+        key === scene.inputController.cursors.up ||
+        key === scene.inputController.cursors.down
+    );
 
     scene.update();
 
@@ -270,12 +305,19 @@ describe('GameScene orchestration', () => {
     expect(boardRenderer.update).toHaveBeenCalledTimes(3);
     expect(scene.gameState.dropSpeed).toBe(FAST_DROP_SPEED);
     expect(scene.gameState.softDropActive).toBe(true);
-    expect(scene.time.addEvent).toHaveBeenCalledWith(expect.objectContaining({ delay: FAST_DROP_SPEED }));
+    expect(scene.time.addEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ delay: FAST_DROP_SPEED })
+    );
   });
 
   test('drop loop timer renders through the fall tick result wrapper', () => {
     scene.create();
-    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({ moved: false, locked: true, spawned: true, gameOver: false });
+    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({
+      moved: false,
+      locked: true,
+      spawned: true,
+      gameOver: false
+    });
 
     scene.dropLoopController.restart(scene.gameState.dropSpeed);
     const timerConfig = scene.time.addEvent.mock.calls.at(-1)[0];
@@ -287,7 +329,12 @@ describe('GameScene orchestration', () => {
 
   test('drop loop timer refreshes the preview directly when a new piece spawns', () => {
     scene.create();
-    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({ moved: false, locked: true, spawned: true, gameOver: false });
+    jest.spyOn(scene.gameState, 'updateTick').mockReturnValue({
+      moved: false,
+      locked: true,
+      spawned: true,
+      gameOver: false
+    });
 
     scene.dropLoopController.restart(scene.gameState.dropSpeed);
     const timerConfig = scene.time.addEvent.mock.calls.at(-1)[0];
@@ -317,11 +364,17 @@ describe('GameScene orchestration', () => {
     expect(activeTimer.remove).toHaveBeenCalled();
     expect(scene.dropLoopController.timer).toBeNull();
     expect(scene.gameState.getGameOverStatsSnapshot).toHaveBeenCalledTimes(1);
-    expect(StorageManager.saveHighScore).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
-    expect(StorageManager.updateStatistics).toHaveBeenCalledWith(expect.objectContaining({ score: 2500 }));
+    expect(StorageManager.saveHighScore).toHaveBeenCalledWith(
+      expect.objectContaining({ score: 2500 })
+    );
+    expect(StorageManager.updateStatistics).toHaveBeenCalledWith(
+      expect.objectContaining({ score: 2500 })
+    );
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.GAME_OVER);
     expect(overlayRenderer.renderGameOverScreen).toHaveBeenCalledTimes(1);
-    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(Phaser.Input.Keyboard.KeyCodes.R);
+    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(
+      Phaser.Input.Keyboard.KeyCodes.R
+    );
     expect(soundEffects.playGameOver).toHaveBeenCalled();
     expect(retroMusic.stop).toHaveBeenCalled();
   });
@@ -332,7 +385,9 @@ describe('GameScene orchestration', () => {
     scene.stateMachine.consumeEvents();
     EventBus.emit(EVENTS.GAME_OVER);
     const restartKey = scene.inputController.restartKey;
-    const restartHandler = restartKey.on.mock.calls.find(([event]) => event === 'down')[1];
+    const restartHandler = restartKey.on.mock.calls.find(
+      ([event]) => event === 'down'
+    )[1];
     jest.spyOn(scene.gameState, 'reset');
     jest.spyOn(scene.stateMachine, 'restart');
 
@@ -341,11 +396,15 @@ describe('GameScene orchestration', () => {
     expect(overlayRenderer.clearGameOverScreen).toHaveBeenCalledTimes(1);
     expect(restartKey.removeAllListeners).toHaveBeenCalled();
     expect(scene.gameState.reset).toHaveBeenCalledTimes(1);
-    expect(uiRenderer.onScoreUpdated).toHaveBeenCalledWith({ stats: expect.objectContaining({ score: 0, level: 1 }) });
+    expect(uiRenderer.onScoreUpdated).toHaveBeenCalledWith({
+      stats: expect.objectContaining({ score: 0, level: 1 })
+    });
     expect(uiRenderer.onLevelUp).toHaveBeenCalledWith({ level: 1 });
     expect(scene.stateMachine.restart).toHaveBeenCalledTimes(1);
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.PLAYING);
     expect(scene.gameState.currentTetramino).toBeDefined();
-    expect(scene.time.addEvent).toHaveBeenCalledWith(expect.objectContaining({ callback: expect.any(Function), loop: true }));
+    expect(scene.time.addEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ callback: expect.any(Function), loop: true })
+    );
   });
 });

@@ -53,11 +53,19 @@ export default class GameStateMachine {
   }
 
   start() {
-    return this.transitionTo([GAME_STATES.START_SCREEN], GAME_STATES.PLAYING, EVENTS.GAME_START);
+    return this.transitionTo(
+      [GAME_STATES.START_SCREEN],
+      GAME_STATES.PLAYING,
+      EVENTS.GAME_START
+    );
   }
 
   restart() {
-    return this.transitionTo([GAME_STATES.GAME_OVER], GAME_STATES.PLAYING, EVENTS.GAME_START);
+    return this.transitionTo(
+      [GAME_STATES.GAME_OVER],
+      GAME_STATES.PLAYING,
+      EVENTS.GAME_START
+    );
   }
 
   markGameOver() {
@@ -65,14 +73,26 @@ export default class GameStateMachine {
   }
 
   pause() {
-    return this.transitionTo([GAME_STATES.PLAYING], GAME_STATES.PAUSED, EVENTS.GAME_PAUSED);
+    return this.transitionTo(
+      [GAME_STATES.PLAYING],
+      GAME_STATES.PAUSED,
+      EVENTS.GAME_PAUSED
+    );
   }
 
   resume() {
-    return this.transitionTo([GAME_STATES.PAUSED], GAME_STATES.PLAYING, EVENTS.GAME_RESUMED);
+    return this.transitionTo(
+      [GAME_STATES.PAUSED],
+      GAME_STATES.PLAYING,
+      EVENTS.GAME_RESUMED
+    );
   }
 
   gameOver() {
-    return this.transitionTo([GAME_STATES.PLAYING], GAME_STATES.GAME_OVER, EVENTS.GAME_OVER);
+    return this.transitionTo(
+      [GAME_STATES.PLAYING],
+      GAME_STATES.GAME_OVER,
+      EVENTS.GAME_OVER
+    );
   }
 }

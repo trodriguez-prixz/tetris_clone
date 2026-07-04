@@ -106,7 +106,9 @@ export default class AudioController {
   }
 
   updateIndicators(soundEnabledOverride) {
-    const soundEnabled = soundEnabledOverride ?? (this.soundEffects ? this.soundEffects.isEnabled() : false);
+    const soundEnabled =
+      soundEnabledOverride ??
+      (this.soundEffects ? this.soundEffects.isEnabled() : false);
     this.uiRenderer.updateAudioIndicators(this.musicMuted, soundEnabled);
   }
 }
