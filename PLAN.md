@@ -21,6 +21,7 @@ This plan is the single source of truth for improving the project's architecture
 | 5. Quality tooling | `[x]` | Add minimal automated checks for safer maintenance. |
 | 6. Platform and packaging verification | `[x]` | Preserve web, Express, and Electron delivery paths. |
 | 7. Architecture documentation | `[x]` | Record the final structure and update agent guidance if needed. |
+| 8. Formatting cleanup | `[ ]` | Make Prettier checks pass without mixing formatting with behavior changes. |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -196,6 +197,28 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 - [x] Architecture notes match the implemented code.
 - [x] Future work can start from this plan and `AGENTS.md` without rediscovering core constraints.
+
+## Phase 8 — Formatting cleanup
+
+**Objective:** Bring the repository into a consistent Prettier baseline while keeping the change reviewable and behavior-neutral.
+
+**Tasks**
+
+- [ ] Inventory the current formatting drift with `npm run format:check` and identify the affected files.
+- [ ] Split formatting work into safe review slices if the diff is large.
+  - Suggested slices: docs/config first, tests second, source files last.
+  - Keep generated or intentionally ignored files out of scope, including `.atl/` and `package-lock.json`.
+- [ ] Run Prettier on only the selected slice for each review unit.
+- [ ] Verify each slice with `npm run format:check` or a focused Prettier check for the changed paths.
+- [ ] Run `npm run lint`, `npm test`, and `npm run build` after the final formatting slice.
+- [ ] Decide whether CI should add `npm run format:check` once the repository is fully formatted.
+
+**Exit criteria**
+
+- [ ] `npm run format:check` passes for the full repository.
+- [ ] Formatting-only commits do not include behavior, architecture, or dependency changes.
+- [ ] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
+- [ ] CI either includes `npm run format:check` or this plan records why it remains excluded.
 
 ## Progress notes
 
