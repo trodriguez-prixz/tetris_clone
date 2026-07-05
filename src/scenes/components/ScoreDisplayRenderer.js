@@ -4,7 +4,7 @@ import {
   SIDEBAR_WIDTH,
   PREVIEW_AREA_HEIGHT,
   PADDING,
-  COLORS
+  VISUAL_SYSTEM
 } from '../../config/settings.js';
 import EventBus, { EVENTS } from '../../events/EventBus.js';
 import { StorageManager } from '../../utils/storage.js';
@@ -49,28 +49,28 @@ export default class ScoreDisplayRenderer {
     this.scene.add
       .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.title.offsetY, 'STATS', {
         fontSize: SCORE_TEXT_LAYOUT.title.fontSize,
-        fill: COLORS.HEADER_TEXT,
+        fill: VISUAL_SYSTEM.palette.accent.cyan,
         fontStyle: 'bold'
       })
       .setOrigin(CENTER_ORIGIN);
     this.scoreText = this.scene.add
       .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.score.offsetY, 'Score: 0', {
         fontSize: SCORE_TEXT_LAYOUT.score.fontSize,
-        fill: COLORS.PRIMARY_TEXT,
+        fill: VISUAL_SYSTEM.palette.text.primary,
         fontStyle: 'bold'
       })
       .setOrigin(CENTER_ORIGIN);
     this.levelText = this.scene.add
       .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.level.offsetY, 'Level: 1', {
         fontSize: SCORE_TEXT_LAYOUT.level.fontSize,
-        fill: COLORS.PRIMARY_TEXT,
+        fill: VISUAL_SYSTEM.palette.text.primary,
         fontStyle: 'bold'
       })
       .setOrigin(CENTER_ORIGIN);
     this.linesText = this.scene.add
       .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.lines.offsetY, 'Lines: 0', {
         fontSize: SCORE_TEXT_LAYOUT.lines.fontSize,
-        fill: COLORS.PRIMARY_TEXT,
+        fill: VISUAL_SYSTEM.palette.text.primary,
         fontStyle: 'bold'
       })
       .setOrigin(CENTER_ORIGIN);
@@ -83,7 +83,7 @@ export default class ScoreDisplayRenderer {
         `Best: ${this.formatNumber(bestScore)}`,
         {
           fontSize: SCORE_TEXT_LAYOUT.highScore.fontSize,
-          fill: COLORS.WARNING,
+          fill: VISUAL_SYSTEM.palette.accent.yellow,
           fontStyle: 'bold'
         }
       )
@@ -92,13 +92,13 @@ export default class ScoreDisplayRenderer {
     this.timeText = this.scene.add
       .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.time.offsetY, 'Time: 0:00', {
         fontSize: SCORE_TEXT_LAYOUT.time.fontSize,
-        fill: COLORS.SECONDARY_TEXT
+        fill: VISUAL_SYSTEM.palette.text.secondary
       })
       .setOrigin(CENTER_ORIGIN);
     this.piecesText = this.scene.add
       .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.pieces.offsetY, 'Pieces: 0', {
         fontSize: SCORE_TEXT_LAYOUT.pieces.fontSize,
-        fill: COLORS.SECONDARY_TEXT
+        fill: VISUAL_SYSTEM.palette.text.secondary
       })
       .setOrigin(CENTER_ORIGIN);
     this.tetrisesText = this.scene.add
@@ -108,7 +108,7 @@ export default class ScoreDisplayRenderer {
         'Tetrises: 0',
         {
           fontSize: SCORE_TEXT_LAYOUT.tetrises.fontSize,
-          fill: COLORS.SECONDARY_TEXT
+          fill: VISUAL_SYSTEM.palette.text.secondary
         }
       )
       .setOrigin(CENTER_ORIGIN);
@@ -140,7 +140,7 @@ export default class ScoreDisplayRenderer {
     const bestScore = StorageManager.getBestScore();
     if (stats.score > bestScore) {
       this.highScoreText.setText(`Best: ${this.formatNumber(stats.score)}`);
-      this.highScoreText.setFill(COLORS.DANGER);
+      this.highScoreText.setFill(VISUAL_SYSTEM.palette.accent.red);
     }
   }
 

@@ -1,6 +1,5 @@
 import {
   CELL_SIZE,
-  COLORS,
   GAME_AREA_X,
   GAME_AREA_Y,
   GAME_AREA_WIDTH,
@@ -8,14 +7,13 @@ import {
   GRID_COLS,
   GRID_ROWS,
   PANEL_BORDER_WIDTH,
-  RENDERED_BLOCK_INSET
+  RENDERED_BLOCK_INSET,
+  VISUAL_SYSTEM
 } from '../../config/settings.js';
 import EventBus, { EVENTS } from '../../events/EventBus.js';
 
-const PANEL_BORDER_ALPHA = 1;
 const CENTER_ORIGIN = 0.5;
-const GRID_LINE_WIDTH = 1;
-const GRID_LINE_ALPHA = 0.3;
+const GRID_LINE_WIDTH = VISUAL_SYSTEM.borders.thin;
 const CLEARED_BLOCK_SHRINK_SCALE = 0.5;
 const CLEARED_BLOCK_FADE_ALPHA = 0;
 const CLEARED_BLOCK_FADE_DURATION = 150;
@@ -75,8 +73,8 @@ export default class BoardRenderer {
       GAME_AREA_Y + GAME_AREA_HEIGHT / 2,
       GAME_AREA_WIDTH,
       GAME_AREA_HEIGHT,
-      COLORS.PANEL_BACKGROUND,
-      COLORS.PANEL_BORDER
+      VISUAL_SYSTEM.palette.surface.board,
+      VISUAL_SYSTEM.palette.border.primary
     );
     this.drawGridLines();
   }
@@ -84,7 +82,11 @@ export default class BoardRenderer {
   drawArea(centerX, centerY, width, height, fillColor, strokeColor) {
     this.scene.add.rectangle(centerX, centerY, width, height, fillColor);
     const graphics = this.scene.add.graphics();
-    graphics.lineStyle(PANEL_BORDER_WIDTH, strokeColor, PANEL_BORDER_ALPHA);
+    graphics.lineStyle(
+      PANEL_BORDER_WIDTH,
+      strokeColor,
+      VISUAL_SYSTEM.borders.alpha.panel
+    );
     graphics.strokeRect(
       centerX - width / 2,
       centerY - height / 2,
@@ -95,8 +97,12 @@ export default class BoardRenderer {
 
   drawGridLines() {
     const graphics = this.scene.add.graphics();
-    const gridLineColor = COLORS.GRID_LINE;
-    graphics.lineStyle(GRID_LINE_WIDTH, gridLineColor, GRID_LINE_ALPHA);
+    const gridLineColor = VISUAL_SYSTEM.palette.border.secondary;
+    graphics.lineStyle(
+      GRID_LINE_WIDTH,
+      gridLineColor,
+      VISUAL_SYSTEM.borders.alpha.grid
+    );
 
     for (let col = 0; col <= GRID_COLS; col++) {
       const x = GAME_AREA_X + col * CELL_SIZE;
@@ -123,6 +129,11 @@ export default class BoardRenderer {
       color
     );
     rect.setOrigin(CENTER_ORIGIN, CENTER_ORIGIN);
+    rect.setStrokeStyle(
+      VISUAL_SYSTEM.borders.thin,
+      VISUAL_SYSTEM.palette.border.secondary,
+      VISUAL_SYSTEM.borders.alpha.blockStroke
+    );
     return rect;
   }
 

@@ -5,14 +5,12 @@ import {
   PREVIEW_AREA_HEIGHT,
   SCORE_AREA_HEIGHT,
   PADDING,
-  COLORS,
-  PANEL_BORDER_WIDTH
+  PANEL_BORDER_WIDTH,
+  VISUAL_SYSTEM
 } from '../../config/settings.js';
 import AudioIndicatorRenderer from './AudioIndicatorRenderer.js';
 import PreviewRenderer from './PreviewRenderer.js';
 import ScoreDisplayRenderer from './ScoreDisplayRenderer.js';
-
-const PANEL_BORDER_ALPHA = 1;
 
 export default class UIRenderer {
   constructor(scene, gameState) {
@@ -31,8 +29,8 @@ export default class UIRenderer {
       SIDEBAR_Y + PREVIEW_AREA_HEIGHT / 2,
       SIDEBAR_WIDTH - PADDING,
       PREVIEW_AREA_HEIGHT,
-      COLORS.PANEL_BACKGROUND,
-      COLORS.PANEL_BORDER
+      VISUAL_SYSTEM.palette.surface.panel,
+      VISUAL_SYSTEM.palette.border.primary
     );
 
     const scoreAreaY =
@@ -42,15 +40,19 @@ export default class UIRenderer {
       scoreAreaY,
       SIDEBAR_WIDTH - PADDING,
       SCORE_AREA_HEIGHT,
-      COLORS.PANEL_BACKGROUND,
-      COLORS.PANEL_BORDER
+      VISUAL_SYSTEM.palette.surface.panel,
+      VISUAL_SYSTEM.palette.border.primary
     );
   }
 
   drawArea(centerX, centerY, width, height, fillColor, strokeColor) {
     this.scene.add.rectangle(centerX, centerY, width, height, fillColor);
     const graphics = this.scene.add.graphics();
-    graphics.lineStyle(PANEL_BORDER_WIDTH, strokeColor, PANEL_BORDER_ALPHA);
+    graphics.lineStyle(
+      PANEL_BORDER_WIDTH,
+      strokeColor,
+      VISUAL_SYSTEM.borders.alpha.panel
+    );
     graphics.strokeRect(
       centerX - width / 2,
       centerY - height / 2,

@@ -105,6 +105,11 @@ export const VISUAL_SYSTEM = {
       none: 0,
       sm: 4,
       md: 8
+    },
+    alpha: {
+      panel: 1,
+      grid: 0.3,
+      blockStroke: 0.75
     }
   },
   effects: {

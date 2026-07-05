@@ -3,7 +3,7 @@ import {
   SIDEBAR_WIDTH,
   CANVAS_HEIGHT,
   PADDING,
-  COLORS
+  VISUAL_SYSTEM
 } from '../../config/settings.js';
 
 const CENTER_ORIGIN = 0.5;
@@ -31,7 +31,7 @@ export default class AudioIndicatorRenderer {
         'M: Música | S: Sonidos',
         {
           fontSize: AUDIO_TEXT_LAYOUT.controls.fontSize,
-          fill: COLORS.MUTED_TEXT
+          fill: VISUAL_SYSTEM.palette.text.muted
         }
       )
       .setOrigin(CENTER_ORIGIN);
@@ -42,7 +42,7 @@ export default class AudioIndicatorRenderer {
         '🔊 Sonidos: ON',
         {
           fontSize: AUDIO_TEXT_LAYOUT.soundEffects.fontSize,
-          fill: COLORS.SECONDARY_TEXT
+          fill: VISUAL_SYSTEM.palette.text.secondary
         }
       )
       .setOrigin(CENTER_ORIGIN);
@@ -53,7 +53,7 @@ export default class AudioIndicatorRenderer {
         '🔊 Música: ON',
         {
           fontSize: AUDIO_TEXT_LAYOUT.music.fontSize,
-          fill: COLORS.SECONDARY_TEXT
+          fill: VISUAL_SYSTEM.palette.text.secondary
         }
       )
       .setOrigin(CENTER_ORIGIN);
@@ -64,14 +64,20 @@ export default class AudioIndicatorRenderer {
       this.musicIndicator.setText(
         musicMuted ? '🔇 Música: OFF' : '🔊 Música: ON'
       );
-      this.musicIndicator.setFill(musicMuted ? COLORS.DANGER : COLORS.SUCCESS);
+      this.musicIndicator.setFill(
+        musicMuted
+          ? VISUAL_SYSTEM.palette.accent.red
+          : VISUAL_SYSTEM.palette.accent.green
+      );
     }
     if (this.soundEffectsIndicator) {
       this.soundEffectsIndicator.setText(
         !soundEnabled ? '🔇 Sonidos: OFF' : '🔊 Sonidos: ON'
       );
       this.soundEffectsIndicator.setFill(
-        !soundEnabled ? COLORS.DANGER : COLORS.SUCCESS
+        !soundEnabled
+          ? VISUAL_SYSTEM.palette.accent.red
+          : VISUAL_SYSTEM.palette.accent.green
       );
     }
   }

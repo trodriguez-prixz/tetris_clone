@@ -6,7 +6,8 @@ import {
   PADDING,
   TETRAMINOS,
   PREVIEW_CELL_SIZE,
-  RENDERED_BLOCK_INSET
+  RENDERED_BLOCK_INSET,
+  VISUAL_SYSTEM
 } from '../../config/settings.js';
 
 const PREVIEW_SLOT_COUNT = 3;
@@ -52,15 +53,19 @@ export default class PreviewRenderer {
           previewAreaLeft + offsetX + (p.x - minX) * cellSize + cellSize / 2;
         const y =
           segmentCenterY + offsetY + (p.y - minY) * cellSize + cellSize / 2;
-        this.previewBlocks.push(
-          this.scene.add.rectangle(
-            x,
-            y,
-            cellSize - RENDERED_BLOCK_INSET,
-            cellSize - RENDERED_BLOCK_INSET,
-            tetData.color
-          )
+        const previewBlock = this.scene.add.rectangle(
+          x,
+          y,
+          cellSize - RENDERED_BLOCK_INSET,
+          cellSize - RENDERED_BLOCK_INSET,
+          tetData.color
         );
+        previewBlock.setStrokeStyle(
+          VISUAL_SYSTEM.borders.thin,
+          VISUAL_SYSTEM.palette.border.secondary,
+          VISUAL_SYSTEM.borders.alpha.blockStroke
+        );
+        this.previewBlocks.push(previewBlock);
       });
     });
   }
