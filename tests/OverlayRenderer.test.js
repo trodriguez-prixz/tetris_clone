@@ -55,7 +55,7 @@ describe('OverlayRenderer', () => {
     expect(scene.add.text).toHaveBeenCalledWith(
       CANVAS_WIDTH / 2,
       expect.any(Number),
-      'Ready to play',
+      'Start screen',
       expect.objectContaining({
         fontSize: VISUAL_SYSTEM.typography.size.overlayPrompt,
         fill: VISUAL_SYSTEM.palette.text.primary
@@ -64,7 +64,7 @@ describe('OverlayRenderer', () => {
     expect(scene.add.text).toHaveBeenCalledWith(
       CANVAS_WIDTH / 2,
       expect.any(Number),
-      'Press any key except P, or click to start',
+      'Press any key except P, or click',
       expect.objectContaining({
         fontSize: VISUAL_SYSTEM.typography.size.metric,
         fill: VISUAL_SYSTEM.palette.accent.cyan
@@ -94,6 +94,15 @@ describe('OverlayRenderer', () => {
     expect(scene.add.text).toHaveBeenCalledWith(
       CANVAS_WIDTH / 2,
       expect.any(Number),
+      'Play is paused',
+      expect.objectContaining({
+        fontSize: VISUAL_SYSTEM.typography.size.overlayPrompt,
+        fill: VISUAL_SYSTEM.palette.text.primary
+      })
+    );
+    expect(scene.add.text).toHaveBeenCalledWith(
+      CANVAS_WIDTH / 2,
+      expect.any(Number),
       'Press P or Space to resume',
       expect.objectContaining({
         fontSize: VISUAL_SYSTEM.typography.size.metric,
@@ -107,6 +116,15 @@ describe('OverlayRenderer', () => {
       expect.objectContaining({
         fontSize: VISUAL_SYSTEM.typography.size.overlayTitle,
         fill: VISUAL_SYSTEM.palette.accent.magenta
+      })
+    );
+    expect(scene.add.text).toHaveBeenCalledWith(
+      CANVAS_WIDTH / 2,
+      expect.any(Number),
+      'Run ended',
+      expect.objectContaining({
+        fontSize: VISUAL_SYSTEM.typography.size.overlayPrompt,
+        fill: VISUAL_SYSTEM.palette.text.primary
       })
     );
     expect(scene.add.text).toHaveBeenCalledWith(

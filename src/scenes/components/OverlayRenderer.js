@@ -45,20 +45,20 @@ const OVERLAY_CONTENT = {
   start: {
     alpha: START_OVERLAY_ALPHA,
     title: 'TETRIS',
-    status: 'Ready to play',
-    action: 'Press any key except P, or click to start',
+    status: 'Start screen',
+    action: 'Press any key except P, or click',
     flashAction: true
   },
   pause: {
     alpha: MODAL_OVERLAY_ALPHA,
     title: 'PAUSED',
-    status: 'Game is paused',
+    status: 'Play is paused',
     action: 'Press P or Space to resume'
   },
   gameOver: {
     alpha: MODAL_OVERLAY_ALPHA,
     title: 'GAME OVER',
-    status: 'Run finished',
+    status: 'Run ended',
     action: 'Press R to restart'
   }
 };

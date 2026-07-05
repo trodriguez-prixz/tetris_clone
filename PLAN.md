@@ -341,7 +341,7 @@ Centralized remaining theme-facing visual values by keeping shared block inset a
 - [x] Improve active-piece, ghost/landing-position, locked-block, and line-clear readability if the current rendering makes decisions hard to anticipate.
 - [x] Improve next-piece preview spacing, scale, and labeling so upcoming pieces are scannable.
 - [x] Clarify score, level, lines, elapsed time, and high-score/stat display priority.
-- [ ] Review start, pause, and game-over copy for concise instructions and state clarity.
+- [x] Review start, pause, and game-over copy for concise instructions and state clarity.
 - [ ] Add or update tests/mocks only where scene behavior or rendering contracts need protection.
 
 **Task 1 note — 2026-07-04**
@@ -358,6 +358,11 @@ Preview data order, queue semantics, gameplay rules, scoring, timers, storage po
 
 Grouped the score panel into current-run, session-stat, and record sections so score, level, and lines remain the fastest metrics to scan while elapsed time, pieces, tetrises, and best score stay readable as supporting information.
 Score calculations, level/line calculations, timer behavior, storage policy, input behavior, event flows, board dimensions, cell size, gameplay coordinates, and piece queue semantics were intentionally preserved.
+
+**Task 4 note — 2026-07-05**
+
+Tightened start, pause, and game-over overlay copy so each state reads clearly and the visible next action matches actual valid controls: start accepts any key except `P` or pointer click, pause resumes with `P` or Space, and game over restarts with `R`.
+Overlay layout, presentation tokens, start/pause/restart mechanics, input wiring, scoring, timers, storage policy, event flows, board dimensions, cell size, gameplay coordinates, and piece queue semantics were intentionally preserved.
 
 **Exit criteria**
 
