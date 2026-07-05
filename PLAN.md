@@ -231,11 +231,19 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Tasks**
 
-- [ ] Play through the current web build and capture friction in start, active play, pause, game-over, and restart flows.
+- [x] Play through the current web build and capture friction in start, active play, pause, game-over, and restart flows.
 - [ ] Inventory current UI surfaces: board, score panel, next pieces, audio indicator, overlays, keyboard controls, and any persistent stats.
 - [ ] Identify visual hierarchy issues such as unclear status, weak contrast, crowded panels, or hard-to-scan score information.
 - [ ] Define target UX outcomes for the first improvement slice, prioritizing clarity during gameplay over decorative changes.
 - [ ] Record implementation constraints that must stay stable: Phaser rendering boundaries, pure logic modules, Vite/Electron packaging, and existing tests.
+
+**Task 1 note — 2026-07-04**
+
+- Start: the start overlay only says “Presiona cualquier tecla”; `P` is ignored as a start key and pointer input also starts the game, but neither exception is visible.
+- Active play: movement, rotation, soft drop, pause, and audio keys exist in input code, but the visible UI only documents audio controls, so core gameplay controls rely on prior knowledge.
+- Pause: the pause overlay only says “PAUSED”; it does not explain that `P` or Space resumes play.
+- Game over: the overlay only shows “GAME OVER” and “Press R to Restart”; it omits final score, best-score outcome, and session stats even though those stats are persisted.
+- Restart: restart is keyboard-only through `R`; there is no pointer restart path and no visible confirmation that score, level, timer, and board state reset before play resumes.
 
 **Exit criteria**
 
