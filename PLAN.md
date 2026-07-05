@@ -23,7 +23,7 @@ This plan is the single source of truth for improving the project's architecture
 | 7. Architecture documentation           | `[x]`  | Record the final structure and update agent guidance if needed.            |
 | 8. Formatting cleanup                   | `[x]`  | Make Prettier checks pass without mixing formatting with behavior changes. |
 | 9. UX/UI discovery baseline             | `[x]`  | Identify usability gaps before changing visuals or flows.                  |
-| 10. Visual system refresh               | `[~]`  | Create a consistent arcade visual language for the game.                   |
+| 10. Visual system refresh               | `[x]`  | Create a consistent arcade visual language for the game.                   |
 | 11. Gameplay readability                | `[ ]`  | Make board state, next pieces, score, and status easier to understand.     |
 | 12. Interaction feedback and game feel  | `[ ]`  | Improve player feedback without changing core Tetris rules.                |
 | 13. Accessibility and responsive polish | `[ ]`  | Make the game more usable across devices and player needs.                 |
@@ -304,7 +304,7 @@ Phase 10+ visual and UX work must preserve these implementation constraints:
 - [x] Refresh board, block, grid, and panel styling while keeping gameplay coordinates and rules unchanged.
 - [x] Standardize overlay presentation for start, pause, and game-over states.
 - [x] Ensure score, level, lines, timer, and high-score information follow the same visual hierarchy.
-- [ ] Keep visual constants named and centralized enough for future theme changes.
+- [x] Keep visual constants named and centralized enough for future theme changes.
 
 **Task 1 note — 2026-07-04**
 
@@ -322,11 +322,15 @@ Standardized start, pause, and game-over overlays around shared layout/content h
 
 Standardized the score display hierarchy with shared `VISUAL_SYSTEM` typography and palette tokens: score, level, and lines remain the emphasized primary metrics, while timer and high-score use the same supporting tier so they stay readable without competing with active gameplay metrics. Score content, calculations, timer behavior, storage policy, input behavior, event flows, and board coordinates were intentionally preserved.
 
+**Task 5 note — 2026-07-04**
+
+Centralized remaining theme-facing visual values by keeping shared block inset and panel border aliases backed by `VISUAL_SYSTEM`, and by routing audio indicator font family, sizes, and text colors through visual-system tokens. Layout measurements, gameplay coordinates, scoring rules, timers, storage policy, input behavior, event flows, and line-clear effect tuning were intentionally left in their current homes because they are layout/gameplay or event-specific presentation constants, not broad theme tokens.
+
 **Exit criteria**
 
-- [ ] The game has a cohesive visual style across board, sidebar, and overlays.
-- [ ] Visual changes do not modify scoring, collision, timing, or state transitions.
-- [ ] `npm test` passes after the visual refresh slice.
+- [x] The game has a cohesive visual style across board, sidebar, and overlays.
+- [x] Visual changes do not modify scoring, collision, timing, or state transitions.
+- [x] `npm test` passes after the visual refresh slice.
 
 ## Phase 11 — Gameplay readability
 

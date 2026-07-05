@@ -9,9 +9,27 @@ import {
 const CENTER_ORIGIN = 0.5;
 
 const AUDIO_TEXT_LAYOUT = {
-  controls: { offsetFromBottom: 20, fontSize: '12px' },
-  soundEffects: { offsetFromBottom: 50, fontSize: '16px' },
-  music: { offsetFromBottom: 75, fontSize: '16px' }
+  controls: {
+    offsetFromBottom: 20,
+    fontSize: VISUAL_SYSTEM.typography.size.caption
+  },
+  soundEffects: {
+    offsetFromBottom: 50,
+    fontSize: VISUAL_SYSTEM.typography.size.body
+  },
+  music: {
+    offsetFromBottom: 75,
+    fontSize: VISUAL_SYSTEM.typography.size.body
+  }
+};
+
+const AUDIO_TEXT_STYLE = {
+  controls: {
+    fill: VISUAL_SYSTEM.palette.text.muted
+  },
+  indicator: {
+    fill: VISUAL_SYSTEM.palette.text.secondary
+  }
 };
 
 export default class AudioIndicatorRenderer {
@@ -30,8 +48,9 @@ export default class AudioIndicatorRenderer {
         sidebarBottom - AUDIO_TEXT_LAYOUT.controls.offsetFromBottom,
         'M: Música | S: Sonidos',
         {
+          fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: AUDIO_TEXT_LAYOUT.controls.fontSize,
-          fill: VISUAL_SYSTEM.palette.text.muted
+          fill: AUDIO_TEXT_STYLE.controls.fill
         }
       )
       .setOrigin(CENTER_ORIGIN);
@@ -41,8 +60,9 @@ export default class AudioIndicatorRenderer {
         sidebarBottom - AUDIO_TEXT_LAYOUT.soundEffects.offsetFromBottom,
         '🔊 Sonidos: ON',
         {
+          fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: AUDIO_TEXT_LAYOUT.soundEffects.fontSize,
-          fill: VISUAL_SYSTEM.palette.text.secondary
+          fill: AUDIO_TEXT_STYLE.indicator.fill
         }
       )
       .setOrigin(CENTER_ORIGIN);
@@ -52,8 +72,9 @@ export default class AudioIndicatorRenderer {
         sidebarBottom - AUDIO_TEXT_LAYOUT.music.offsetFromBottom,
         '🔊 Música: ON',
         {
+          fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: AUDIO_TEXT_LAYOUT.music.fontSize,
-          fill: VISUAL_SYSTEM.palette.text.secondary
+          fill: AUDIO_TEXT_STYLE.indicator.fill
         }
       )
       .setOrigin(CENTER_ORIGIN);

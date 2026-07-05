@@ -19,8 +19,6 @@ export const SIDEBAR_Y = PADDING;
 export const PREVIEW_AREA_HEIGHT = 200;
 export const SCORE_AREA_HEIGHT = 280;
 export const PREVIEW_CELL_SIZE = CELL_SIZE / 2;
-export const RENDERED_BLOCK_INSET = 2;
-export const PANEL_BORDER_WIDTH = 2;
 
 export const COLORS = {
   BACKGROUND: 0x34495e,
@@ -112,6 +110,9 @@ export const VISUAL_SYSTEM = {
       blockStroke: 0.75
     }
   },
+  blocks: {
+    inset: 2
+  },
   effects: {
     glow: {
       subtle: { color: '#66e3ff', alpha: 0.35, blur: 8 },
@@ -135,6 +136,9 @@ export const VISUAL_SYSTEM = {
     }
   }
 };
+
+export const RENDERED_BLOCK_INSET = VISUAL_SYSTEM.blocks.inset;
+export const PANEL_BORDER_WIDTH = VISUAL_SYSTEM.borders.normal;
 
 // Each tetramino is defined by relative positions from a pivot point (0, 0)
 export const TETRAMINOS = {
