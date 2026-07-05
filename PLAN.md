@@ -332,7 +332,7 @@ Centralized remaining theme-facing visual values by keeping shared block inset a
 - [x] Visual changes do not modify scoring, collision, timing, or state transitions.
 - [x] `npm test` passes after the visual refresh slice.
 
-## Phase 11 — Gameplay readability [~]
+## Phase 11 — Gameplay readability [x]
 
 **Objective:** Make important gameplay information easy to read quickly while the player is focused on the board.
 
@@ -342,7 +342,7 @@ Centralized remaining theme-facing visual values by keeping shared block inset a
 - [x] Improve next-piece preview spacing, scale, and labeling so upcoming pieces are scannable.
 - [x] Clarify score, level, lines, elapsed time, and high-score/stat display priority.
 - [x] Review start, pause, and game-over copy for concise instructions and state clarity.
-- [ ] Add or update tests/mocks only where scene behavior or rendering contracts need protection.
+- [x] Add or update tests/mocks only where scene behavior or rendering contracts need protection.
 
 **Task 1 note — 2026-07-04**
 
@@ -364,11 +364,15 @@ Score calculations, level/line calculations, timer behavior, storage policy, inp
 Tightened start, pause, and game-over overlay copy so each state reads clearly and the visible next action matches actual valid controls: start accepts any key except `P` or pointer click, pause resumes with `P` or Space, and game over restarts with `R`.
 Overlay layout, presentation tokens, start/pause/restart mechanics, input wiring, scoring, timers, storage policy, event flows, board dimensions, cell size, gameplay coordinates, and piece queue semantics were intentionally preserved.
 
+**Task 5 note — 2026-07-05**
+
+Audited the Phase 11 rendering contracts. `BoardRenderer`, `PreviewRenderer`, `ScoreDisplayRenderer`, and `OverlayRenderer` tests already protect landing ghost placement, preview label/scale/spacing, score grouping and elapsed/best labels, and overlay state/action copy; one focused `BoardRenderer` test was added to protect the active-versus-locked block styling contract. No Phaser mock changes were needed.
+
 **Exit criteria**
 
-- [ ] A player can identify current state, next actions, and key stats without reading dense UI.
-- [ ] Rendering ownership remains in `src/scenes/components/`.
-- [ ] Focused scene tests pass when scene behavior changes.
+- [x] A player can identify current state, next actions, and key stats without reading dense UI.
+- [x] Rendering ownership remains in `src/scenes/components/`.
+- [x] Focused scene tests pass when scene behavior changes.
 
 ## Phase 12 — Interaction feedback and game feel
 

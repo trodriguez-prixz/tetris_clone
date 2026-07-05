@@ -114,4 +114,35 @@ describe('BoardRenderer gameplay readability', () => {
     expect(scene.add.rectangle.mock.calls[0][1]).toBe(logicalCenter(4));
     expect(activeBlock.y).toBe(0);
   });
+
+  test('keeps locked blocks visually quieter than the active piece', () => {
+    const scene = buildScene();
+    const fieldData = createEmptyField();
+    fieldData[18][4] = { x: 4, y: 18, color: 0x3498db };
+    const gameState = {
+      fieldData,
+      currentTetramino: {
+        blocks: [{ x: 5, y: GRID_ROWS - 1, color: BLOCK_COLOR }]
+      }
+    };
+    const renderer = new BoardRenderer(scene, gameState);
+    scene.add.rectangle.mockClear();
+
+    renderer.update();
+
+    const rectangles = scene.add.rectangle.mock.results.map(
+      ({ value }) => value
+    );
+    expect(rectangles).toHaveLength(2);
+    expect(rectangles[0].setStrokeStyle).toHaveBeenCalledWith(
+      VISUAL_SYSTEM.borders.normal,
+      VISUAL_SYSTEM.palette.border.focus,
+      1
+    );
+    expect(rectangles[1].setStrokeStyle).toHaveBeenCalledWith(
+      VISUAL_SYSTEM.borders.thin,
+      VISUAL_SYSTEM.palette.border.secondary,
+      VISUAL_SYSTEM.borders.alpha.blockStroke
+    );
+  });
 });
