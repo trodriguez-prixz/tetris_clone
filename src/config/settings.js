@@ -37,6 +37,100 @@ export const COLORS = {
   WARNING: '#f39c12'
 };
 
+export const VISUAL_SYSTEM = {
+  palette: {
+    surface: {
+      page: 0x101820,
+      board: 0x172635,
+      panel: 0x1e3142,
+      panelRaised: 0x263d52,
+      overlay: 0x000000
+    },
+    border: {
+      primary: 0x66e3ff,
+      secondary: 0x2d5266,
+      focus: 0xf7d154
+    },
+    text: {
+      primary: '#f4fbff',
+      secondary: '#b8c9d6',
+      muted: '#8ea4b2',
+      inverse: '#101820'
+    },
+    accent: {
+      cyan: '#66e3ff',
+      magenta: '#ff5fd7',
+      yellow: '#f7d154',
+      green: '#5dff9a',
+      red: '#ff5d73'
+    }
+  },
+  contrast: {
+    bodyText: 4.5,
+    largeText: 3,
+    importantText: 7,
+    nonText: 3
+  },
+  typography: {
+    fontFamily: 'monospace',
+    weight: {
+      regular: 'normal',
+      emphasis: 'bold'
+    },
+    size: {
+      caption: '12px',
+      body: '16px',
+      metric: '20px',
+      sectionTitle: '18px',
+      overlayPrompt: '24px',
+      overlayTitle: '64px'
+    },
+    lineHeight: {
+      compact: 1.1,
+      normal: 1.25
+    }
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 20,
+    xl: 32
+  },
+  borders: {
+    thin: 1,
+    normal: 2,
+    strong: 4,
+    radius: {
+      none: 0,
+      sm: 4,
+      md: 8
+    }
+  },
+  effects: {
+    glow: {
+      subtle: { color: '#66e3ff', alpha: 0.35, blur: 8 },
+      strong: { color: '#ff5fd7', alpha: 0.6, blur: 16 }
+    },
+    shadow: {
+      panel: {
+        color: '#000000',
+        alpha: 0.35,
+        offsetX: 0,
+        offsetY: 4,
+        blur: 12
+      },
+      overlayText: {
+        color: '#000000',
+        alpha: 0.65,
+        offsetX: 2,
+        offsetY: 2,
+        blur: 4
+      }
+    }
+  }
+};
+
 // Each tetramino is defined by relative positions from a pivot point (0, 0)
 export const TETRAMINOS = {
   T: {

@@ -23,7 +23,7 @@ This plan is the single source of truth for improving the project's architecture
 | 7. Architecture documentation           | `[x]`  | Record the final structure and update agent guidance if needed.            |
 | 8. Formatting cleanup                   | `[x]`  | Make Prettier checks pass without mixing formatting with behavior changes. |
 | 9. UX/UI discovery baseline             | `[x]`  | Identify usability gaps before changing visuals or flows.                  |
-| 10. Visual system refresh               | `[ ]`  | Create a consistent arcade visual language for the game.                   |
+| 10. Visual system refresh               | `[~]`  | Create a consistent arcade visual language for the game.                   |
 | 11. Gameplay readability                | `[ ]`  | Make board state, next pieces, score, and status easier to understand.     |
 | 12. Interaction feedback and game feel  | `[ ]`  | Improve player feedback without changing core Tetris rules.                |
 | 13. Accessibility and responsive polish | `[ ]`  | Make the game more usable across devices and player needs.                 |
@@ -300,11 +300,15 @@ Phase 10+ visual and UX work must preserve these implementation constraints:
 
 **Tasks**
 
-- [ ] Define the core palette, contrast targets, typography style, spacing, borders, and glow/shadow rules in `src/config/settings.js` or focused rendering constants.
+- [x] Define the core palette, contrast targets, typography style, spacing, borders, and glow/shadow rules in `src/config/settings.js` or focused rendering constants.
 - [ ] Refresh board, block, grid, and panel styling while keeping gameplay coordinates and rules unchanged.
 - [ ] Standardize overlay presentation for start, pause, and game-over states.
 - [ ] Ensure score, level, lines, timer, and high-score information follow the same visual hierarchy.
 - [ ] Keep visual constants named and centralized enough for future theme changes.
+
+**Task 1 note — 2026-07-04**
+
+Defined `VISUAL_SYSTEM` in `src/config/settings.js` with the future arcade palette, contrast targets, typography tokens, spacing scale, border rules, and glow/shadow effect rules. Later Phase 10 tasks will apply these constants to board, block, panel, overlay, and UI rendering without changing gameplay rules.
 
 **Exit criteria**
 
