@@ -234,7 +234,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 - [x] Play through the current web build and capture friction in start, active play, pause, game-over, and restart flows.
 - [x] Inventory current UI surfaces: board, score panel, next pieces, audio indicator, overlays, keyboard controls, and any persistent stats.
 - [x] Identify visual hierarchy issues such as unclear status, weak contrast, crowded panels, or hard-to-scan score information.
-- [ ] Define target UX outcomes for the first improvement slice, prioritizing clarity during gameplay over decorative changes.
+- [x] Define target UX outcomes for the first improvement slice, prioritizing clarity during gameplay over decorative changes.
 - [ ] Record implementation constraints that must stay stable: Phaser rendering boundaries, pure logic modules, Vite/Electron packaging, and existing tests.
 
 **Task 1 note — 2026-07-04**
@@ -266,6 +266,18 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 | Crowded sidebar panels | The 200px sidebar stacks a three-piece preview, eight stat lines, and audio state/controls; the preview panel has no label, and audio controls compete with gameplay stats near the bottom. | Medium: separate information groups and reduce competition. |
 | Hard-to-scan score information | Score, level, and lines share similar weight and centered labels; secondary stats and best score sit in the same dense column, making the primary gameplay metrics less dominant. | High: establish score/stat hierarchy before Phase 11 readability work. |
 | Priority/order risk | Visual polish could amplify existing ambiguity if status copy, stat priority, preview labeling, and contrast are not defined first. | High: use task 4 to define target UX outcomes before implementation. |
+
+**Task 4 note — 2026-07-04**
+
+First improvement slice target: make gameplay state and high-priority information easier to understand while play is happening, without changing Tetris rules or adding decorative-only effects.
+
+| Outcome | Target for the first slice | Later verification |
+| ------- | -------------------------- | ------------------ |
+| State and next action are obvious | Start, pause, and game-over overlays should explain the current state and the next valid action in one short instruction. | During start, pause, and game-over, a reviewer can identify how to continue/restart without reading source code or guessing hidden keys. |
+| Primary gameplay metrics stand out | Score, level, and lines should be visually prioritized above secondary stats such as time, pieces, tetrises, and best score. | During active play, score, level, and lines are the fastest sidebar values to scan. |
+| Next pieces are identifiable | The preview area should be labeled and spaced so the next pieces read as planning information, not decoration. | A reviewer can locate the next-piece queue immediately and distinguish it from score/audio panels. |
+| Contrast supports fast reading | Important overlay text, stat labels, stat values, preview labels, and audio status should meet readable contrast before palette polish. | A contrast review can check the selected text/background pairs for important UI text. |
+| Decorative effects stay secondary | Glow, particles, shadows, and palette polish should not reduce board readability, hide active/locked blocks, or compete with critical stats. | Gameplay remains readable when effects trigger, especially during movement, line clears, pause, and game over. |
 
 **Exit criteria**
 
