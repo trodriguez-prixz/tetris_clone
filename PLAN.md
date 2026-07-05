@@ -339,7 +339,7 @@ Centralized remaining theme-facing visual values by keeping shared block inset a
 **Tasks**
 
 - [x] Improve active-piece, ghost/landing-position, locked-block, and line-clear readability if the current rendering makes decisions hard to anticipate.
-- [ ] Improve next-piece preview spacing, scale, and labeling so upcoming pieces are scannable.
+- [x] Improve next-piece preview spacing, scale, and labeling so upcoming pieces are scannable.
 - [ ] Clarify score, level, lines, elapsed time, and high-score/stat display priority.
 - [ ] Review start, pause, and game-over copy for concise instructions and state clarity.
 - [ ] Add or update tests/mocks only where scene behavior or rendering contracts need protection.
@@ -348,6 +348,11 @@ Centralized remaining theme-facing visual values by keeping shared block inset a
 
 Added a non-mutating landing-position ghost in `BoardRenderer` and gave the active piece a stronger focus stroke while locked blocks keep the quieter secondary stroke.
 This improves drop anticipation and active/locked separation while preserving gameplay rules, scoring, timers, storage policy, input behavior, event flows, board dimensions, cell size, gameplay coordinates, and the existing line-clear animation behavior.
+
+**Task 2 note — 2026-07-04**
+
+Added a visible `NEXT` label to `PreviewRenderer`, increased preview block scale, and spaced the three queue slots with named visual-system-backed constants so upcoming pieces read as planning information.
+Preview data order, queue semantics, gameplay rules, scoring, timers, storage policy, input behavior, event flows, board dimensions, cell size, and gameplay coordinates were intentionally preserved.
 
 **Exit criteria**
 
