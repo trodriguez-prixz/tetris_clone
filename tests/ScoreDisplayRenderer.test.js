@@ -41,7 +41,17 @@ describe('ScoreDisplayRenderer', () => {
     renderer.destroy();
   });
 
-  test('renders score, level, lines, timer, and high score with a consistent hierarchy', () => {
+  test('groups stat display by gameplay priority', () => {
+    expect(scene.add.text).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.any(Number),
+      'CURRENT RUN',
+      expect.objectContaining({
+        fontSize: VISUAL_SYSTEM.typography.size.caption,
+        fill: VISUAL_SYSTEM.palette.text.secondary,
+        fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+      })
+    );
     expect(scene.add.text).toHaveBeenCalledWith(
       expect.any(Number),
       expect.any(Number),
@@ -76,7 +86,17 @@ describe('ScoreDisplayRenderer', () => {
     expect(scene.add.text).toHaveBeenCalledWith(
       expect.any(Number),
       expect.any(Number),
-      'Best: 0',
+      'SESSION STATS',
+      expect.objectContaining({
+        fontSize: VISUAL_SYSTEM.typography.size.caption,
+        fill: VISUAL_SYSTEM.palette.text.secondary,
+        fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+      })
+    );
+    expect(scene.add.text).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.any(Number),
+      'Elapsed: 0:00',
       expect.objectContaining({
         fontSize: VISUAL_SYSTEM.typography.size.body,
         fill: VISUAL_SYSTEM.palette.text.secondary,
@@ -86,7 +106,17 @@ describe('ScoreDisplayRenderer', () => {
     expect(scene.add.text).toHaveBeenCalledWith(
       expect.any(Number),
       expect.any(Number),
-      'Time: 0:00',
+      'RECORD',
+      expect.objectContaining({
+        fontSize: VISUAL_SYSTEM.typography.size.caption,
+        fill: VISUAL_SYSTEM.palette.text.secondary,
+        fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+      })
+    );
+    expect(scene.add.text).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.any(Number),
+      'Best Score: 0',
       expect.objectContaining({
         fontSize: VISUAL_SYSTEM.typography.size.body,
         fill: VISUAL_SYSTEM.palette.text.secondary,
@@ -104,9 +134,17 @@ describe('ScoreDisplayRenderer', () => {
     expect(renderer.linesText.setText).toHaveBeenCalledWith('Lines: 2');
     expect(renderer.piecesText.setText).toHaveBeenCalledWith('Pieces: 3');
     expect(renderer.tetrisesText.setText).toHaveBeenCalledWith('Tetrises: 0');
-    expect(renderer.highScoreText.setText).toHaveBeenCalledWith('Best: 1,000');
+    expect(renderer.highScoreText.setText).toHaveBeenCalledWith(
+      'Best Score: 1,000'
+    );
     expect(renderer.highScoreText.setFill).toHaveBeenCalledWith(
       VISUAL_SYSTEM.palette.accent.red
     );
+  });
+
+  test('keeps elapsed-time formatting behavior unchanged', () => {
+    renderer.updateTime(5);
+
+    expect(renderer.timeText.setText).toHaveBeenCalledWith('Elapsed: 0:05');
   });
 });
