@@ -232,7 +232,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 **Tasks**
 
 - [x] Play through the current web build and capture friction in start, active play, pause, game-over, and restart flows.
-- [ ] Inventory current UI surfaces: board, score panel, next pieces, audio indicator, overlays, keyboard controls, and any persistent stats.
+- [x] Inventory current UI surfaces: board, score panel, next pieces, audio indicator, overlays, keyboard controls, and any persistent stats.
 - [ ] Identify visual hierarchy issues such as unclear status, weak contrast, crowded panels, or hard-to-scan score information.
 - [ ] Define target UX outcomes for the first improvement slice, prioritizing clarity during gameplay over decorative changes.
 - [ ] Record implementation constraints that must stay stable: Phaser rendering boundaries, pure logic modules, Vite/Electron packaging, and existing tests.
@@ -244,6 +244,18 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 - Pause: the pause overlay only says “PAUSED”; it does not explain that `P` or Space resumes play.
 - Game over: the overlay only shows “GAME OVER” and “Press R to Restart”; it omits final score, best-score outcome, and session stats even though those stats are persisted.
 - Restart: restart is keyboard-only through `R`; there is no pointer restart path and no visible confirmation that score, level, timer, and board state reset before play resumes.
+
+**Task 2 note — 2026-07-04**
+
+| Surface | Current inventory |
+| ------- | ----------------- |
+| Board | `BoardRenderer` draws a 10×20 grid panel, active tetramino blocks, locked field blocks, and line-clear particles. |
+| Score panel | `ScoreDisplayRenderer` shows `STATS`, score, level, lines, best score, time, pieces, and tetrises in the sidebar. |
+| Next pieces | `PreviewRenderer` renders the next three tetramino shapes in the preview panel, without a visible label. |
+| Audio indicator | `AudioIndicatorRenderer` shows music and sound-effect status plus `M: Música | S: Sonidos` controls near the sidebar bottom. |
+| Overlays | `OverlayRenderer` owns start (`TETRIS`, “Presiona cualquier tecla”), pause (`PAUSED`), and game-over (`GAME OVER`, “Press R to Restart”) overlays. |
+| Keyboard controls | `InputController` wires arrows for move/rotate/soft drop, `P` or Space for pause/resume, `M` for music, `S` for sound effects, and `R` for restart after game over; pointer input only starts the game. |
+| Persistent stats | `StorageManager` persists top-ten high scores and lifetime totals (`totalGames`, `totalScore`, `totalLines`, `totalPieces`, `totalTetrises`, `totalTime`, `bestLevel`); the visible UI only surfaces the current best score during play. |
 
 **Exit criteria**
 
