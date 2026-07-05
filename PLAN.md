@@ -25,7 +25,7 @@ This plan is the single source of truth for improving the project's architecture
 | 9. UX/UI discovery baseline             | `[x]`  | Identify usability gaps before changing visuals or flows.                  |
 | 10. Visual system refresh               | `[x]`  | Create a consistent arcade visual language for the game.                   |
 | 11. Gameplay readability                | `[ ]`  | Make board state, next pieces, score, and status easier to understand.     |
-| 12. Interaction feedback and game feel  | `[ ]`  | Improve player feedback without changing core Tetris rules.                |
+| 12. Interaction feedback and game feel  | `[~]`  | Improve player feedback without changing core Tetris rules.                |
 | 13. Accessibility and responsive polish | `[ ]`  | Make the game more usable across devices and player needs.                 |
 
 ## Phase 0 — Refactor safety baseline
@@ -374,17 +374,33 @@ Audited the Phase 11 rendering contracts. `BoardRenderer`, `PreviewRenderer`, `S
 - [x] Rendering ownership remains in `src/scenes/components/`.
 - [x] Focused scene tests pass when scene behavior changes.
 
-## Phase 12 — Interaction feedback and game feel
+## Phase 12 — Interaction feedback and game feel [~]
 
 **Objective:** Improve responsiveness and feedback while preserving the existing Tetris rule model.
 
 **Tasks**
 
-- [ ] Review movement, rotation, soft drop, hard drop, lock, line clear, level-up, pause, and game-over feedback moments.
+- [x] Review movement, rotation, soft drop, hard drop, lock, line clear, level-up, pause, and game-over feedback moments.
 - [ ] Tune visual effects and animations so they communicate events without hiding the board or delaying gameplay.
 - [ ] Ensure audio feedback remains optional, understandable, and coordinated through existing audio boundaries.
 - [ ] Add clear feedback for disabled or unavailable actions where applicable.
 - [ ] Protect behavior with tests when feedback changes affect scene coordination or event emission.
+
+**Task 1 note — 2026-07-05**
+
+Feedback moment inventory, based on the current scene/component boundaries:
+
+| Moment | Current feedback | Follow-up signal for later Phase 12 tasks |
+| ------ | ---------------- | ----------------------------------------- |
+| Movement | Successful horizontal movement plays the move sound and rerenders the board. Blocked movement has no explicit feedback. | Consider disabled-action feedback only if it stays subtle and does not change input behavior. |
+| Rotation | Successful rotation plays the rotate sound and rerenders the board. Blocked rotation has no explicit feedback. | Consider a small unavailable-action cue without changing wall-kick or rotation rules. |
+| Soft drop | Pressing Down advances one fall tick immediately, switches to fast drop speed, and restarts the drop loop; release restores base speed. | Feedback is mostly motion/timing; any added cue should preserve timer behavior. |
+| Hard drop | No active hard-drop input or rule path is wired; `SoundEffects.playHardDrop()` exists but is not used by scene gameplay. | Treat as unavailable unless a later scoped task explicitly adds the behavior. |
+| Lock | A locked piece updates the board, increments placed pieces, and spawns the next piece; there is no lock-specific EventBus event or sound. | Add only presentation feedback if needed; do not reintroduce duplicate event flow without a consumer. |
+| Line clear | `LINES_CLEARED` drives board particles, line-clear audio, score/stat updates, and cleared-row fade/shrink animation. | Tune intensity so particles communicate the clear without hiding the board. |
+| Level-up | `LEVEL_UP` drives level-up audio and a score-panel scale/flash animation on the level text. | Coordinate any visual/audio changes through existing score/audio components. |
+| Pause | Pause stops the drop loop, pauses music, and shows the pause overlay; resume restarts the loop/music and clears it. | Existing state feedback is clear; avoid extra effects that obscure the paused board. |
+| Game-over | Game over stops the drop loop, persists stats, plays game-over audio, stops music, and shows the restart overlay. | Any added effect should preserve persistence, restart input, and EventBus flow. |
 
 **Exit criteria**
 
