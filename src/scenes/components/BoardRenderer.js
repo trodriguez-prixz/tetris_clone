@@ -26,6 +26,26 @@ const PARTICLE_BASE_DURATION = 500;
 const PARTICLE_RANDOM_DURATION = 300;
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const PARTICLE_EASE = 'Power2';
+const BLOCK_VISUAL_STYLES = {
+  locked: {
+    strokeWidth: VISUAL_SYSTEM.borders.thin,
+    strokeColor: VISUAL_SYSTEM.palette.border.secondary,
+    strokeAlpha: VISUAL_SYSTEM.borders.alpha.blockStroke,
+    fillAlpha: 1
+  },
+  active: {
+    strokeWidth: VISUAL_SYSTEM.borders.normal,
+    strokeColor: VISUAL_SYSTEM.palette.border.focus,
+    strokeAlpha: 1,
+    fillAlpha: 1
+  },
+  ghost: {
+    strokeWidth: VISUAL_SYSTEM.borders.normal,
+    strokeColor: VISUAL_SYSTEM.palette.border.focus,
+    strokeAlpha: 0.85,
+    fillAlpha: 0.22
+  }
+};
 
 const LINE_CLEAR_EFFECTS = {
   1: {
@@ -61,6 +81,7 @@ export default class BoardRenderer {
     // Track locked block objects so removed rows can animate before their rectangles are destroyed.
     this.visualBlocks = new Map();
     this.activeBlocks = [];
+    this.ghostBlocks = [];
 
     this.drawBackground();
 
@@ -118,7 +139,12 @@ export default class BoardRenderer {
     graphics.strokePath();
   }
 
-  createVisualBlock(logicalX, logicalY, color) {
+  createVisualBlock(
+    logicalX,
+    logicalY,
+    color,
+    style = BLOCK_VISUAL_STYLES.locked
+  ) {
     const pixelX = GAME_AREA_X + logicalX * CELL_SIZE + CELL_SIZE / 2;
     const pixelY = GAME_AREA_Y + logicalY * CELL_SIZE + CELL_SIZE / 2;
     const rect = this.scene.add.rectangle(
@@ -129,27 +155,76 @@ export default class BoardRenderer {
       color
     );
     rect.setOrigin(CENTER_ORIGIN, CENTER_ORIGIN);
+    rect.setAlpha(style.fillAlpha);
     rect.setStrokeStyle(
-      VISUAL_SYSTEM.borders.thin,
-      VISUAL_SYSTEM.palette.border.secondary,
-      VISUAL_SYSTEM.borders.alpha.blockStroke
+      style.strokeWidth,
+      style.strokeColor,
+      style.strokeAlpha
     );
     return rect;
   }
 
   update() {
+    this.ghostBlocks.forEach((b) => b.destroy());
     this.activeBlocks.forEach((b) => b.destroy());
+    this.ghostBlocks = [];
     this.activeBlocks = [];
 
     const activeTetra = this.gameState.currentTetramino;
     if (activeTetra) {
+      this.drawGhostBlocks(activeTetra);
       activeTetra.blocks.forEach((lb) => {
-        const visual = this.createVisualBlock(lb.x, lb.y, lb.color);
+        const visual = this.createVisualBlock(
+          lb.x,
+          lb.y,
+          lb.color,
+          BLOCK_VISUAL_STYLES.active
+        );
         this.activeBlocks.push(visual);
       });
     }
 
     this.syncFieldData();
+  }
+
+  drawGhostBlocks(activeTetra) {
+    const landingOffset = this.getLandingOffset(activeTetra);
+    if (landingOffset === 0) return;
+
+    activeTetra.blocks.forEach((lb) => {
+      const ghost = this.createVisualBlock(
+        lb.x,
+        lb.y + landingOffset,
+        lb.color,
+        BLOCK_VISUAL_STYLES.ghost
+      );
+      this.ghostBlocks.push(ghost);
+    });
+  }
+
+  getLandingOffset(activeTetra) {
+    let offset = 0;
+    const positions = activeTetra.blocks.map((block) => ({
+      x: block.x,
+      y: block.y
+    }));
+
+    while (!this.wouldCollideVertically(positions, offset + 1)) {
+      offset += 1;
+    }
+
+    return offset;
+  }
+
+  wouldCollideVertically(positions, offset) {
+    return positions.some(({ x, y }) => {
+      const targetY = y + offset;
+      return (
+        targetY >= GRID_ROWS ||
+        (this.gameState.fieldData[targetY] &&
+          this.gameState.fieldData[targetY][x] !== null)
+      );
+    });
   }
 
   syncFieldData() {
@@ -238,6 +313,7 @@ export default class BoardRenderer {
   destroy() {
     EventBus.off(EVENTS.LINES_CLEARED, this.handleLinesCleared, this);
     this.visualBlocks.forEach((vb) => vb.destroy());
+    this.ghostBlocks.forEach((b) => b.destroy());
     this.activeBlocks.forEach((b) => b.destroy());
   }
 }
