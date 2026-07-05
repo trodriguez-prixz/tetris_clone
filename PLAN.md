@@ -233,7 +233,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 - [x] Play through the current web build and capture friction in start, active play, pause, game-over, and restart flows.
 - [x] Inventory current UI surfaces: board, score panel, next pieces, audio indicator, overlays, keyboard controls, and any persistent stats.
-- [ ] Identify visual hierarchy issues such as unclear status, weak contrast, crowded panels, or hard-to-scan score information.
+- [x] Identify visual hierarchy issues such as unclear status, weak contrast, crowded panels, or hard-to-scan score information.
 - [ ] Define target UX outcomes for the first improvement slice, prioritizing clarity during gameplay over decorative changes.
 - [ ] Record implementation constraints that must stay stable: Phaser rendering boundaries, pure logic modules, Vite/Electron packaging, and existing tests.
 
@@ -256,6 +256,16 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 | Overlays | `OverlayRenderer` owns start (`TETRIS`, “Presiona cualquier tecla”), pause (`PAUSED`), and game-over (`GAME OVER`, “Press R to Restart”) overlays. |
 | Keyboard controls | `InputController` wires arrows for move/rotate/soft drop, `P` or Space for pause/resume, `M` for music, `S` for sound effects, and `R` for restart after game over; pointer input only starts the game. |
 | Persistent stats | `StorageManager` persists top-ten high scores and lifetime totals (`totalGames`, `totalScore`, `totalLines`, `totalPieces`, `totalTetrises`, `totalTime`, `bestLevel`); the visible UI only surfaces the current best score during play. |
+
+**Task 3 note — 2026-07-04**
+
+| Issue | Evidence | Priority |
+| ----- | -------- | -------- |
+| Unclear game status | Start, pause, and game-over overlays use short labels only; pause does not show resume controls, and game over does not summarize final score or best-score outcome. | High: clarify state and next action before decorative styling. |
+| Contrast/readability risk | Muted and secondary text (`#7f8c8d`, `#95a5a6`) sits on a dark panel, audio controls use the smallest text, and grid lines share the background hue at low alpha. | High: verify contrast before changing palette or adding effects. |
+| Crowded sidebar panels | The 200px sidebar stacks a three-piece preview, eight stat lines, and audio state/controls; the preview panel has no label, and audio controls compete with gameplay stats near the bottom. | Medium: separate information groups and reduce competition. |
+| Hard-to-scan score information | Score, level, and lines share similar weight and centered labels; secondary stats and best score sit in the same dense column, making the primary gameplay metrics less dominant. | High: establish score/stat hierarchy before Phase 11 readability work. |
+| Priority/order risk | Visual polish could amplify existing ambiguity if status copy, stat priority, preview labeling, and contrast are not defined first. | High: use task 4 to define target UX outcomes before implementation. |
 
 **Exit criteria**
 
