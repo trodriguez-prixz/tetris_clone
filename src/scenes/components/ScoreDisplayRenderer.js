@@ -20,14 +20,37 @@ const TEXT_ANIMATION_EASE = 'Power2';
 const NUMBER_FORMAT_CACHE_LIMIT = 1000;
 
 const SCORE_TEXT_LAYOUT = {
-  title: { offsetY: 15, fontSize: '18px' },
-  score: { offsetY: 45, fontSize: '20px' },
-  level: { offsetY: 75, fontSize: '20px' },
-  lines: { offsetY: 100, fontSize: '20px' },
-  highScore: { offsetY: 130, fontSize: '16px' },
-  time: { offsetY: 155, fontSize: '16px' },
-  pieces: { offsetY: 180, fontSize: '16px' },
-  tetrises: { offsetY: 205, fontSize: '16px' }
+  title: { offsetY: 15, hierarchy: 'title' },
+  score: { offsetY: 45, hierarchy: 'primaryMetric' },
+  level: { offsetY: 73, hierarchy: 'primaryMetric' },
+  lines: { offsetY: 101, hierarchy: 'primaryMetric' },
+  highScore: { offsetY: 137, hierarchy: 'supportMetric' },
+  time: { offsetY: 161, hierarchy: 'supportMetric' },
+  pieces: { offsetY: 185, hierarchy: 'secondaryMetric' },
+  tetrises: { offsetY: 209, hierarchy: 'secondaryMetric' }
+};
+
+const SCORE_TEXT_HIERARCHY = {
+  title: {
+    fontSize: VISUAL_SYSTEM.typography.size.sectionTitle,
+    fill: VISUAL_SYSTEM.palette.accent.cyan,
+    fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+  },
+  primaryMetric: {
+    fontSize: VISUAL_SYSTEM.typography.size.metric,
+    fill: VISUAL_SYSTEM.palette.text.primary,
+    fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+  },
+  supportMetric: {
+    fontSize: VISUAL_SYSTEM.typography.size.body,
+    fill: VISUAL_SYSTEM.palette.text.secondary,
+    fontStyle: VISUAL_SYSTEM.typography.weight.regular
+  },
+  secondaryMetric: {
+    fontSize: VISUAL_SYSTEM.typography.size.body,
+    fill: VISUAL_SYSTEM.palette.text.muted,
+    fontStyle: VISUAL_SYSTEM.typography.weight.regular
+  }
 };
 
 export default class ScoreDisplayRenderer {
@@ -46,71 +69,43 @@ export default class ScoreDisplayRenderer {
     const uiX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
     const scoreAreaTop = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING;
 
-    this.scene.add
-      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.title.offsetY, 'STATS', {
-        fontSize: SCORE_TEXT_LAYOUT.title.fontSize,
-        fill: VISUAL_SYSTEM.palette.accent.cyan,
-        fontStyle: 'bold'
-      })
-      .setOrigin(CENTER_ORIGIN);
-    this.scoreText = this.scene.add
-      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.score.offsetY, 'Score: 0', {
-        fontSize: SCORE_TEXT_LAYOUT.score.fontSize,
-        fill: VISUAL_SYSTEM.palette.text.primary,
-        fontStyle: 'bold'
-      })
-      .setOrigin(CENTER_ORIGIN);
-    this.levelText = this.scene.add
-      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.level.offsetY, 'Level: 1', {
-        fontSize: SCORE_TEXT_LAYOUT.level.fontSize,
-        fill: VISUAL_SYSTEM.palette.text.primary,
-        fontStyle: 'bold'
-      })
-      .setOrigin(CENTER_ORIGIN);
-    this.linesText = this.scene.add
-      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.lines.offsetY, 'Lines: 0', {
-        fontSize: SCORE_TEXT_LAYOUT.lines.fontSize,
-        fill: VISUAL_SYSTEM.palette.text.primary,
-        fontStyle: 'bold'
-      })
-      .setOrigin(CENTER_ORIGIN);
+    this.createScoreText(uiX, scoreAreaTop, 'title', 'STATS');
+    this.scoreText = this.createScoreText(uiX, scoreAreaTop, 'score', 'Score: 0');
+    this.levelText = this.createScoreText(uiX, scoreAreaTop, 'level', 'Level: 1');
+    this.linesText = this.createScoreText(uiX, scoreAreaTop, 'lines', 'Lines: 0');
 
     const bestScore = StorageManager.getBestScore();
-    this.highScoreText = this.scene.add
-      .text(
-        uiX,
-        scoreAreaTop + SCORE_TEXT_LAYOUT.highScore.offsetY,
-        `Best: ${this.formatNumber(bestScore)}`,
-        {
-          fontSize: SCORE_TEXT_LAYOUT.highScore.fontSize,
-          fill: VISUAL_SYSTEM.palette.accent.yellow,
-          fontStyle: 'bold'
-        }
-      )
-      .setOrigin(CENTER_ORIGIN);
+    this.highScoreText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'highScore',
+      `Best: ${this.formatNumber(bestScore)}`
+    );
 
-    this.timeText = this.scene.add
-      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.time.offsetY, 'Time: 0:00', {
-        fontSize: SCORE_TEXT_LAYOUT.time.fontSize,
-        fill: VISUAL_SYSTEM.palette.text.secondary
+    this.timeText = this.createScoreText(uiX, scoreAreaTop, 'time', 'Time: 0:00');
+    this.piecesText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'pieces',
+      'Pieces: 0'
+    );
+    this.tetrisesText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'tetrises',
+      'Tetrises: 0'
+    );
+  }
+
+  createScoreText(uiX, scoreAreaTop, layoutKey, content) {
+    const layout = SCORE_TEXT_LAYOUT[layoutKey];
+    const hierarchyStyle = SCORE_TEXT_HIERARCHY[layout.hierarchy];
+
+    return this.scene.add
+      .text(uiX, scoreAreaTop + layout.offsetY, content, {
+        fontFamily: VISUAL_SYSTEM.typography.fontFamily,
+        ...hierarchyStyle
       })
-      .setOrigin(CENTER_ORIGIN);
-    this.piecesText = this.scene.add
-      .text(uiX, scoreAreaTop + SCORE_TEXT_LAYOUT.pieces.offsetY, 'Pieces: 0', {
-        fontSize: SCORE_TEXT_LAYOUT.pieces.fontSize,
-        fill: VISUAL_SYSTEM.palette.text.secondary
-      })
-      .setOrigin(CENTER_ORIGIN);
-    this.tetrisesText = this.scene.add
-      .text(
-        uiX,
-        scoreAreaTop + SCORE_TEXT_LAYOUT.tetrises.offsetY,
-        'Tetrises: 0',
-        {
-          fontSize: SCORE_TEXT_LAYOUT.tetrises.fontSize,
-          fill: VISUAL_SYSTEM.palette.text.secondary
-        }
-      )
       .setOrigin(CENTER_ORIGIN);
   }
 
