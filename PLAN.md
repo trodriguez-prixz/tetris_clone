@@ -302,7 +302,7 @@ Phase 10+ visual and UX work must preserve these implementation constraints:
 
 - [x] Define the core palette, contrast targets, typography style, spacing, borders, and glow/shadow rules in `src/config/settings.js` or focused rendering constants.
 - [x] Refresh board, block, grid, and panel styling while keeping gameplay coordinates and rules unchanged.
-- [ ] Standardize overlay presentation for start, pause, and game-over states.
+- [x] Standardize overlay presentation for start, pause, and game-over states.
 - [ ] Ensure score, level, lines, timer, and high-score information follow the same visual hierarchy.
 - [ ] Keep visual constants named and centralized enough for future theme changes.
 
@@ -313,6 +313,10 @@ Defined `VISUAL_SYSTEM` in `src/config/settings.js` with the future arcade palet
 **Task 2 note — 2026-07-04**
 
 Refreshed board and sidebar panel surfaces, grid lines, gameplay/preview block strokes, and panel text colors by applying `VISUAL_SYSTEM` tokens in rendering components. Preserved board dimensions, cell size, gameplay coordinates, rules, scoring, timers, input behavior, event flows, overlay presentation, and score content/order.
+
+**Task 3 note — 2026-07-04**
+
+Standardized start, pause, and game-over overlays around shared layout/content helpers and `VISUAL_SYSTEM` typography, palette, and spacing tokens. Each overlay now names the current state and the next valid action; gameplay rules, start/pause/restart mechanics, scoring, timers, coordinates, and event flows were intentionally preserved.
 
 **Exit criteria**
 
