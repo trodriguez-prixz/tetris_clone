@@ -46,7 +46,7 @@ export default class AudioIndicatorRenderer {
       .text(
         uiX,
         sidebarBottom - AUDIO_TEXT_LAYOUT.controls.offsetFromBottom,
-        'M: Música | S: Sonidos',
+        'M: Music | S: Sound',
         {
           fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: AUDIO_TEXT_LAYOUT.controls.fontSize,
@@ -58,7 +58,7 @@ export default class AudioIndicatorRenderer {
       .text(
         uiX,
         sidebarBottom - AUDIO_TEXT_LAYOUT.soundEffects.offsetFromBottom,
-        '🔊 Sonidos: ON',
+        '🔊 Sound: ON',
         {
           fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: AUDIO_TEXT_LAYOUT.soundEffects.fontSize,
@@ -70,7 +70,7 @@ export default class AudioIndicatorRenderer {
       .text(
         uiX,
         sidebarBottom - AUDIO_TEXT_LAYOUT.music.offsetFromBottom,
-        '🔊 Música: ON',
+        '🔊 Music: ON',
         {
           fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: AUDIO_TEXT_LAYOUT.music.fontSize,
@@ -83,7 +83,7 @@ export default class AudioIndicatorRenderer {
   updateAudioIndicators(musicMuted, soundEnabled) {
     if (this.musicIndicator) {
       this.musicIndicator.setText(
-        musicMuted ? '🔇 Música: OFF' : '🔊 Música: ON'
+        musicMuted ? '🔇 Music: OFF' : '🔊 Music: ON'
       );
       this.musicIndicator.setFill(
         musicMuted
@@ -93,7 +93,7 @@ export default class AudioIndicatorRenderer {
     }
     if (this.soundEffectsIndicator) {
       this.soundEffectsIndicator.setText(
-        !soundEnabled ? '🔇 Sonidos: OFF' : '🔊 Sonidos: ON'
+        !soundEnabled ? '🔇 Sound: OFF' : '🔊 Sound: ON'
       );
       this.soundEffectsIndicator.setFill(
         !soundEnabled
