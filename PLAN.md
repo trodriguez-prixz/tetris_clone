@@ -22,7 +22,7 @@ This plan is the single source of truth for improving the project's architecture
 | 6. Platform and packaging verification  | `[x]`  | Preserve web, Express, and Electron delivery paths.                        |
 | 7. Architecture documentation           | `[x]`  | Record the final structure and update agent guidance if needed.            |
 | 8. Formatting cleanup                   | `[x]`  | Make Prettier checks pass without mixing formatting with behavior changes. |
-| 9. UX/UI discovery baseline             | `[ ]`  | Identify usability gaps before changing visuals or flows.                  |
+| 9. UX/UI discovery baseline             | `[x]`  | Identify usability gaps before changing visuals or flows.                  |
 | 10. Visual system refresh               | `[ ]`  | Create a consistent arcade visual language for the game.                   |
 | 11. Gameplay readability                | `[ ]`  | Make board state, next pieces, score, and status easier to understand.     |
 | 12. Interaction feedback and game feel  | `[ ]`  | Improve player feedback without changing core Tetris rules.                |
@@ -235,7 +235,7 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 - [x] Inventory current UI surfaces: board, score panel, next pieces, audio indicator, overlays, keyboard controls, and any persistent stats.
 - [x] Identify visual hierarchy issues such as unclear status, weak contrast, crowded panels, or hard-to-scan score information.
 - [x] Define target UX outcomes for the first improvement slice, prioritizing clarity during gameplay over decorative changes.
-- [ ] Record implementation constraints that must stay stable: Phaser rendering boundaries, pure logic modules, Vite/Electron packaging, and existing tests.
+- [x] Record implementation constraints that must stay stable: Phaser rendering boundaries, pure logic modules, Vite/Electron packaging, and existing tests.
 
 **Task 1 note — 2026-07-04**
 
@@ -279,11 +279,20 @@ First improvement slice target: make gameplay state and high-priority informatio
 | Contrast supports fast reading | Important overlay text, stat labels, stat values, preview labels, and audio status should meet readable contrast before palette polish. | A contrast review can check the selected text/background pairs for important UI text. |
 | Decorative effects stay secondary | Glow, particles, shadows, and palette polish should not reduce board readability, hide active/locked blocks, or compete with critical stats. | Gameplay remains readable when effects trigger, especially during movement, line clears, pause, and game over. |
 
+**Task 5 note — 2026-07-04**
+
+Phase 10+ visual and UX work must preserve these implementation constraints:
+
+- Phaser-facing rendering, effects, overlays, input, audio controls, and drop-loop timers stay in `src/scenes/` and `src/scenes/components/`; core rules do not move into renderers.
+- `src/logic/` and `src/classes/` remain pure gameplay/domain modules with no Phaser objects, rendering APIs, timers, audio, storage, browser APIs, or direct EventBus emission.
+- Vite/Electron packaging assumptions stay stable: Vite keeps `base: './'` and `dist/` output, Electron dev loads `http://localhost:3000`, packaged Electron loads `dist/index.html`, and Express serving continues to use `dist/`.
+- Existing behavior checks remain part of future visual slices: update Jest tests/mocks when scene behavior or rendering contracts change, and keep `npm run lint`, `npm test`, `npm run build`, and `npm run format:check` as the documented verification path.
+
 **Exit criteria**
 
-- [ ] The main UX/UI problems are documented in this plan or a linked issue/PR.
-- [ ] The first implementation slice is small enough to review safely.
-- [ ] No visual work starts before the target outcomes are clear.
+- [x] The main UX/UI problems are documented in this plan or a linked issue/PR.
+- [x] The first implementation slice is small enough to review safely.
+- [x] No visual work starts before the target outcomes are clear.
 
 ## Phase 10 — Visual system refresh
 
