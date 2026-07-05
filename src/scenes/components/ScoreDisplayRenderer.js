@@ -12,10 +12,10 @@ import { StorageManager } from '../../utils/storage.js';
 const CENTER_ORIGIN = 0.5;
 const TEXT_UPDATE_SCALE = 1.15;
 const TEXT_UPDATE_DURATION = 150;
-const LEVEL_UP_SCALE = 1.3;
-const LEVEL_UP_DURATION = 200;
-const LEVEL_UP_FLASH_ALPHA = 0.3;
-const LEVEL_UP_FLASH_DURATION = 100;
+const LEVEL_UP_SCALE = 1.18;
+const LEVEL_UP_DURATION = 140;
+const LEVEL_UP_FLASH_ALPHA = 0.55;
+const LEVEL_UP_FLASH_DURATION = 80;
 const TEXT_ANIMATION_EASE = 'Power2';
 const NUMBER_FORMAT_CACHE_LIMIT = 1000;
 
@@ -207,14 +207,13 @@ export default class ScoreDisplayRenderer {
       scaleY: LEVEL_UP_SCALE,
       duration: LEVEL_UP_DURATION,
       yoyo: true,
-      ease: TEXT_ANIMATION_EASE,
-      onComplete: () =>
-        this.scene.tweens.add({
-          targets: textObject,
-          alpha: LEVEL_UP_FLASH_ALPHA,
-          duration: LEVEL_UP_FLASH_DURATION,
-          yoyo: true
-        })
+      ease: TEXT_ANIMATION_EASE
+    });
+    this.scene.tweens.add({
+      targets: textObject,
+      alpha: LEVEL_UP_FLASH_ALPHA,
+      duration: LEVEL_UP_FLASH_DURATION,
+      yoyo: true
     });
   }
 

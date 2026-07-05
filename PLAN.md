@@ -381,7 +381,7 @@ Audited the Phase 11 rendering contracts. `BoardRenderer`, `PreviewRenderer`, `S
 **Tasks**
 
 - [x] Review movement, rotation, soft drop, hard drop, lock, line clear, level-up, pause, and game-over feedback moments.
-- [ ] Tune visual effects and animations so they communicate events without hiding the board or delaying gameplay.
+- [x] Tune visual effects and animations so they communicate events without hiding the board or delaying gameplay.
 - [ ] Ensure audio feedback remains optional, understandable, and coordinated through existing audio boundaries.
 - [ ] Add clear feedback for disabled or unavailable actions where applicable.
 - [ ] Protect behavior with tests when feedback changes affect scene coordination or event emission.
@@ -401,6 +401,10 @@ Feedback moment inventory, based on the current scene/component boundaries:
 | Level-up | `LEVEL_UP` drives level-up audio and a score-panel scale/flash animation on the level text. | Coordinate any visual/audio changes through existing score/audio components. |
 | Pause | Pause stops the drop loop, pauses music, and shows the pause overlay; resume restarts the loop/music and clears it. | Existing state feedback is clear; avoid extra effects that obscure the paused board. |
 | Game-over | Game over stops the drop loop, persists stats, plays game-over audio, stops music, and shows the restart overlay. | Any added effect should preserve persistence, restart input, and EventBus flow. |
+
+**Task 2 note — 2026-07-05**
+
+Line-clear effects now use fewer, smaller, shorter-lived particles plus a faster cleared-block fade so row clears read as feedback without covering the board. Level-up score-panel feedback now runs its scale and flash tweens immediately with shorter, lower-intensity values. Gameplay rules, timers, event flow, audio boundaries, overlays, board dimensions, and queue semantics were intentionally preserved.
 
 **Exit criteria**
 

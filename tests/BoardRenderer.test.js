@@ -1,4 +1,4 @@
-import EventBus from '../src/events/EventBus.js';
+import EventBus, { EVENTS } from '../src/events/EventBus.js';
 import BoardRenderer from '../src/scenes/components/BoardRenderer.js';
 import {
   CELL_SIZE,
@@ -144,5 +144,77 @@ describe('BoardRenderer gameplay readability', () => {
       VISUAL_SYSTEM.palette.border.secondary,
       VISUAL_SYSTEM.borders.alpha.blockStroke
     );
+  });
+
+  test('keeps line-clear particles bounded and short-lived', () => {
+    const scene = buildScene();
+    const gameState = {
+      fieldData: createEmptyField(),
+      currentTetramino: null
+    };
+    new BoardRenderer(scene, gameState);
+    scene.add.rectangle.mockClear();
+
+    EventBus.emit(EVENTS.LINES_CLEARED, { rows: [16, 17, 18, 19] });
+
+    expect(scene.add.rectangle.mock.calls.length).toBeGreaterThan(0);
+    expect(scene.add.rectangle.mock.calls.length).toBeLessThanOrEqual(
+      GRID_COLS * 4 * 3
+    );
+    expect(scene.tweens.add).toHaveBeenCalledTimes(
+      scene.add.rectangle.mock.calls.length
+    );
+    scene.tweens.add.mock.calls.forEach(([config]) => {
+      expect(config.duration).toBeLessThanOrEqual(440);
+      expect(config.alpha.from).toBeGreaterThan(0);
+      expect(config.alpha.to).toBe(0);
+      expect(config.scale.from).toBeGreaterThan(0);
+      expect(config.scale.from).toBeLessThanOrEqual(1);
+      expect(config.scale.to).toBe(0);
+      expect(config.onComplete).toEqual(expect.any(Function));
+      config.onComplete();
+      expect(config.targets.destroy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('fades and shrinks removed locked blocks before destroying them', () => {
+    const scene = buildScene();
+    const lockedBlock = { x: 4, y: 18, color: 0x3498db };
+    const fieldData = createEmptyField();
+    fieldData[18][4] = lockedBlock;
+    const gameState = {
+      fieldData,
+      currentTetramino: null
+    };
+    const renderer = new BoardRenderer(scene, gameState);
+    scene.add.rectangle.mockClear();
+
+    renderer.update();
+    const lockedVisual = scene.add.rectangle.mock.results[0].value;
+    scene.tweens.add.mockClear();
+    fieldData[18][4] = null;
+
+    renderer.update();
+
+    expect(scene.tweens.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: lockedVisual,
+        scaleX: expect.any(Number),
+        scaleY: expect.any(Number),
+        alpha: 0,
+        duration: expect.any(Number),
+        onComplete: expect.any(Function)
+      })
+    );
+    const [fadeConfig] = scene.tweens.add.mock.calls[0];
+    expect(fadeConfig.scaleX).toBeGreaterThan(0);
+    expect(fadeConfig.scaleX).toBeLessThan(1);
+    expect(fadeConfig.scaleY).toBe(fadeConfig.scaleX);
+    expect(fadeConfig.duration).toBeGreaterThan(0);
+    expect(fadeConfig.duration).toBeLessThanOrEqual(200);
+
+    fadeConfig.onComplete();
+
+    expect(lockedVisual.destroy).toHaveBeenCalledTimes(1);
   });
 });

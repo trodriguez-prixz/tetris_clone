@@ -14,16 +14,16 @@ import EventBus, { EVENTS } from '../../events/EventBus.js';
 
 const CENTER_ORIGIN = 0.5;
 const GRID_LINE_WIDTH = VISUAL_SYSTEM.borders.thin;
-const CLEARED_BLOCK_SHRINK_SCALE = 0.5;
+const CLEARED_BLOCK_SHRINK_SCALE = 0.65;
 const CLEARED_BLOCK_FADE_ALPHA = 0;
-const CLEARED_BLOCK_FADE_DURATION = 150;
+const CLEARED_BLOCK_FADE_DURATION = 120;
 const PARTICLE_JITTER_ORIGIN = 0.5;
-const PARTICLE_SIZE_RATIO = 0.3;
-const PARTICLE_DISTANCE_TIME_SCALE = 0.5;
-const PARTICLE_ALPHA_START = 1;
+const PARTICLE_SIZE_RATIO = 0.22;
+const PARTICLE_DISTANCE_TIME_SCALE = 0.35;
+const PARTICLE_ALPHA_START = 0.85;
 const PARTICLE_ALPHA_END = 0;
-const PARTICLE_BASE_DURATION = 500;
-const PARTICLE_RANDOM_DURATION = 300;
+const PARTICLE_BASE_DURATION = 320;
+const PARTICLE_RANDOM_DURATION = 120;
 const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const PARTICLE_EASE = 'Power2';
 const BLOCK_VISUAL_STYLES = {
@@ -49,28 +49,28 @@ const BLOCK_VISUAL_STYLES = {
 
 const LINE_CLEAR_EFFECTS = {
   1: {
-    particleCount: 20,
+    particleCount: 10,
     colors: [0x3498db, 0x2980b9],
     speed: { min: 50, max: 150 },
-    scale: { start: 0.5, end: 0 }
+    scale: { start: 0.45, end: 0 }
   },
   2: {
-    particleCount: 30,
+    particleCount: 16,
     colors: [0x2ecc71, 0x27ae60],
     speed: { min: 80, max: 200 },
-    scale: { start: 0.6, end: 0 }
+    scale: { start: 0.5, end: 0 }
   },
   3: {
-    particleCount: 40,
+    particleCount: 20,
     colors: [0xf39c12, 0xe67e22],
     speed: { min: 100, max: 250 },
-    scale: { start: 0.7, end: 0 }
+    scale: { start: 0.55, end: 0 }
   },
   4: {
-    particleCount: 60,
+    particleCount: 24,
     colors: [0xe74c3c, 0xc0392b, 0xf1c40f, 0xf39c12],
     speed: { min: 150, max: 300 },
-    scale: { start: 0.8, end: 0 }
+    scale: { start: 0.6, end: 0 }
   }
 };
 

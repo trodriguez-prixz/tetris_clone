@@ -147,4 +147,40 @@ describe('ScoreDisplayRenderer', () => {
 
     expect(renderer.timeText.setText).toHaveBeenCalledWith('Elapsed: 0:05');
   });
+
+  test('keeps level-up animation immediate and bounded', () => {
+    EventBus.emit(EVENTS.LEVEL_UP, { level: 2 });
+
+    expect(renderer.levelText.setText).toHaveBeenCalledWith('Level: 2');
+    expect(scene.tweens.add).toHaveBeenCalledTimes(2);
+    const tweenConfigs = scene.tweens.add.mock.calls.map(([config]) => config);
+    const scaleTween = tweenConfigs.find((config) => config.scaleX);
+    const alphaTween = tweenConfigs.find((config) => config.alpha);
+
+    expect(scaleTween).toEqual(
+      expect.objectContaining({
+        targets: renderer.levelText,
+        yoyo: true
+      })
+    );
+    expect(scaleTween.scaleX).toBeGreaterThan(1);
+    expect(scaleTween.scaleX).toBeLessThanOrEqual(1.25);
+    expect(scaleTween.scaleY).toBe(scaleTween.scaleX);
+    expect(scaleTween.duration).toBeGreaterThan(0);
+    expect(scaleTween.duration).toBeLessThanOrEqual(180);
+
+    expect(alphaTween).toEqual(
+      expect.objectContaining({
+        targets: renderer.levelText,
+        yoyo: true
+      })
+    );
+    expect(alphaTween.alpha).toBeGreaterThanOrEqual(0.5);
+    expect(alphaTween.alpha).toBeLessThan(1);
+    expect(alphaTween.duration).toBeGreaterThan(0);
+    expect(alphaTween.duration).toBeLessThanOrEqual(120);
+    tweenConfigs.forEach((config) => {
+      expect(config.onComplete).toBeUndefined();
+    });
+  });
 });
