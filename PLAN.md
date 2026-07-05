@@ -1,6 +1,6 @@
-# Architecture Improvement Plan
+# Project Improvement Plan
 
-This plan is the single source of truth for improving the project's architecture and design. Update the status markers as work progresses.
+This plan is the single source of truth for improving the project's architecture, maintainability, and UX/UI. Update the status markers as work progresses.
 
 ## Status legend
 
@@ -11,17 +11,22 @@ This plan is the single source of truth for improving the project's architecture
 
 ## Phase overview
 
-| Phase                                  | Status | Goal                                                                       |
-| -------------------------------------- | ------ | -------------------------------------------------------------------------- |
-| 0. Refactor safety baseline            | `[x]`  | Protect current behavior before architecture changes.                      |
-| 1. Game domain extraction              | `[x]`  | Keep Tetris rules testable without Phaser.                                 |
-| 2. Scene orchestration cleanup         | `[x]`  | Make `GameScene` coordinate instead of owning every concern.               |
-| 3. Rendering and UI design boundaries  | `[x]`  | Separate visual layout from game rules.                                    |
-| 4. Event communication cleanup         | `[x]`  | Make module communication explicit and consistent.                         |
-| 5. Quality tooling                     | `[x]`  | Add minimal automated checks for safer maintenance.                        |
-| 6. Platform and packaging verification | `[x]`  | Preserve web, Express, and Electron delivery paths.                        |
-| 7. Architecture documentation          | `[x]`  | Record the final structure and update agent guidance if needed.            |
-| 8. Formatting cleanup                  | `[x]`  | Make Prettier checks pass without mixing formatting with behavior changes. |
+| Phase                                   | Status | Goal                                                                       |
+| --------------------------------------- | ------ | -------------------------------------------------------------------------- |
+| 0. Refactor safety baseline             | `[x]`  | Protect current behavior before architecture changes.                      |
+| 1. Game domain extraction               | `[x]`  | Keep Tetris rules testable without Phaser.                                 |
+| 2. Scene orchestration cleanup          | `[x]`  | Make `GameScene` coordinate instead of owning every concern.               |
+| 3. Rendering and UI design boundaries   | `[x]`  | Separate visual layout from game rules.                                    |
+| 4. Event communication cleanup          | `[x]`  | Make module communication explicit and consistent.                         |
+| 5. Quality tooling                      | `[x]`  | Add minimal automated checks for safer maintenance.                        |
+| 6. Platform and packaging verification  | `[x]`  | Preserve web, Express, and Electron delivery paths.                        |
+| 7. Architecture documentation           | `[x]`  | Record the final structure and update agent guidance if needed.            |
+| 8. Formatting cleanup                   | `[x]`  | Make Prettier checks pass without mixing formatting with behavior changes. |
+| 9. UX/UI discovery baseline             | `[ ]`  | Identify usability gaps before changing visuals or flows.                  |
+| 10. Visual system refresh               | `[ ]`  | Create a consistent arcade visual language for the game.                   |
+| 11. Gameplay readability                | `[ ]`  | Make board state, next pieces, score, and status easier to understand.     |
+| 12. Interaction feedback and game feel  | `[ ]`  | Improve player feedback without changing core Tetris rules.                |
+| 13. Accessibility and responsive polish | `[ ]`  | Make the game more usable across devices and player needs.                 |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -220,12 +225,103 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 - [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
 - [x] CI either includes `npm run format:check` or this plan records why it remains excluded.
 
+## Phase 9 — UX/UI discovery baseline
+
+**Objective:** Establish the current user experience problems, constraints, and success criteria before implementing visual changes.
+
+**Tasks**
+
+- [ ] Play through the current web build and capture friction in start, active play, pause, game-over, and restart flows.
+- [ ] Inventory current UI surfaces: board, score panel, next pieces, audio indicator, overlays, keyboard controls, and any persistent stats.
+- [ ] Identify visual hierarchy issues such as unclear status, weak contrast, crowded panels, or hard-to-scan score information.
+- [ ] Define target UX outcomes for the first improvement slice, prioritizing clarity during gameplay over decorative changes.
+- [ ] Record implementation constraints that must stay stable: Phaser rendering boundaries, pure logic modules, Vite/Electron packaging, and existing tests.
+
+**Exit criteria**
+
+- [ ] The main UX/UI problems are documented in this plan or a linked issue/PR.
+- [ ] The first implementation slice is small enough to review safely.
+- [ ] No visual work starts before the target outcomes are clear.
+
+## Phase 10 — Visual system refresh
+
+**Objective:** Create a consistent arcade visual language that improves polish without scattering style decisions across the codebase.
+
+**Tasks**
+
+- [ ] Define the core palette, contrast targets, typography style, spacing, borders, and glow/shadow rules in `src/config/settings.js` or focused rendering constants.
+- [ ] Refresh board, block, grid, and panel styling while keeping gameplay coordinates and rules unchanged.
+- [ ] Standardize overlay presentation for start, pause, and game-over states.
+- [ ] Ensure score, level, lines, timer, and high-score information follow the same visual hierarchy.
+- [ ] Keep visual constants named and centralized enough for future theme changes.
+
+**Exit criteria**
+
+- [ ] The game has a cohesive visual style across board, sidebar, and overlays.
+- [ ] Visual changes do not modify scoring, collision, timing, or state transitions.
+- [ ] `npm test` passes after the visual refresh slice.
+
+## Phase 11 — Gameplay readability
+
+**Objective:** Make important gameplay information easy to read quickly while the player is focused on the board.
+
+**Tasks**
+
+- [ ] Improve active-piece, ghost/landing-position, locked-block, and line-clear readability if the current rendering makes decisions hard to anticipate.
+- [ ] Improve next-piece preview spacing, scale, and labeling so upcoming pieces are scannable.
+- [ ] Clarify score, level, lines, elapsed time, and high-score/stat display priority.
+- [ ] Review start, pause, and game-over copy for concise instructions and state clarity.
+- [ ] Add or update tests/mocks only where scene behavior or rendering contracts need protection.
+
+**Exit criteria**
+
+- [ ] A player can identify current state, next actions, and key stats without reading dense UI.
+- [ ] Rendering ownership remains in `src/scenes/components/`.
+- [ ] Focused scene tests pass when scene behavior changes.
+
+## Phase 12 — Interaction feedback and game feel
+
+**Objective:** Improve responsiveness and feedback while preserving the existing Tetris rule model.
+
+**Tasks**
+
+- [ ] Review movement, rotation, soft drop, hard drop, lock, line clear, level-up, pause, and game-over feedback moments.
+- [ ] Tune visual effects and animations so they communicate events without hiding the board or delaying gameplay.
+- [ ] Ensure audio feedback remains optional, understandable, and coordinated through existing audio boundaries.
+- [ ] Add clear feedback for disabled or unavailable actions where applicable.
+- [ ] Protect behavior with tests when feedback changes affect scene coordination or event emission.
+
+**Exit criteria**
+
+- [ ] Feedback makes player actions and game events feel clear and responsive.
+- [ ] Effects remain Phaser-facing and do not move game rules out of `src/logic/`.
+- [ ] `npm run lint` and `npm test` pass.
+
+## Phase 13 — Accessibility and responsive polish
+
+**Objective:** Make the game easier to use across screens, input contexts, and accessibility needs.
+
+**Tasks**
+
+- [ ] Verify keyboard instructions are visible and accurate for start, play, pause, restart, and audio controls.
+- [ ] Review contrast and text size for important labels, stats, and overlays.
+- [ ] Check browser viewport behavior and Electron window assumptions so the layout remains usable at expected sizes.
+- [ ] Decide whether reduced-motion or lower-intensity effects are needed for visual comfort.
+- [ ] Document any known accessibility limitations that are out of scope for the current slice.
+
+**Exit criteria**
+
+- [ ] The game remains usable on the supported web and Electron targets.
+- [ ] Important instructions and state changes are understandable without relying only on audio or subtle animation.
+- [ ] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
+
 ## Progress notes
 
 Use this section for short dated updates. Keep detailed implementation notes in the relevant PR or commit.
 
 | Date       | Update                                                                                                                                                                                                                                                                                      |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-04 | Added Phases 9–13 for UX/UI improvement planning: discovery baseline, visual system refresh, gameplay readability, interaction feedback/game feel, and accessibility/responsive polish.                                                                                                    |
 | 2026-07-03 | Phase 8 completed by applying Prettier in docs/config, tests, and source slices, verifying `npm run format:check`, `npm run lint`, `npm test`, `npm run build`, and `git diff --check`, and adding `npm run format:check` to CI after the baseline passed.                                  |
 | 2026-07-03 | Phase 7 task 3 completed by reviewing `PLAN.md` and `AGENTS.md` for compactness, preserving high-signal ownership/tooling notes, and closing Phase 7 exit criteria.                                                                                                                         |
 | 2026-07-03 | Phase 6 task 4 completed by statically verifying packaged Electron resolves `electron/main.cjs` to `dist/index.html`, electron-builder includes both `electron/**/*` and `dist/**/*`, and `npm run build` produces the expected relative asset paths; Phase 6 exit criteria are now closed. |
