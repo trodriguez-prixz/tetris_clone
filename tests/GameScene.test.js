@@ -30,6 +30,7 @@ jest.mock('../src/utils/storage.js', () => ({
 const createDisplayObject = () => ({
   setOrigin: jest.fn().mockReturnThis(),
   setFill: jest.fn().mockReturnThis(),
+  setAlpha: jest.fn().mockReturnThis(),
   setText: jest.fn().mockReturnThis(),
   destroy: jest.fn()
 });
@@ -116,7 +117,8 @@ describe('GameScene orchestration', () => {
       renderPreview: jest.fn(),
       updateTime: jest.fn(),
       onScoreUpdated: jest.fn(),
-      onLevelUp: jest.fn()
+      onLevelUp: jest.fn(),
+      showUnavailableAction: jest.fn()
     };
     retroMusic = {
       init: jest.fn(() => true),
@@ -308,6 +310,33 @@ describe('GameScene orchestration', () => {
     expect(scene.time.addEvent).toHaveBeenCalledWith(
       expect.objectContaining({ delay: FAST_DROP_SPEED })
     );
+  });
+
+  test('blocked movement and rotation show unavailable-action feedback without changing gameplay flow', () => {
+    scene.create();
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
+    scene.gameState.currentTetramino = { blocks: [] };
+    jest.spyOn(scene.gameState, 'moveLeft').mockReturnValue(false);
+    jest.spyOn(scene.gameState, 'rotate').mockReturnValue(false);
+    Phaser.Input.Keyboard.JustDown.mockImplementation(
+      (key) =>
+        key === scene.inputController.cursors.left ||
+        key === scene.inputController.cursors.up
+    );
+
+    scene.update();
+
+    expect(scene.gameState.moveLeft).toHaveBeenCalledTimes(1);
+    expect(scene.gameState.rotate).toHaveBeenCalledTimes(1);
+    expect(uiRenderer.showUnavailableAction).toHaveBeenCalledWith(
+      'Move blocked'
+    );
+    expect(uiRenderer.showUnavailableAction).toHaveBeenCalledWith(
+      'Rotation blocked'
+    );
+    expect(soundEffects.playMove).not.toHaveBeenCalled();
+    expect(soundEffects.playRotate).not.toHaveBeenCalled();
   });
 
   test('drop loop timer renders through the fall tick result wrapper', () => {

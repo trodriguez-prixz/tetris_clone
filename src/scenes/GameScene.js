@@ -83,6 +83,8 @@ export default class GameScene extends Phaser.Scene {
       resume: () => this.resumeGame(),
       move: (direction) => this.tryMove(direction),
       rotate: () => this.tryRotate(),
+      showUnavailableAction: (message) =>
+        this.showUnavailableActionFeedback(message),
       startSoftDrop: () => this.startSoftDrop(),
       stopSoftDrop: () => this.stopSoftDrop()
     });
@@ -143,10 +145,16 @@ export default class GameScene extends Phaser.Scene {
   }
 
   tryRotate() {
-    if (this.gameState.rotate()) {
+    const rotated = this.gameState.rotate();
+    if (rotated) {
       this.audioController.playRotate();
       this.boardRenderer.update();
     }
+    return rotated;
+  }
+
+  showUnavailableActionFeedback(message) {
+    this.uiRenderer.showUnavailableAction(message);
   }
 
   startSoftDrop() {

@@ -5,6 +5,11 @@ import {
   START_INPUT_PAUSE_GUARD_DURATION
 } from '../../config/settings.js';
 
+const UNAVAILABLE_ACTION_MESSAGES = {
+  move: 'Move blocked',
+  rotate: 'Rotation blocked'
+};
+
 export default class InputController {
   constructor(scene, actions) {
     this.scene = scene;
@@ -91,8 +96,11 @@ export default class InputController {
       this.moveHorizontally(1);
 
     if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && this.canRotate()) {
-      this.actions.rotate();
-      this.lastRotateTime = this.scene.time.now;
+      const rotated = this.actions.rotate();
+      if (!rotated) {
+        this.actions.showUnavailableAction(UNAVAILABLE_ACTION_MESSAGES.rotate);
+      }
+      if (rotated) this.lastRotateTime = this.scene.time.now;
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
@@ -105,7 +113,10 @@ export default class InputController {
   moveHorizontally(direction) {
     if (this.actions.move(direction)) {
       this.lastMoveTime = this.scene.time.now;
+      return;
     }
+
+    this.actions.showUnavailableAction(UNAVAILABLE_ACTION_MESSAGES.move);
   }
 
   isPausePressed() {

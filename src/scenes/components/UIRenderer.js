@@ -12,6 +12,12 @@ import AudioIndicatorRenderer from './AudioIndicatorRenderer.js';
 import PreviewRenderer from './PreviewRenderer.js';
 import ScoreDisplayRenderer from './ScoreDisplayRenderer.js';
 
+const CENTER_ORIGIN = 0.5;
+const ACTION_FEEDBACK_OFFSET_FROM_BOTTOM = 125;
+const ACTION_FEEDBACK_REPEAT_DELAY = 300;
+const ACTION_FEEDBACK_VISIBLE_DELAY = 450;
+const ACTION_FEEDBACK_FADE_DURATION = 250;
+
 export default class UIRenderer {
   constructor(scene, gameState) {
     this.scene = scene;
@@ -21,6 +27,7 @@ export default class UIRenderer {
     this.previewRenderer = new PreviewRenderer(scene, gameState);
     this.scoreDisplayRenderer = new ScoreDisplayRenderer(scene, gameState);
     this.audioIndicatorRenderer = new AudioIndicatorRenderer(scene);
+    this.createActionFeedbackText();
   }
 
   createBackgrounds() {
@@ -81,8 +88,52 @@ export default class UIRenderer {
     this.previewRenderer.renderPreview();
   }
 
+  createActionFeedbackText() {
+    this.actionFeedbackText = this.scene.add
+      .text(
+        SIDEBAR_X + SIDEBAR_WIDTH / 2,
+        this.scene.scale?.height
+          ? this.scene.scale.height - ACTION_FEEDBACK_OFFSET_FROM_BOTTOM
+          : SIDEBAR_Y + PREVIEW_AREA_HEIGHT + SCORE_AREA_HEIGHT + PADDING * 4,
+        '',
+        {
+          fontFamily: VISUAL_SYSTEM.typography.fontFamily,
+          fontSize: VISUAL_SYSTEM.typography.size.caption,
+          fill: VISUAL_SYSTEM.palette.accent.yellow,
+          fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+        }
+      )
+      .setOrigin(CENTER_ORIGIN)
+      .setAlpha(0);
+  }
+
+  showUnavailableAction(message) {
+    const now = this.scene.time.now;
+    if (
+      this.lastActionFeedbackAt !== undefined &&
+      this.lastActionFeedbackMessage === message &&
+      now - this.lastActionFeedbackAt < ACTION_FEEDBACK_REPEAT_DELAY
+    ) {
+      return;
+    }
+
+    this.lastActionFeedbackAt = now;
+    this.lastActionFeedbackMessage = message;
+    this.actionFeedbackText.setText(message).setAlpha(1);
+    this.actionFeedbackTween?.stop();
+    this.actionFeedbackTween = this.scene.tweens.add({
+      targets: this.actionFeedbackText,
+      alpha: 0,
+      delay: ACTION_FEEDBACK_VISIBLE_DELAY,
+      duration: ACTION_FEEDBACK_FADE_DURATION,
+      ease: 'Power2'
+    });
+  }
+
   destroy() {
     this.previewRenderer.destroy();
     this.scoreDisplayRenderer.destroy();
+    this.actionFeedbackTween?.stop();
+    this.actionFeedbackText?.destroy();
   }
 }
