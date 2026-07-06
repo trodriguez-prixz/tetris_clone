@@ -26,7 +26,7 @@ This plan is the single source of truth for improving the project's architecture
 | 10. Visual system refresh               | `[x]`  | Create a consistent arcade visual language for the game.                   |
 | 11. Gameplay readability                | `[ ]`  | Make board state, next pieces, score, and status easier to understand.     |
 | 12. Interaction feedback and game feel  | `[x]`  | Improve player feedback without changing core Tetris rules.                |
-| 13. Accessibility and responsive polish | `[~]`  | Make the game more usable across devices and player needs.                 |
+| 13. Accessibility and responsive polish | `[x]`  | Make the game more usable across devices and player needs.                 |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -424,7 +424,7 @@ Audited the Phase 12 feedback contracts. Existing focused tests protect bounded 
 - [x] Effects remain Phaser-facing and do not move game rules out of `src/logic/`.
 - [x] `npm run lint` and `npm test` pass.
 
-## Phase 13 — Accessibility and responsive polish
+## Phase 13 — Accessibility and responsive polish [x]
 
 **Objective:** Make the game easier to use across screens, input contexts, and accessibility needs.
 
@@ -434,13 +434,22 @@ Audited the Phase 12 feedback contracts. Existing focused tests protect bounded 
 - [x] Review contrast and text size for important labels, stats, and overlays.
 - [x] Check browser viewport behavior and Electron window assumptions so the layout remains usable at expected sizes.
 - [x] Decide whether reduced-motion or lower-intensity effects are needed for visual comfort.
-- [ ] Document any known accessibility limitations that are out of scope for the current slice.
+- [x] Document any known accessibility limitations that are out of scope for the current slice.
+
+**Task 5 note — 2026-07-05**
+
+Known accessibility limitations intentionally left out of this slice:
+
+- The game is still a Phaser canvas experience without semantic DOM controls, ARIA announcements, or screen-reader-friendly board state.
+- Input remains keyboard-first; pointer/touch gameplay controls and remappable keys are not part of this phase.
+- The layout remains built around the fixed 660×840 game canvas, with scrollability for smaller browser viewports rather than a fully responsive/mobile layout.
+- Audio and visual cues are clearer and optional where supported, but there is no broad settings UI for reduced motion, high-contrast themes, text scaling, or custom feedback intensity.
 
 **Exit criteria**
 
-- [ ] The game remains usable on the supported web and Electron targets.
-- [ ] Important instructions and state changes are understandable without relying only on audio or subtle animation.
-- [ ] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
+- [x] The game remains usable on the supported web and Electron targets.
+- [x] Important instructions and state changes are understandable without relying only on audio or subtle animation.
+- [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
 
 ## Progress notes
 
@@ -452,6 +461,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 | 2026-07-05 | Phase 13 task 2 completed by auditing important label, stat, and overlay styles against the visual-system palette/typography tokens. Caption text was raised from 12px to 14px for readability; existing high-contrast text colors, overlay sizing, layout, gameplay behavior, and event/audio flows were preserved. |
 | 2026-07-05 | Phase 13 task 3 completed by aligning browser and Electron shell assumptions with the fixed 660×840 game canvas: browser pages now keep the canvas scrollable at smaller viewports, and Electron now sizes the content area to the canvas while detaching devtools so development inspection does not squeeze the game. Gameplay geometry, board dimensions, rendering boundaries, input behavior, timers, and audio semantics were preserved. |
 | 2026-07-05 | Phase 13 task 4 completed by deciding not to add a reduced-motion hook or additional lower-intensity effect path in this slice. Phase 12 already bounded line-clear particles, cleared-block fade, level-up feedback, start-prompt flashing, and unavailable-action fade through existing scene/component tests, so gameplay rules, event flow, timers, storage, input behavior, audio toggles, board geometry, and user-facing settings scope were intentionally preserved. |
+| 2026-07-05 | Phase 13 task 5 completed by documenting the current out-of-scope accessibility limitations: canvas semantics/screen reader support, pointer/touch gameplay controls, remappable keys, fully responsive/mobile layout, and broad accessibility settings UI. Phase 13 is closed after verification. |
 | 2026-07-04 | Added Phases 9–13 for UX/UI improvement planning: discovery baseline, visual system refresh, gameplay readability, interaction feedback/game feel, and accessibility/responsive polish.                                                                                                    |
 | 2026-07-03 | Phase 8 completed by applying Prettier in docs/config, tests, and source slices, verifying `npm run format:check`, `npm run lint`, `npm test`, `npm run build`, and `git diff --check`, and adding `npm run format:check` to CI after the baseline passed.                                  |
 | 2026-07-03 | Phase 7 task 3 completed by reviewing `PLAN.md` and `AGENTS.md` for compactness, preserving high-signal ownership/tooling notes, and closing Phase 7 exit criteria.                                                                                                                         |
