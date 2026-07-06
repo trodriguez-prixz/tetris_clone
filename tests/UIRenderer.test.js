@@ -2,6 +2,7 @@ import UIRenderer from '../src/scenes/components/UIRenderer.js';
 import AudioIndicatorRenderer from '../src/scenes/components/AudioIndicatorRenderer.js';
 import PreviewRenderer from '../src/scenes/components/PreviewRenderer.js';
 import ScoreDisplayRenderer from '../src/scenes/components/ScoreDisplayRenderer.js';
+import { VISUAL_SYSTEM } from '../src/config/settings.js';
 
 jest.mock('../src/scenes/components/AudioIndicatorRenderer.js', () =>
   jest.fn()
@@ -47,6 +48,36 @@ describe('UIRenderer action feedback', () => {
     PreviewRenderer.mockImplementation(() => previewRenderer);
     ScoreDisplayRenderer.mockImplementation(() => scoreDisplayRenderer);
     AudioIndicatorRenderer.mockImplementation(() => ({}));
+  });
+
+  test('renders visible gameplay keyboard instructions in the sidebar', () => {
+    new UIRenderer(scene, {});
+
+    expect(scene.add.text).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.any(Number),
+      'Controls',
+      expect.objectContaining({
+        fontFamily: VISUAL_SYSTEM.typography.fontFamily,
+        fontSize: VISUAL_SYSTEM.typography.size.body,
+        fill: VISUAL_SYSTEM.palette.text.primary,
+        fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+      })
+    );
+    ['←/→ Move', '↑ Rotate', '↓ Soft drop', 'P/Space Pause'].forEach(
+      (instruction) => {
+        expect(scene.add.text).toHaveBeenCalledWith(
+          expect.any(Number),
+          expect.any(Number),
+          instruction,
+          expect.objectContaining({
+            fontFamily: VISUAL_SYSTEM.typography.fontFamily,
+            fontSize: VISUAL_SYSTEM.typography.size.caption,
+            fill: VISUAL_SYSTEM.palette.text.secondary
+          })
+        );
+      }
+    );
   });
 
   test('shows and fades unavailable-action text in the sidebar', () => {

@@ -13,10 +13,21 @@ import PreviewRenderer from './PreviewRenderer.js';
 import ScoreDisplayRenderer from './ScoreDisplayRenderer.js';
 
 const CENTER_ORIGIN = 0.5;
+const GAMEPLAY_CONTROLS_START_Y =
+  SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING + SCORE_AREA_HEIGHT + PADDING * 2;
+const GAMEPLAY_CONTROLS_LINE_HEIGHT = 18;
 const ACTION_FEEDBACK_OFFSET_FROM_BOTTOM = 125;
 const ACTION_FEEDBACK_REPEAT_DELAY = 300;
 const ACTION_FEEDBACK_VISIBLE_DELAY = 450;
 const ACTION_FEEDBACK_FADE_DURATION = 250;
+
+const GAMEPLAY_CONTROLS = [
+  { text: 'Controls', emphasis: true },
+  { text: '←/→ Move' },
+  { text: '↑ Rotate' },
+  { text: '↓ Soft drop' },
+  { text: 'P/Space Pause' }
+];
 
 export default class UIRenderer {
   constructor(scene, gameState) {
@@ -27,6 +38,7 @@ export default class UIRenderer {
     this.previewRenderer = new PreviewRenderer(scene, gameState);
     this.scoreDisplayRenderer = new ScoreDisplayRenderer(scene, gameState);
     this.audioIndicatorRenderer = new AudioIndicatorRenderer(scene);
+    this.createGameplayControlsText();
     this.createActionFeedbackText();
   }
 
@@ -88,6 +100,32 @@ export default class UIRenderer {
     this.previewRenderer.renderPreview();
   }
 
+  createGameplayControlsText() {
+    const controlsX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
+
+    this.gameplayControlTexts = GAMEPLAY_CONTROLS.map((control, index) =>
+      this.scene.add
+        .text(
+          controlsX,
+          GAMEPLAY_CONTROLS_START_Y + GAMEPLAY_CONTROLS_LINE_HEIGHT * index,
+          control.text,
+          {
+            fontFamily: VISUAL_SYSTEM.typography.fontFamily,
+            fontSize: control.emphasis
+              ? VISUAL_SYSTEM.typography.size.body
+              : VISUAL_SYSTEM.typography.size.caption,
+            fill: control.emphasis
+              ? VISUAL_SYSTEM.palette.text.primary
+              : VISUAL_SYSTEM.palette.text.secondary,
+            fontStyle: control.emphasis
+              ? VISUAL_SYSTEM.typography.weight.emphasis
+              : VISUAL_SYSTEM.typography.weight.regular
+          }
+        )
+        .setOrigin(CENTER_ORIGIN)
+    );
+  }
+
   createActionFeedbackText() {
     this.actionFeedbackText = this.scene.add
       .text(
@@ -135,5 +173,6 @@ export default class UIRenderer {
     this.scoreDisplayRenderer.destroy();
     this.actionFeedbackTween?.stop();
     this.actionFeedbackText?.destroy();
+    this.gameplayControlTexts?.forEach((controlText) => controlText.destroy());
   }
 }
