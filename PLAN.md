@@ -431,7 +431,7 @@ Audited the Phase 12 feedback contracts. Existing focused tests protect bounded 
 **Tasks**
 
 - [x] Verify keyboard instructions are visible and accurate for start, play, pause, restart, and audio controls.
-- [ ] Review contrast and text size for important labels, stats, and overlays.
+- [x] Review contrast and text size for important labels, stats, and overlays.
 - [ ] Check browser viewport behavior and Electron window assumptions so the layout remains usable at expected sizes.
 - [ ] Decide whether reduced-motion or lower-intensity effects are needed for visual comfort.
 - [ ] Document any known accessibility limitations that are out of scope for the current slice.
@@ -449,6 +449,7 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 | Date       | Update                                                                                                                                                                                                                                                                                      |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-07-05 | Phase 13 task 1 completed by auditing keyboard copy for start, pause/resume, restart, and audio controls, adding visible sidebar play controls for movement, rotation, soft drop, and pause, and preserving existing input behavior/audio toggle semantics.                                  |
+| 2026-07-05 | Phase 13 task 2 completed by auditing important label, stat, and overlay styles against the visual-system palette/typography tokens. Caption text was raised from 12px to 14px for readability; existing high-contrast text colors, overlay sizing, layout, gameplay behavior, and event/audio flows were preserved. |
 | 2026-07-04 | Added Phases 9–13 for UX/UI improvement planning: discovery baseline, visual system refresh, gameplay readability, interaction feedback/game feel, and accessibility/responsive polish.                                                                                                    |
 | 2026-07-03 | Phase 8 completed by applying Prettier in docs/config, tests, and source slices, verifying `npm run format:check`, `npm run lint`, `npm test`, `npm run build`, and `git diff --check`, and adding `npm run format:check` to CI after the baseline passed.                                  |
 | 2026-07-03 | Phase 7 task 3 completed by reviewing `PLAN.md` and `AGENTS.md` for compactness, preserving high-signal ownership/tooling notes, and closing Phase 7 exit criteria.                                                                                                                         |

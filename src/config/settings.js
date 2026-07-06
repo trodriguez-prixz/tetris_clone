@@ -76,7 +76,7 @@ export const VISUAL_SYSTEM = {
       emphasis: 'bold'
     },
     size: {
-      caption: '12px',
+      caption: '14px',
       body: '16px',
       metric: '20px',
       sectionTitle: '18px',
