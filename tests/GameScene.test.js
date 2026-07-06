@@ -317,6 +317,10 @@ describe('GameScene orchestration', () => {
     scene.stateMachine.start();
     scene.stateMachine.consumeEvents();
     scene.gameState.currentTetramino = { blocks: [] };
+    const emittedEvents = [];
+    Object.values(EVENTS).forEach((eventName) => {
+      EventBus.on(eventName, () => emittedEvents.push(eventName));
+    });
     jest.spyOn(scene.gameState, 'moveLeft').mockReturnValue(false);
     jest.spyOn(scene.gameState, 'rotate').mockReturnValue(false);
     Phaser.Input.Keyboard.JustDown.mockImplementation(
@@ -337,6 +341,7 @@ describe('GameScene orchestration', () => {
     );
     expect(soundEffects.playMove).not.toHaveBeenCalled();
     expect(soundEffects.playRotate).not.toHaveBeenCalled();
+    expect(emittedEvents).toEqual([]);
   });
 
   test('drop loop timer renders through the fall tick result wrapper', () => {

@@ -25,7 +25,7 @@ This plan is the single source of truth for improving the project's architecture
 | 9. UX/UI discovery baseline             | `[x]`  | Identify usability gaps before changing visuals or flows.                  |
 | 10. Visual system refresh               | `[x]`  | Create a consistent arcade visual language for the game.                   |
 | 11. Gameplay readability                | `[ ]`  | Make board state, next pieces, score, and status easier to understand.     |
-| 12. Interaction feedback and game feel  | `[~]`  | Improve player feedback without changing core Tetris rules.                |
+| 12. Interaction feedback and game feel  | `[x]`  | Improve player feedback without changing core Tetris rules.                |
 | 13. Accessibility and responsive polish | `[ ]`  | Make the game more usable across devices and player needs.                 |
 
 ## Phase 0 — Refactor safety baseline
@@ -374,7 +374,7 @@ Audited the Phase 11 rendering contracts. `BoardRenderer`, `PreviewRenderer`, `S
 - [x] Rendering ownership remains in `src/scenes/components/`.
 - [x] Focused scene tests pass when scene behavior changes.
 
-## Phase 12 — Interaction feedback and game feel [~]
+## Phase 12 — Interaction feedback and game feel [x]
 
 **Objective:** Improve responsiveness and feedback while preserving the existing Tetris rule model.
 
@@ -384,7 +384,7 @@ Audited the Phase 11 rendering contracts. `BoardRenderer`, `PreviewRenderer`, `S
 - [x] Tune visual effects and animations so they communicate events without hiding the board or delaying gameplay.
 - [x] Ensure audio feedback remains optional, understandable, and coordinated through existing audio boundaries.
 - [x] Add clear feedback for disabled or unavailable actions where applicable.
-- [ ] Protect behavior with tests when feedback changes affect scene coordination or event emission.
+- [x] Protect behavior with tests when feedback changes affect scene coordination or event emission.
 
 **Task 1 note — 2026-07-05**
 
@@ -414,11 +414,15 @@ Audio feedback remains optional through the existing `M` music and `S` sound-eff
 
 Blocked horizontal movement and blocked rotation now show a brief sidebar unavailable-action cue through the existing scene/UI component boundary. Gameplay rules, movement and rotation input timing, scoring, timers, event flow, audio toggles, and the unwired hard-drop behavior were intentionally preserved.
 
+**Task 5 note — 2026-07-05**
+
+Audited the Phase 12 feedback contracts. Existing focused tests protect bounded line-clear particles, cleared-block fade cleanup, immediate bounded level-up feedback, optional audio indicator labels/colors, and UI throttling for unavailable-action messages. One scene coordination assertion was added so blocked movement/rotation feedback remains UI-only and does not emit gameplay events or trigger movement/rotation sounds.
+
 **Exit criteria**
 
-- [ ] Feedback makes player actions and game events feel clear and responsive.
-- [ ] Effects remain Phaser-facing and do not move game rules out of `src/logic/`.
-- [ ] `npm run lint` and `npm test` pass.
+- [x] Feedback makes player actions and game events feel clear and responsive.
+- [x] Effects remain Phaser-facing and do not move game rules out of `src/logic/`.
+- [x] `npm run lint` and `npm test` pass.
 
 ## Phase 13 — Accessibility and responsive polish
 
