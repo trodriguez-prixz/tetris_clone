@@ -5,10 +5,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          phaser: ['phaser']
+        codeSplitting: {
+          groups: [{ name: 'phaser', test: /phaser/ }]
         }
       }
     }
