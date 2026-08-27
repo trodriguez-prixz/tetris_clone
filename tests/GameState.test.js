@@ -39,7 +39,7 @@ describe('GameState', () => {
     expect(gameState.score.getAllStats()).toEqual(
       expect.objectContaining({ score: 0, level: 1, lines: 0, pieces: 0 })
     );
-    expect(gameState.nextShapes).toEqual(['T', 'T', 'T']);
+    expect(gameState.nextShapes).toEqual(['T', 'Z', 'S']);
   });
 
   test('reset restores board, score, timing, active piece, and preview queue', () => {
@@ -64,7 +64,7 @@ describe('GameState', () => {
     expect(gameState.dropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.softDropActive).toBe(false);
-    expect(gameState.nextShapes).toEqual(['T', 'T', 'T']);
+    expect(gameState.nextShapes).toEqual(['T', 'Z', 'S']);
   });
 
   test('startSoftDrop and stopSoftDrop own soft-drop speed selection', () => {
@@ -84,14 +84,36 @@ describe('GameState', () => {
 
   test('spawnTetramino consumes the next shape and replenishes the queue', () => {
     gameState.nextShapes = ['O', 'I', 'T'];
-    Math.random.mockReturnValueOnce(5 / 7);
 
     const spawned = gameState.spawnTetramino();
 
     expect(spawned).toBe(true);
     expect(gameState.currentTetramino.type).toBe('O');
-    expect(gameState.nextShapes).toEqual(['I', 'T', 'S']);
+    expect(gameState.nextShapes).toEqual(['I', 'T', 'I']);
     expect(gameState.consumeEvents()).toEqual([]);
+  });
+
+  test('bag selection fills a new randomized bag once it is exhausted', () => {
+    gameState.bag = [];
+
+    const firstCycle = Array.from({ length: 7 }, () =>
+      gameState.getRandomShapeType()
+    );
+    const secondCycle = Array.from({ length: 7 }, () =>
+      gameState.getRandomShapeType()
+    );
+
+    expect(firstCycle.sort()).toEqual(['I', 'J', 'L', 'O', 'S', 'T', 'Z']);
+    expect(secondCycle.sort()).toEqual(['I', 'J', 'L', 'O', 'S', 'T', 'Z']);
+  });
+
+  test('reset clears the pending bag and rebuilds a fresh queue from a new bag', () => {
+    gameState.bag = ['O', 'I'];
+    gameState.nextShapes = ['L'];
+
+    gameState.reset();
+
+    expect(gameState.nextShapes).toEqual(['T', 'Z', 'S']);
   });
 
   test('startGame starts score timing, spawns the initial piece, and returns a start result', () => {
@@ -103,7 +125,7 @@ describe('GameState', () => {
     expect(result).toEqual({ started: true, spawned: true, gameOver: false });
     expect(gameState.score.startTimer).toHaveBeenCalledTimes(1);
     expect(gameState.currentTetramino.type).toBe('O');
-    expect(gameState.nextShapes).toEqual(['I', 'T', 'T']);
+    expect(gameState.nextShapes).toEqual(['I', 'T', 'I']);
     expect(gameState.consumeEvents()).toEqual([]);
   });
 

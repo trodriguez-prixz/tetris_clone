@@ -218,6 +218,8 @@ export const INITIAL_DROP_SPEED = 1000;
 
 export const FAST_DROP_SPEED = 300;
 
+export const SHAPES = Object.keys(TETRAMINOS);
+
 export const LEVEL_SPEED_MULTIPLIER = 0.75;
 
 export const LINES_PER_LEVEL = 10;

@@ -4,7 +4,7 @@ import Score from '../classes/Score.js';
 import {
   GRID_ROWS,
   GRID_COLS,
-  TETRAMINOS,
+  SHAPES,
   INITIAL_DROP_SPEED,
   FAST_DROP_SPEED,
   LEVEL_SPEED_MULTIPLIER
@@ -22,6 +22,7 @@ export default class GameState {
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.softDropActive = false;
     this.domainEvents = [];
+    this.bag = [];
 
     // Initialize next shapes queue (3 shapes)
     for (let i = 0; i < 3; i++) {
@@ -40,6 +41,7 @@ export default class GameState {
     this.baseDropSpeed = INITIAL_DROP_SPEED;
     this.softDropActive = false;
     this.domainEvents = [];
+    this.bag = [];
     for (let i = 0; i < 3; i++) {
       this.nextShapes.push(this.getRandomShapeType());
     }
@@ -80,9 +82,20 @@ export default class GameState {
     return events;
   }
 
+  fillBag() {
+    const shuffled = [...SHAPES];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    this.bag = shuffled;
+  }
+
   getRandomShapeType() {
-    const types = Object.keys(TETRAMINOS);
-    return types[Math.floor(Math.random() * types.length)];
+    if (this.bag.length === 0) {
+      this.fillBag();
+    }
+    return this.bag.pop();
   }
 
   // Core update cycle for falling piece
