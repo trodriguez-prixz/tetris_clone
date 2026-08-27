@@ -24,6 +24,11 @@ describe('Tetramino', () => {
     );
   });
 
+  test('rejects an unknown or missing type instead of picking a random one', () => {
+    expect(() => new Tetramino()).toThrow('Unknown tetramino type');
+    expect(() => new Tetramino('X')).toThrow('Unknown tetramino type');
+  });
+
   test('moves every block and pivot by one cell in the requested direction', () => {
     const tetramino = new Tetramino('O');
     const initialPivot = { ...tetramino.pivot };

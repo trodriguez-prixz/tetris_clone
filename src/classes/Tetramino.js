@@ -2,13 +2,17 @@ import Block from './Block.js';
 import { TETRAMINOS, GRID_COLS, GRID_ROWS } from '../config/settings.js';
 
 export default class Tetramino {
-  constructor(type = null) {
+  constructor(type) {
+    // A Tetramino never picks its own type: piece selection is owned by
+    // GameState's 7-bag. Requiring an explicit type prevents re-introducing
+    // the unbounded-drought random pick a bag eliminates.
+    if (!TETRAMINOS[type]) {
+      throw new Error(`Unknown tetramino type: ${type}`);
+    }
+
     this.blocks = [];
 
-    // Get random type if not provided
-    const types = Object.keys(TETRAMINOS);
-    this.type = type || types[Math.floor(Math.random() * types.length)];
-
+    this.type = type;
     const tetraminoData = TETRAMINOS[this.type];
     this.color = tetraminoData.color;
 
