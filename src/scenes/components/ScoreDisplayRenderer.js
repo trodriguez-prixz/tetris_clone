@@ -106,9 +106,24 @@ export default class ScoreDisplayRenderer {
 
     this.createScoreText(uiX, scoreAreaTop, 'title', 'STATS');
     this.createScoreText(uiX, scoreAreaTop, 'currentLabel', 'CURRENT RUN');
-    this.scoreText = this.createScoreText(uiX, scoreAreaTop, 'score', 'Score: 0');
-    this.levelText = this.createScoreText(uiX, scoreAreaTop, 'level', 'Level: 1');
-    this.linesText = this.createScoreText(uiX, scoreAreaTop, 'lines', 'Lines: 0');
+    this.scoreText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'score',
+      'Score: 0'
+    );
+    this.levelText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'level',
+      'Level: 1'
+    );
+    this.linesText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'lines',
+      'Lines: 0'
+    );
 
     this.createScoreText(uiX, scoreAreaTop, 'sessionLabel', 'SESSION STATS');
     this.timeText = this.createScoreText(
@@ -177,7 +192,9 @@ export default class ScoreDisplayRenderer {
 
     const bestScore = StorageManager.getBestScore();
     if (stats.score > bestScore) {
-      this.highScoreText.setText(`Best Score: ${this.formatNumber(stats.score)}`);
+      this.highScoreText.setText(
+        `Best Score: ${this.formatNumber(stats.score)}`
+      );
       this.highScoreText.setFill(VISUAL_SYSTEM.palette.accent.red);
     }
   }

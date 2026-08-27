@@ -49,7 +49,8 @@ export default class PreviewRenderer {
     const previewAreaWidth = SIDEBAR_WIDTH - PADDING;
     const previewAreaLeft = SIDEBAR_X + PADDING / 2;
     const queueTop = SIDEBAR_Y + PREVIEW_QUEUE_TOP_OFFSET;
-    const queueHeight = PREVIEW_AREA_HEIGHT - PREVIEW_QUEUE_TOP_OFFSET - PADDING;
+    const queueHeight =
+      PREVIEW_AREA_HEIGHT - PREVIEW_QUEUE_TOP_OFFSET - PADDING;
     const segmentHeight =
       (queueHeight - PREVIEW_SLOT_GAP * (PREVIEW_SLOT_COUNT - 1)) /
       PREVIEW_SLOT_COUNT;
@@ -76,8 +77,7 @@ export default class PreviewRenderer {
       tetData.blocks.forEach((p) => {
         const x =
           previewAreaLeft + offsetX + (p.x - minX) * cellSize + cellSize / 2;
-        const y =
-          segmentTop + offsetY + (p.y - minY) * cellSize + cellSize / 2;
+        const y = segmentTop + offsetY + (p.y - minY) * cellSize + cellSize / 2;
         const previewBlock = this.scene.add.rectangle(
           x,
           y,
