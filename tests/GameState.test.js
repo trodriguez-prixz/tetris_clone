@@ -6,11 +6,14 @@ import {
   GRID_ROWS,
   INITIAL_DROP_SPEED,
   FAST_DROP_SPEED,
-  LEVEL_SPEED_MULTIPLIER
+  LEVEL_SPEED_MULTIPLIER,
+  TETRAMINOS
 } from '../src/config/settings.js';
 
 const createFilledRow = (row, color = 0xffffff) =>
   Array.from({ length: GRID_COLS }, (_, col) => new Block(col, row, color));
+
+const isValidShape = (shape) => TETRAMINOS[shape] !== undefined;
 
 describe('GameState', () => {
   let gameState;
@@ -39,7 +42,8 @@ describe('GameState', () => {
     expect(gameState.score.getAllStats()).toEqual(
       expect.objectContaining({ score: 0, level: 1, lines: 0, pieces: 0 })
     );
-    expect(gameState.nextShapes).toEqual(['T', 'Z', 'S']);
+    expect(gameState.nextShapes).toHaveLength(3);
+    expect(gameState.nextShapes.every(isValidShape)).toBe(true);
   });
 
   test('reset restores board, score, timing, active piece, and preview queue', () => {
@@ -64,7 +68,8 @@ describe('GameState', () => {
     expect(gameState.dropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.baseDropSpeed).toBe(INITIAL_DROP_SPEED);
     expect(gameState.softDropActive).toBe(false);
-    expect(gameState.nextShapes).toEqual(['T', 'Z', 'S']);
+    expect(gameState.nextShapes).toHaveLength(3);
+    expect(gameState.nextShapes.every(isValidShape)).toBe(true);
   });
 
   test('startSoftDrop and stopSoftDrop own soft-drop speed selection', () => {
@@ -89,7 +94,9 @@ describe('GameState', () => {
 
     expect(spawned).toBe(true);
     expect(gameState.currentTetramino.type).toBe('O');
-    expect(gameState.nextShapes).toEqual(['I', 'T', 'I']);
+    // Explicit queue is consumed left-to-right; the replenished tail is a valid shape
+    expect(gameState.nextShapes.slice(0, 2)).toEqual(['I', 'T']);
+    expect(isValidShape(gameState.nextShapes[2])).toBe(true);
     expect(gameState.consumeEvents()).toEqual([]);
   });
 
@@ -113,7 +120,11 @@ describe('GameState', () => {
 
     gameState.reset();
 
-    expect(gameState.nextShapes).toEqual(['T', 'Z', 'S']);
+    // Old pending bag is discarded; reset repopulates the queue from a fresh bag
+    const combined = [...gameState.nextShapes, ...gameState.bag];
+    expect(gameState.nextShapes).toHaveLength(3);
+    expect(gameState.bag).toHaveLength(4);
+    expect(combined.sort()).toEqual(['I', 'J', 'L', 'O', 'S', 'T', 'Z']);
   });
 
   test('startGame starts score timing, spawns the initial piece, and returns a start result', () => {
@@ -125,7 +136,8 @@ describe('GameState', () => {
     expect(result).toEqual({ started: true, spawned: true, gameOver: false });
     expect(gameState.score.startTimer).toHaveBeenCalledTimes(1);
     expect(gameState.currentTetramino.type).toBe('O');
-    expect(gameState.nextShapes).toEqual(['I', 'T', 'I']);
+    expect(gameState.nextShapes.slice(0, 2)).toEqual(['I', 'T']);
+    expect(isValidShape(gameState.nextShapes[2])).toBe(true);
     expect(gameState.consumeEvents()).toEqual([]);
   });
 
