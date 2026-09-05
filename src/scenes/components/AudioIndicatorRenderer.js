@@ -9,10 +9,6 @@ import {
 const CENTER_ORIGIN = 0.5;
 
 const AUDIO_TEXT_LAYOUT = {
-  controls: {
-    offsetFromBottom: 20,
-    fontSize: VISUAL_SYSTEM.typography.size.caption
-  },
   soundEffects: {
     offsetFromBottom: 50,
     fontSize: VISUAL_SYSTEM.typography.size.body
@@ -24,9 +20,6 @@ const AUDIO_TEXT_LAYOUT = {
 };
 
 const AUDIO_TEXT_STYLE = {
-  controls: {
-    fill: VISUAL_SYSTEM.palette.text.muted
-  },
   indicator: {
     fill: VISUAL_SYSTEM.palette.text.secondary
   }
@@ -42,18 +35,6 @@ export default class AudioIndicatorRenderer {
     const uiX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
     const sidebarBottom = CANVAS_HEIGHT - PADDING;
 
-    this.scene.add
-      .text(
-        uiX,
-        sidebarBottom - AUDIO_TEXT_LAYOUT.controls.offsetFromBottom,
-        'M: Music | S: Sound',
-        {
-          fontFamily: VISUAL_SYSTEM.typography.fontFamily,
-          fontSize: AUDIO_TEXT_LAYOUT.controls.fontSize,
-          fill: AUDIO_TEXT_STYLE.controls.fill
-        }
-      )
-      .setOrigin(CENTER_ORIGIN);
     this.soundEffectsIndicator = this.scene.add
       .text(
         uiX,

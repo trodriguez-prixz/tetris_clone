@@ -8,6 +8,7 @@ import {
   PANEL_BORDER_WIDTH,
   VISUAL_SYSTEM
 } from '../../config/settings.js';
+import { CONTROLS_HELP_LINES } from '../../config/controlsHelp.js';
 import AudioIndicatorRenderer from './AudioIndicatorRenderer.js';
 import PreviewRenderer from './PreviewRenderer.js';
 import ScoreDisplayRenderer from './ScoreDisplayRenderer.js';
@@ -15,19 +16,11 @@ import ScoreDisplayRenderer from './ScoreDisplayRenderer.js';
 const CENTER_ORIGIN = 0.5;
 const GAMEPLAY_CONTROLS_START_Y =
   SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING + SCORE_AREA_HEIGHT + PADDING * 2;
-const GAMEPLAY_CONTROLS_LINE_HEIGHT = 18;
-const ACTION_FEEDBACK_OFFSET_FROM_BOTTOM = 125;
+const GAMEPLAY_CONTROLS_LINE_HEIGHT = 16;
+const ACTION_FEEDBACK_OFFSET_FROM_BOTTOM = 140;
 const ACTION_FEEDBACK_REPEAT_DELAY = 300;
 const ACTION_FEEDBACK_VISIBLE_DELAY = 450;
 const ACTION_FEEDBACK_FADE_DURATION = 250;
-
-const GAMEPLAY_CONTROLS = [
-  { text: 'Controls', emphasis: true },
-  { text: '←/→ Move' },
-  { text: '↑ Rotate' },
-  { text: '↓ Soft drop' },
-  { text: 'P/Space Pause' }
-];
 
 export default class UIRenderer {
   constructor(scene, gameState) {
@@ -103,7 +96,7 @@ export default class UIRenderer {
   createGameplayControlsText() {
     const controlsX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
 
-    this.gameplayControlTexts = GAMEPLAY_CONTROLS.map((control, index) =>
+    this.gameplayControlTexts = CONTROLS_HELP_LINES.map((control, index) =>
       this.scene.add
         .text(
           controlsX,

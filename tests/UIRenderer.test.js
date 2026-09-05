@@ -50,7 +50,7 @@ describe('UIRenderer action feedback', () => {
     AudioIndicatorRenderer.mockImplementation(() => ({}));
   });
 
-  test('renders visible gameplay keyboard instructions in the sidebar', () => {
+  test('renders consolidated Controls help from the shared contract', () => {
     new UIRenderer(scene, {});
 
     expect(scene.add.text).toHaveBeenCalledWith(
@@ -64,20 +64,26 @@ describe('UIRenderer action feedback', () => {
         fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
       })
     );
-    ['←/→ Move', '↑ Rotate', '↓ Soft drop', 'P/Space Pause'].forEach(
-      (instruction) => {
-        expect(scene.add.text).toHaveBeenCalledWith(
-          expect.any(Number),
-          expect.any(Number),
-          instruction,
-          expect.objectContaining({
-            fontFamily: VISUAL_SYSTEM.typography.fontFamily,
-            fontSize: VISUAL_SYSTEM.typography.size.caption,
-            fill: VISUAL_SYSTEM.palette.text.secondary
-          })
-        );
-      }
-    );
+    [
+      '←/→ Move',
+      '↑ Rotate',
+      '↓ Soft drop',
+      'P/Space Pause',
+      'M Music',
+      'S Sound',
+      'R Restart (game over)'
+    ].forEach((instruction) => {
+      expect(scene.add.text).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+        instruction,
+        expect.objectContaining({
+          fontFamily: VISUAL_SYSTEM.typography.fontFamily,
+          fontSize: VISUAL_SYSTEM.typography.size.caption,
+          fill: VISUAL_SYSTEM.palette.text.secondary
+        })
+      );
+    });
   });
 
   test('shows and fades unavailable-action text in the sidebar', () => {

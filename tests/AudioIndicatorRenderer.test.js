@@ -22,16 +22,13 @@ describe('AudioIndicatorRenderer', () => {
     renderer = new AudioIndicatorRenderer(scene);
   });
 
-  test('shows understandable optional audio controls and initial states', () => {
-    expect(scene.add.text).toHaveBeenCalledWith(
-      expect.any(Number),
-      expect.any(Number),
-      'M: Music | S: Sound',
-      expect.objectContaining({
-        fontFamily: VISUAL_SYSTEM.typography.fontFamily,
-        fill: VISUAL_SYSTEM.palette.text.muted
-      })
-    );
+  test('shows audio status indicators without duplicating Controls shortcuts', () => {
+    const createdLabels = scene.add.text.mock.calls.map((call) => call[2]);
+
+    expect(createdLabels).not.toContain('M: Music | S: Sound');
+    expect(createdLabels.some((label) => /^M:/.test(label))).toBe(false);
+    expect(createdLabels.some((label) => /^S:/.test(label))).toBe(false);
+
     expect(scene.add.text).toHaveBeenCalledWith(
       expect.any(Number),
       expect.any(Number),
