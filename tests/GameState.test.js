@@ -161,7 +161,7 @@ describe('GameState', () => {
       lines: 12,
       pieces: 24,
       tetrises: 2,
-      gameTime: 90,
+      time: 90,
       ignored: 'not persisted'
     });
 
@@ -174,8 +174,29 @@ describe('GameState', () => {
       lines: 12,
       pieces: 24,
       tetrises: 2,
-      gameTime: 90
+      time: 90
     });
+    expect(snapshot).not.toHaveProperty('gameTime');
+    expect(snapshot.time).toBe(gameState.score.getAllStats().time);
+  });
+
+  test('getGameOverStatsSnapshot time matches getAllStats time for a different elapsed value', () => {
+    jest.spyOn(gameState.score, 'updateGameTime');
+    jest.spyOn(gameState.score, 'getAllStats').mockReturnValue({
+      score: 0,
+      level: 1,
+      lines: 0,
+      pieces: 0,
+      tetrises: 0,
+      time: 42
+    });
+
+    const snapshot = gameState.getGameOverStatsSnapshot();
+
+    expect(snapshot.time).toBe(42);
+    expect(Object.prototype.hasOwnProperty.call(snapshot, 'gameTime')).toBe(
+      false
+    );
   });
 
   test('spawnTetramino returns false and preserves the current state when the spawn area is blocked', () => {

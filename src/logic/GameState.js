@@ -68,7 +68,7 @@ export default class GameState {
       lines: stats.lines,
       pieces: stats.pieces,
       tetrises: stats.tetrises,
-      gameTime: stats.gameTime
+      time: stats.time
     };
   }
 

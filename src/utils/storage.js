@@ -78,7 +78,7 @@ export class StorageManager {
       stats.totalLines += gameStats.lines;
       stats.totalPieces += gameStats.pieces;
       stats.totalTetrises += gameStats.tetrises;
-      stats.totalTime += gameStats.time;
+      stats.totalTime += Number(gameStats.time) || 0;
 
       if (gameStats.level > stats.bestLevel) {
         stats.bestLevel = gameStats.level;
