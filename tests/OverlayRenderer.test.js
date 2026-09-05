@@ -143,4 +143,34 @@ describe('OverlayRenderer', () => {
       textCalls.some((text) => /R/i.test(text) && /click/i.test(text))
     ).toBe(true);
   });
+
+  test('keeps start pause and game-over overlays as short next-action prompts', () => {
+    const manualLines = [
+      '←/→ Move',
+      '↑ Rotate',
+      '↓ Soft drop',
+      'M Music',
+      'S Sound',
+      'R Restart (game over)'
+    ];
+
+    renderer.renderStartScreen();
+    let labels = scene.add.text.mock.calls.map((call) => call[2]);
+    expect(labels).toContain('Press any key except P, or click');
+    manualLines.forEach((line) => expect(labels).not.toContain(line));
+
+    scene.add.text.mockClear();
+    renderer.renderPauseScreen();
+    labels = scene.add.text.mock.calls.map((call) => call[2]);
+    expect(labels).toContain('Press P or Space to resume');
+    manualLines.forEach((line) => expect(labels).not.toContain(line));
+
+    scene.add.text.mockClear();
+    renderer.renderGameOverScreen({ score: 10, outcomeLabel: 'Best: 10' });
+    labels = scene.add.text.mock.calls.map((call) => call[2]);
+    expect(labels.some((text) => /R/i.test(text) && /click/i.test(text))).toBe(
+      true
+    );
+    manualLines.forEach((line) => expect(labels).not.toContain(line));
+  });
 });
