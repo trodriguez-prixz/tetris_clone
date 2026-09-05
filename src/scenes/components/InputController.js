@@ -74,6 +74,12 @@ export default class InputController {
       Phaser.Input.Keyboard.KeyCodes.R
     );
     this.restartKey.on('down', onRestart);
+
+    this.restartPointerTrigger = () => {
+      onRestart();
+    };
+    this.scene.input.on('pointerdown', this.restartPointerTrigger);
+
     return this.restartKey;
   }
 
@@ -81,6 +87,10 @@ export default class InputController {
     if (this.restartKey) {
       this.restartKey.removeAllListeners();
       this.restartKey = null;
+    }
+    if (this.restartPointerTrigger) {
+      this.scene.input.off('pointerdown', this.restartPointerTrigger);
+      this.restartPointerTrigger = null;
     }
   }
 

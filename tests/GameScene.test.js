@@ -494,4 +494,53 @@ describe('GameScene orchestration', () => {
       expect.objectContaining({ callback: expect.any(Function), loop: true })
     );
   });
+
+  test('game over binds R and pointerdown restart; restart clears both', () => {
+    scene.create();
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
+    scene.input.on.mockClear();
+    scene.input.off.mockClear();
+
+    EventBus.emit(EVENTS.GAME_OVER);
+
+    expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(
+      Phaser.Input.Keyboard.KeyCodes.R
+    );
+    expect(scene.input.on).toHaveBeenCalledWith(
+      'pointerdown',
+      expect.any(Function)
+    );
+
+    const restartPointer = scene.input.on.mock.calls.find(
+      ([event]) => event === 'pointerdown'
+    )[1];
+    const restartKey = scene.inputController.restartKey;
+    jest.spyOn(scene.gameState, 'reset');
+    jest.spyOn(scene.stateMachine, 'restart');
+
+    restartPointer();
+
+    expect(overlayRenderer.clearGameOverScreen).toHaveBeenCalledTimes(1);
+    expect(restartKey.removeAllListeners).toHaveBeenCalled();
+    expect(scene.input.off).toHaveBeenCalledWith('pointerdown', restartPointer);
+    expect(scene.stateMachine.getState()).toBe(GAME_STATES.PLAYING);
+  });
+
+  test('pointer restart remains inactive outside game-over', () => {
+    scene.create();
+    scene.input.on.mockClear();
+
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
+    expect(scene.stateMachine.getState()).toBe(GAME_STATES.PLAYING);
+    expect(scene.input.on).not.toHaveBeenCalledWith(
+      'pointerdown',
+      expect.any(Function)
+    );
+
+    scene.stateMachine.pause();
+    expect(scene.stateMachine.getState()).toBe(GAME_STATES.PAUSED);
+    expect(scene.inputController.restartKey).toBeFalsy();
+  });
 });
