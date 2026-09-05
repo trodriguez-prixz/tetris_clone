@@ -1,0 +1,39 @@
+schema: gentle-ai.sdd-state/v1
+changeName: game-over-outcome-clarity
+artifactStore: openspec
+createdAt: 2026-09-05T19:54:13Z
+updatedAt: 2026-09-05T20:26:26Z
+phase: archive
+dependencies:
+  proposal: done
+  specs: done
+  design: done
+  tasks: done
+  apply: done
+  verify: done
+  archive: done
+research:
+  selected: false
+  status: unselected
+decisions:
+  status: confirmed
+  items:
+    - id: overlay-summary
+      choice: final-score-and-best-outcome
+      detail: >-
+        Game-over overlay MUST show final score and best-score outcome
+        (New best or Best: N). No extra lines/level/time on the overlay.
+    - id: restart-input
+      choice: keyboard-and-pointer
+      detail: Keep R restart and add pointer/click restart on the game-over overlay only.
+    - id: time-field
+      choice: time
+      detail: Align snapshot and StorageManager on Score.getAllStats() field name `time`.
+    - id: boundaries
+      choice: preserve
+      detail: OverlayRenderer owns presentation; GameScene owns storage policy and wiring; GameState remains pure.
+proposalReady: true
+specsReady: true
+designReady: true
+tasksReady: true
+sourcePlan: PLAN.md Phase 14

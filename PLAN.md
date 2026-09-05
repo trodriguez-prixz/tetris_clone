@@ -11,22 +11,23 @@ This plan is the single source of truth for improving the project's architecture
 
 ## Phase overview
 
-| Phase                                   | Status | Goal                                                                       |
-| --------------------------------------- | ------ | -------------------------------------------------------------------------- |
-| 0. Refactor safety baseline             | `[x]`  | Protect current behavior before architecture changes.                      |
-| 1. Game domain extraction               | `[x]`  | Keep Tetris rules testable without Phaser.                                 |
-| 2. Scene orchestration cleanup          | `[x]`  | Make `GameScene` coordinate instead of owning every concern.               |
-| 3. Rendering and UI design boundaries   | `[x]`  | Separate visual layout from game rules.                                    |
-| 4. Event communication cleanup          | `[x]`  | Make module communication explicit and consistent.                         |
-| 5. Quality tooling                      | `[x]`  | Add minimal automated checks for safer maintenance.                        |
-| 6. Platform and packaging verification  | `[x]`  | Preserve web, Express, and Electron delivery paths.                        |
-| 7. Architecture documentation           | `[x]`  | Record the final structure and update agent guidance if needed.            |
-| 8. Formatting cleanup                   | `[x]`  | Make Prettier checks pass without mixing formatting with behavior changes. |
-| 9. UX/UI discovery baseline             | `[x]`  | Identify usability gaps before changing visuals or flows.                  |
-| 10. Visual system refresh               | `[x]`  | Create a consistent arcade visual language for the game.                   |
-| 11. Gameplay readability                | `[x]`  | Make board state, next pieces, score, and status easier to understand.     |
-| 12. Interaction feedback and game feel  | `[x]`  | Improve player feedback without changing core Tetris rules.                |
-| 13. Accessibility and responsive polish | `[x]`  | Make the game more usable across devices and player needs.                 |
+| Phase                                   | Status | Goal                                                                         |
+| --------------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| 0. Refactor safety baseline             | `[x]`  | Protect current behavior before architecture changes.                        |
+| 1. Game domain extraction               | `[x]`  | Keep Tetris rules testable without Phaser.                                   |
+| 2. Scene orchestration cleanup          | `[x]`  | Make `GameScene` coordinate instead of owning every concern.                 |
+| 3. Rendering and UI design boundaries   | `[x]`  | Separate visual layout from game rules.                                      |
+| 4. Event communication cleanup          | `[x]`  | Make module communication explicit and consistent.                           |
+| 5. Quality tooling                      | `[x]`  | Add minimal automated checks for safer maintenance.                          |
+| 6. Platform and packaging verification  | `[x]`  | Preserve web, Express, and Electron delivery paths.                          |
+| 7. Architecture documentation           | `[x]`  | Record the final structure and update agent guidance if needed.              |
+| 8. Formatting cleanup                   | `[x]`  | Make Prettier checks pass without mixing formatting with behavior changes.   |
+| 9. UX/UI discovery baseline             | `[x]`  | Identify usability gaps before changing visuals or flows.                    |
+| 10. Visual system refresh               | `[x]`  | Create a consistent arcade visual language for the game.                     |
+| 11. Gameplay readability                | `[x]`  | Make board state, next pieces, score, and status easier to understand.       |
+| 12. Interaction feedback and game feel  | `[x]`  | Improve player feedback without changing core Tetris rules.                  |
+| 13. Accessibility and responsive polish | `[x]`  | Make the game more usable across devices and player needs.                   |
+| 14. Game-over outcome clarity           | `[x]`  | Make the ended run’s result and restart path obvious without changing rules. |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -451,12 +452,77 @@ Known accessibility limitations intentionally left out of this slice:
 - [x] Important instructions and state changes are understandable without relying only on audio or subtle animation.
 - [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
 
+## Phase 14 — Game-over outcome clarity
+
+**Objective:** Close the remaining game-over UX gap: show the ended run’s result on the overlay, keep restart discoverable, and keep persistence/presentation boundaries intact. Do not change Tetris spawn/lock/scoring rules.
+
+**Problem snapshot (current)**
+
+| Area        | Current behavior                                                                             | Gap                                                                                                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Overlay     | Shows `GAME OVER`, `Run ended`, and `Press R to restart`.                                    | Omits final score and whether the run beat the best score.                                                                                                          |
+| Sidebar     | Score/level/lines/best remain visible behind the dim overlay.                                | Players must look past the modal instead of reading a run summary.                                                                                                  |
+| Persistence | `GameState.getGameOverStatsSnapshot()` feeds high-score and lifetime stats from `GameScene`. | Snapshot uses `gameTime` while `Score.getAllStats()` exposes `time` and `StorageManager.updateStatistics()` reads `time`, so elapsed-time totals can fail silently. |
+| Restart     | Keyboard `R` only.                                                                           | No pointer restart path; Phase 13 left broader pointer gameplay out of scope.                                                                                       |
+
+**Target outcomes**
+
+| Outcome                   | Target for this phase                                                                              | Verification                                                       |
+| ------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Run result is obvious     | Game-over overlay shows final score and a clear best-score outcome (`New best` or current best).   | A reviewer can read score + record outcome from the overlay alone. |
+| Next action stays clear   | Restart instruction remains visible and accurate (`R`, plus pointer if task 4 is included).        | Restart path is obvious without reading source.                    |
+| Persistence stays correct | Snapshot ↔ storage field names agree; lifetime `totalTime` accumulates real elapsed seconds.       | Focused logic/storage/scene tests cover the contract.              |
+| Boundaries stay stable    | Overlay remains in `OverlayRenderer`; rules stay in `src/logic/`; storage stays in scene/platform. | No Phaser/storage APIs move into `GameState`.                      |
+
+**Tasks**
+
+- [x] Audit the game-over presentation contract: overlay copy, sidebar visibility, snapshot fields, high-score save rule, and restart input.
+  - Decide the minimum overlay summary: final score + best-score outcome are required; lines/level/time are optional supporting lines if they stay scannable.
+  - Keep decorative effects secondary; do not hide the restart action.
+- [x] Align the game-over stats contract between `Score.getAllStats()`, `GameState.getGameOverStatsSnapshot()`, and `StorageManager.updateStatistics()`.
+  - Prefer one serializable elapsed-time field used by both overlay formatting and persistence.
+  - Update focused `GameState` / storage / scene tests so mocks match production field names.
+- [x] Extend `OverlayRenderer` game-over content to accept run-summary data and render it with existing `VISUAL_SYSTEM` tokens.
+  - Preserve title/status/action hierarchy; add summary lines without turning the overlay into a dense stats dump.
+  - Pass summary data from `GameScene` after `getGameOverStatsSnapshot()` / best-score comparison; do not make the renderer own storage policy.
+- [x] Decide and implement restart discoverability for this slice.
+  - Required: keep `R` restart and visible instruction text.
+  - Optional in this phase: add pointer/click restart on the game-over overlay only (not full touch gameplay controls).
+  - Record the decision in the task note; if pointer restart is deferred, keep it explicitly out of scope here.
+- [x] Protect the new behavior with focused tests and close the phase.
+  - Cover overlay summary rendering, scene wiring of snapshot → overlay, persistence field contract, and restart input for whatever path task 4 includes.
+  - Verify with `npm test` (focused files first) plus `npm run lint` and `npm run format:check` before marking exit criteria done.
+
+**Suggested implementation order (work units)**
+
+1. Persistence/snapshot field alignment + tests.
+2. Overlay summary API/rendering + `GameScene` wiring + tests.
+3. Optional pointer restart + tests, or a short note deferring it.
+4. Phase status/progress-note closeout in this plan.
+
+**Out of scope for Phase 14**
+
+- Hard drop gameplay or reclaiming Space from pause.
+- Full lifetime-stats screen or top-ten leaderboard UI.
+- Remappable keys, screen-reader/ARIA canvas semantics, or mobile-responsive redesign.
+- Changing spawn collision, scoring formulas, or high-score top-ten policy beyond fixing the time field contract.
+
+**Exit criteria**
+
+- [x] Game-over overlay communicates final score, best-score outcome, and restart action without requiring sidebar inspection.
+- [x] Snapshot/storage elapsed-time contract is consistent and tested.
+- [x] Rendering ownership remains in `src/scenes/components/`; rules remain in `src/logic/`.
+- [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
+
 ## Progress notes
 
 Use this section for short dated updates. Keep detailed implementation notes in the relevant PR or commit.
 
 | Date       | Update                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-05 | SDD archived `game-over-outcome-clarity` → `openspec/changes/archive/2026-09-05-game-over-outcome-clarity/`; main specs created for `game-over-overlay` and `game-over-stats-contract`. Verify was pass_with_warnings (storage.js focused coverage only). |
+| 2026-09-05 | Phase 14 closed via SDD apply (`game-over-outcome-clarity`): snapshot/storage use `time`; overlay shows score + best-outcome (`New best` / `Best: N`) with R+click restart; GameScene captures previousBest before persist; pointer restart binds/clears on game-over only. Verified with `npm test`, `npm run lint`, `npm run format:check`, and `npm run build`.                                                                                                           |
+| 2026-09-05 | Added Phase 14 for game-over outcome clarity: overlay run summary, snapshot/storage time-field alignment, restart discoverability decision, and focused test coverage. Hard drop and broader accessibility work remain outside this phase.                                                                                                                                                                                                                                   |
 | 2026-09-05 | Corrected the phase overview so Phase 11 matches its closed detail section. Phase 9 discovery notes remain a historical baseline from before Phases 10–13; residual intentional gaps stay documented elsewhere (hard drop unwired in Phase 12; game-over overlay without score summary; Phase 13 accessibility limits).                                                                                                                                                      |
 | 2026-07-05 | Phase 13 task 1 completed by auditing keyboard copy for start, pause/resume, restart, and audio controls, adding visible sidebar play controls for movement, rotation, soft drop, and pause, and preserving existing input behavior/audio toggle semantics.                                                                                                                                                                                                                  |
 | 2026-07-05 | Phase 13 task 2 completed by auditing important label, stat, and overlay styles against the visual-system palette/typography tokens. Caption text was raised from 12px to 14px for readability; existing high-contrast text colors, overlay sizing, layout, gameplay behavior, and event/audio flows were preserved.                                                                                                                                                         |

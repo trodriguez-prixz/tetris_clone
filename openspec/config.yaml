@@ -1,0 +1,50 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Phaser 3, Vite 5, Jest/jsdom, Express, Electron (ESM; electron/main.cjs is CJS).
+  Architecture: pure logic in src/logic/ and src/classes/; GameScene coordinates; rendering/input/audio in src/scenes/components/; events in src/events/.
+  Testing: npm test (Jest), focused via npm test -- <file>; lint/format/build via npm scripts.
+  Style: relative ESM imports with .js extensions; constants in src/config/settings.js; PLAN.md is UX/architecture source of truth.
+
+projects:
+  - path: .
+    stack: phaser-vite-jest
+    test_command: npm test
+    lint_command: npm run lint
+    format_command: npm run format:check
+    build_command: npm run build
+
+strict_tdd: true
+
+testing:
+  runner: jest
+  command: npm test
+  coverage_command: npm test -- --coverage
+  layers: [unit]
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Keep PLAN.md Phase 14 aligned with change intent
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Preserve logic/scene/component ownership boundaries from AGENTS.md
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by work unit, use hierarchical numbering
+    - Keep tests with the behavior they verify
+  apply:
+    guidelines:
+      - Follow existing code patterns
+      - Update PLAN.md Phase 14 status notes with each completed task group
+    tdd: true
+    test_command: npm test
+  verify:
+    test_command: npm test
+    build_command: npm run build
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+    - Sync PLAN.md Phase 14 to done when archive succeeds
