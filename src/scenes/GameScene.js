@@ -233,21 +233,29 @@ export default class GameScene extends Phaser.Scene {
     this.stateMachine.markGameOver();
     this.dropLoopController.stop();
 
-    this.persistGameOverStats();
-    this.showGameOverScreen();
+    const summary = this.persistGameOverStats();
+    this.showGameOverScreen(summary);
     this.bindRestartInput();
   }
 
   persistGameOverStats() {
     const stats = this.gameState.getGameOverStatsSnapshot();
-    if (stats.score > StorageManager.getBestScore()) {
+    const previousBest = StorageManager.getBestScore();
+    const isNewBest = stats.score > previousBest;
+
+    if (isNewBest) {
       StorageManager.saveHighScore(stats);
     }
     StorageManager.updateStatistics(stats);
+
+    return {
+      score: stats.score,
+      outcomeLabel: isNewBest ? 'New best' : `Best: ${previousBest}`
+    };
   }
 
-  showGameOverScreen() {
-    this.overlayRenderer.renderGameOverScreen();
+  showGameOverScreen(summary) {
+    this.overlayRenderer.renderGameOverScreen(summary);
   }
 
   bindRestartInput() {

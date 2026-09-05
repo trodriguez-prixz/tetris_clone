@@ -389,7 +389,7 @@ describe('GameScene orchestration', () => {
       level: 2,
       pieces: 10,
       tetrises: 1,
-      gameTime: 30
+      time: 30
     });
     StorageManager.getBestScore.mockReturnValue(1000);
 
@@ -398,19 +398,72 @@ describe('GameScene orchestration', () => {
     expect(activeTimer.remove).toHaveBeenCalled();
     expect(scene.dropLoopController.timer).toBeNull();
     expect(scene.gameState.getGameOverStatsSnapshot).toHaveBeenCalledTimes(1);
+    expect(StorageManager.getBestScore).toHaveBeenCalled();
     expect(StorageManager.saveHighScore).toHaveBeenCalledWith(
-      expect.objectContaining({ score: 2500 })
+      expect.objectContaining({ score: 2500, time: 30 })
     );
     expect(StorageManager.updateStatistics).toHaveBeenCalledWith(
-      expect.objectContaining({ score: 2500 })
+      expect.objectContaining({ score: 2500, time: 30 })
     );
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.GAME_OVER);
-    expect(overlayRenderer.renderGameOverScreen).toHaveBeenCalledTimes(1);
+    expect(overlayRenderer.renderGameOverScreen).toHaveBeenCalledWith({
+      score: 2500,
+      outcomeLabel: 'New best'
+    });
     expect(scene.input.keyboard.addKey).toHaveBeenCalledWith(
       Phaser.Input.Keyboard.KeyCodes.R
     );
     expect(soundEffects.playGameOver).toHaveBeenCalled();
     expect(retroMusic.stop).toHaveBeenCalled();
+  });
+
+  test('game over passes prior best outcome and skips high-score save when score does not beat best', () => {
+    scene.create();
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
+    jest.spyOn(scene.gameState, 'getGameOverStatsSnapshot').mockReturnValue({
+      score: 800,
+      lines: 2,
+      level: 1,
+      pieces: 5,
+      tetrises: 0,
+      time: 15
+    });
+    StorageManager.getBestScore.mockReturnValue(1200);
+
+    EventBus.emit(EVENTS.GAME_OVER);
+
+    expect(StorageManager.saveHighScore).not.toHaveBeenCalled();
+    expect(StorageManager.updateStatistics).toHaveBeenCalledWith(
+      expect.objectContaining({ score: 800, time: 15 })
+    );
+    expect(overlayRenderer.renderGameOverScreen).toHaveBeenCalledWith({
+      score: 800,
+      outcomeLabel: 'Best: 1200'
+    });
+  });
+
+  test('game over captures previous best before saving so new-best label is not corrupted', () => {
+    scene.create();
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
+    jest.spyOn(scene.gameState, 'getGameOverStatsSnapshot').mockReturnValue({
+      score: 3000,
+      lines: 8,
+      level: 3,
+      pieces: 20,
+      tetrises: 2,
+      time: 60
+    });
+    StorageManager.getBestScore.mockReturnValueOnce(1500).mockReturnValue(3000);
+
+    EventBus.emit(EVENTS.GAME_OVER);
+
+    expect(overlayRenderer.renderGameOverScreen).toHaveBeenCalledWith({
+      score: 3000,
+      outcomeLabel: 'New best'
+    });
+    expect(StorageManager.saveHighScore).toHaveBeenCalled();
   });
 
   test('restart clears game-over UI, resets domain state, updates UI, and uses the restart transition', () => {

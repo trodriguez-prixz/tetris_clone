@@ -78,9 +78,8 @@ describe('OverlayRenderer', () => {
     );
   });
 
-  test('renders standardized pause and game-over presentation content', () => {
+  test('renders standardized pause presentation content', () => {
     renderer.renderPauseScreen();
-    renderer.renderGameOverScreen();
 
     expect(scene.add.text).toHaveBeenCalledWith(
       CANVAS_WIDTH / 2,
@@ -109,33 +108,39 @@ describe('OverlayRenderer', () => {
         fill: VISUAL_SYSTEM.palette.accent.cyan
       })
     );
-    expect(scene.add.text).toHaveBeenCalledWith(
-      CANVAS_WIDTH / 2,
-      expect.any(Number),
-      'GAME OVER',
-      expect.objectContaining({
-        fontSize: VISUAL_SYSTEM.typography.size.overlayTitle,
-        fill: VISUAL_SYSTEM.palette.accent.magenta
-      })
-    );
-    expect(scene.add.text).toHaveBeenCalledWith(
-      CANVAS_WIDTH / 2,
-      expect.any(Number),
-      'Run ended',
-      expect.objectContaining({
-        fontSize: VISUAL_SYSTEM.typography.size.overlayPrompt,
-        fill: VISUAL_SYSTEM.palette.text.primary
-      })
-    );
-    expect(scene.add.text).toHaveBeenCalledWith(
-      CANVAS_WIDTH / 2,
-      expect.any(Number),
-      'Press R to restart',
-      expect.objectContaining({
-        fontSize: VISUAL_SYSTEM.typography.size.metric,
-        fill: VISUAL_SYSTEM.palette.accent.cyan
-      })
-    );
     expect(scene.tweens.add).not.toHaveBeenCalled();
+  });
+
+  test('renders game-over summary with final score and new-best outcome', () => {
+    renderer.renderGameOverScreen({ score: 2500, outcomeLabel: 'New best' });
+
+    const textCalls = scene.add.text.mock.calls.map((call) => call[2]);
+
+    expect(textCalls).toContain('GAME OVER');
+    expect(textCalls).toContain('Score: 2500');
+    expect(textCalls).toContain('New best');
+    expect(
+      textCalls.some((text) => /R/i.test(text) && /click/i.test(text))
+    ).toBe(true);
+    expect(textCalls).not.toContain('Run ended');
+    expect(textCalls.every((text) => !/\blines\b/i.test(text))).toBe(true);
+    expect(textCalls.every((text) => !/\blevel\b/i.test(text))).toBe(true);
+    expect(textCalls.every((text) => !/\btime\b/i.test(text))).toBe(true);
+  });
+
+  test('renders game-over summary with prior best outcome and dual restart copy', () => {
+    renderer.renderGameOverScreen({
+      score: 800,
+      outcomeLabel: 'Best: 1200'
+    });
+
+    const textCalls = scene.add.text.mock.calls.map((call) => call[2]);
+
+    expect(textCalls).toContain('Score: 800');
+    expect(textCalls).toContain('Best: 1200');
+    expect(textCalls).not.toContain('New best');
+    expect(
+      textCalls.some((text) => /R/i.test(text) && /click/i.test(text))
+    ).toBe(true);
   });
 });

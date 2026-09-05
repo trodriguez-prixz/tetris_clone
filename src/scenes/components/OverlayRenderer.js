@@ -20,6 +20,14 @@ const OVERLAY_LAYOUT = {
     offsetY: VISUAL_SYSTEM.spacing.md,
     fontSize: VISUAL_SYSTEM.typography.size.overlayPrompt
   },
+  score: {
+    offsetY: -VISUAL_SYSTEM.spacing.sm,
+    fontSize: VISUAL_SYSTEM.typography.size.overlayPrompt
+  },
+  outcome: {
+    offsetY: VISUAL_SYSTEM.spacing.lg,
+    fontSize: VISUAL_SYSTEM.typography.size.overlayPrompt
+  },
   action: {
     offsetY: VISUAL_SYSTEM.spacing.xl + VISUAL_SYSTEM.spacing.lg,
     fontSize: VISUAL_SYSTEM.typography.size.metric
@@ -32,6 +40,14 @@ const OVERLAY_TEXT_STYLE = {
     fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
   },
   status: {
+    fill: VISUAL_SYSTEM.palette.text.primary,
+    fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+  },
+  score: {
+    fill: VISUAL_SYSTEM.palette.text.primary,
+    fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
+  },
+  outcome: {
     fill: VISUAL_SYSTEM.palette.text.primary,
     fontStyle: VISUAL_SYSTEM.typography.weight.emphasis
   },
@@ -58,8 +74,7 @@ const OVERLAY_CONTENT = {
   gameOver: {
     alpha: MODAL_OVERLAY_ALPHA,
     title: 'GAME OVER',
-    status: 'Run ended',
-    action: 'Press R to restart'
+    action: 'Press R or click to restart'
   }
 };
 
@@ -91,10 +106,33 @@ export default class OverlayRenderer {
     this.pauseElements = this.destroyElements(this.pauseElements);
   }
 
-  renderGameOverScreen() {
+  renderGameOverScreen(summary) {
     this.clearGameOverScreen();
 
-    this.gameOverElements = this.renderOverlay(OVERLAY_CONTENT.gameOver);
+    const content = OVERLAY_CONTENT.gameOver;
+    const overlay = this.createOverlay(content.alpha);
+    const title = this.createCenteredText(
+      OVERLAY_LAYOUT.title,
+      content.title,
+      OVERLAY_TEXT_STYLE.title
+    );
+    const score = this.createCenteredText(
+      OVERLAY_LAYOUT.score,
+      `Score: ${summary.score}`,
+      OVERLAY_TEXT_STYLE.score
+    );
+    const outcome = this.createCenteredText(
+      OVERLAY_LAYOUT.outcome,
+      summary.outcomeLabel,
+      OVERLAY_TEXT_STYLE.outcome
+    );
+    const action = this.createCenteredText(
+      OVERLAY_LAYOUT.action,
+      content.action,
+      OVERLAY_TEXT_STYLE.action
+    );
+
+    this.gameOverElements = [overlay, title, score, outcome, action];
   }
 
   clearGameOverScreen() {
