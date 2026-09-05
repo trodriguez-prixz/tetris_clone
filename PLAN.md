@@ -248,14 +248,14 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Task 2 note — 2026-07-04**
 
-| Surface           | Current inventory                                                                                                                                                                                                                        |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Board             | `BoardRenderer` draws a 10×20 grid panel, active tetramino blocks, locked field blocks, and line-clear particles.                                                                                                                        |
-| Score panel       | `ScoreDisplayRenderer` shows `STATS`, score, level, lines, best score, time, pieces, and tetrises in the sidebar.                                                                                                                        |
-| Next pieces       | `PreviewRenderer` renders the next three tetramino shapes in the preview panel, without a visible label.                                                                                                                                 |
-| Audio indicator   | `AudioIndicatorRenderer` shows music and sound-effect status plus `M: Música                                                                                                                                                             | S: Sonidos` controls near the sidebar bottom. |
-| Overlays          | `OverlayRenderer` owns start (`TETRIS`, “Presiona cualquier tecla”), pause (`PAUSED`), and game-over (`GAME OVER`, “Press R to Restart”) overlays.                                                                                       |
-| Keyboard controls | `InputController` wires arrows for move/rotate/soft drop, `P` or Space for pause/resume, `M` for music, `S` for sound effects, and `R` for restart after game over; pointer input only starts the game.                                  |
+| Surface           | Current inventory |
+| ----------------- | ----------------- |
+| Board             | `BoardRenderer` draws a 10×20 grid panel, active tetramino blocks, locked field blocks, and line-clear particles. |
+| Score panel       | `ScoreDisplayRenderer` shows `STATS`, score, level, lines, best score, time, pieces, and tetrises in the sidebar. |
+| Next pieces       | `PreviewRenderer` renders the next three tetramino shapes in the preview panel, without a visible label. |
+| Audio indicator   | `AudioIndicatorRenderer` shows music and sound-effect status plus `M: Música` / `S: Sonidos` controls near the sidebar bottom. |
+| Overlays          | `OverlayRenderer` owns start (`TETRIS`, "Presiona cualquier tecla"), pause (`PAUSED`), and game-over (`GAME OVER`, "Press R to Restart") overlays. |
+| Keyboard controls | `InputController` wires arrows for move/rotate/soft drop, `P` or Space for pause/resume, `M` for music, `S` for sound effects, and `R` for restart after game over; pointer input only starts the game. |
 | Persistent stats  | `StorageManager` persists top-ten high scores and lifetime totals (`totalGames`, `totalScore`, `totalLines`, `totalPieces`, `totalTetrises`, `totalTime`, `bestLevel`); the visible UI only surfaces the current best score during play. |
 
 **Task 3 note — 2026-07-04**
