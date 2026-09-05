@@ -28,6 +28,7 @@ This plan is the single source of truth for improving the project's architecture
 | 12. Interaction feedback and game feel  | `[x]`  | Improve player feedback without changing core Tetris rules.                  |
 | 13. Accessibility and responsive polish | `[x]`  | Make the game more usable across devices and player needs.                   |
 | 14. Game-over outcome clarity           | `[x]`  | Make the ended run’s result and restart path obvious without changing rules. |
+| 15. In-game controls help               | `[x]`  | Make keyboard controls discoverable from one coherent UI help surface.       |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -248,14 +249,14 @@ Existing pure-rule homes: board occupancy, collision, rotation, line clearing, s
 
 **Task 2 note — 2026-07-04**
 
-| Surface           | Current inventory |
-| ----------------- | ----------------- |
-| Board             | `BoardRenderer` draws a 10×20 grid panel, active tetramino blocks, locked field blocks, and line-clear particles. |
-| Score panel       | `ScoreDisplayRenderer` shows `STATS`, score, level, lines, best score, time, pieces, and tetrises in the sidebar. |
-| Next pieces       | `PreviewRenderer` renders the next three tetramino shapes in the preview panel, without a visible label. |
-| Audio indicator   | `AudioIndicatorRenderer` shows music and sound-effect status plus `M: Música` / `S: Sonidos` controls near the sidebar bottom. |
-| Overlays          | `OverlayRenderer` owns start (`TETRIS`, "Presiona cualquier tecla"), pause (`PAUSED`), and game-over (`GAME OVER`, "Press R to Restart") overlays. |
-| Keyboard controls | `InputController` wires arrows for move/rotate/soft drop, `P` or Space for pause/resume, `M` for music, `S` for sound effects, and `R` for restart after game over; pointer input only starts the game. |
+| Surface           | Current inventory                                                                                                                                                                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Board             | `BoardRenderer` draws a 10×20 grid panel, active tetramino blocks, locked field blocks, and line-clear particles.                                                                                                                        |
+| Score panel       | `ScoreDisplayRenderer` shows `STATS`, score, level, lines, best score, time, pieces, and tetrises in the sidebar.                                                                                                                        |
+| Next pieces       | `PreviewRenderer` renders the next three tetramino shapes in the preview panel, without a visible label.                                                                                                                                 |
+| Audio indicator   | `AudioIndicatorRenderer` shows music and sound-effect status plus `M: Música` / `S: Sonidos` controls near the sidebar bottom.                                                                                                           |
+| Overlays          | `OverlayRenderer` owns start (`TETRIS`, "Presiona cualquier tecla"), pause (`PAUSED`), and game-over (`GAME OVER`, "Press R to Restart") overlays.                                                                                       |
+| Keyboard controls | `InputController` wires arrows for move/rotate/soft drop, `P` or Space for pause/resume, `M` for music, `S` for sound effects, and `R` for restart after game over; pointer input only starts the game.                                  |
 | Persistent stats  | `StorageManager` persists top-ten high scores and lifetime totals (`totalGames`, `totalScore`, `totalLines`, `totalPieces`, `totalTetrises`, `totalTime`, `bestLevel`); the visible UI only surfaces the current best score during play. |
 
 **Task 3 note — 2026-07-04**
@@ -514,15 +515,92 @@ Known accessibility limitations intentionally left out of this slice:
 - [x] Rendering ownership remains in `src/scenes/components/`; rules remain in `src/logic/`.
 - [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
 
+## Phase 15 — In-game controls help
+
+**Objective:** Make every supported keyboard action discoverable from one coherent help surface, without changing input bindings, Tetris rules, or the Phase 13/14 overlay lifecycle copy already shipped.
+
+**Why this phase (after Phase 13)**
+
+Phase 13 already added a sidebar play-controls list and clearer start/pause/restart overlay prompts. Gaps remain:
+
+- Play controls, audio shortcuts, and restart live in separate UI fragments with different wording styles.
+- The always-visible sidebar omits audio (`M`/`S`) and does not clarify that `R` is game-over-only.
+- There is no single inventory of bindings that a first-time player can scan once and trust.
+
+**Problem snapshot (current)**
+
+| Surface               | Current help                                              | Gap                                                                               |
+| --------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Sidebar gameplay list | `Controls`, move, rotate, soft drop, `P`/`Space` pause    | Incomplete vs real `InputController` bindings; no audio; no restart note.         |
+| Audio indicator       | Status lines + `M: Music \| S: Sound` near sidebar bottom | Split from the Controls list; wording/`\|` style differs from play-control lines. |
+| Start overlay         | Title/status + `Press any key except P, or click`         | Correct for start exceptions, but not a full controls primer.                     |
+| Pause overlay         | `Press P or Space to resume`                              | Context action only; fine if the persistent legend is complete.                   |
+| Game-over overlay     | Score/outcome + `Press R or click to restart`             | Restart is discoverable here; not reflected in the always-visible legend.         |
+
+**Target outcomes**
+
+| Outcome                     | Target for this phase                                                                                                               | Verification                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| One binding inventory       | A shared controls-help contract lists every supported action with the same labels the UI shows.                                     | Diffing `InputController` bindings vs help copy finds no missing supported key.   |
+| Scannable persistent help   | During play, the sidebar (or one dedicated help panel) shows gameplay + audio + restart-scope notes without crowding score/preview. | A reviewer can learn controls without reading source or relying only on overlays. |
+| Context overlays stay short | Start/pause/game-over keep a single next-action prompt; they do not become full manuals.                                            | Overlay line count stays comparable to Phase 13/14.                               |
+| Boundaries stay stable      | Help copy/rendering stays in scene components + settings tokens; input behavior unchanged.                                          | No binding remaps; `src/logic/` untouched for rules.                              |
+
+**Product decisions (locked for planning)**
+
+| Decision                   | Choice                                                                                      | Rationale                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Help model                 | Always-visible consolidated sidebar help + short contextual overlay actions                 | Matches current layout; avoids a new modal/settings system.                        |
+| Toggleable full help (`H`) | Out of scope for this phase                                                                 | Adds input + state without fixing fragmentation first.                             |
+| Language                   | English UI copy (match Phase 13/14 overlays and audio labels)                               | Avoid reintroducing mixed Spanish/English prompts.                                 |
+| Restart in persistent help | Show `R Restart` with an explicit game-over-only qualifier                                  | Prevents players from expecting `R` during play.                                   |
+| Audio in persistent help   | Include `M` / `S` in the same Controls group (or immediately under it with identical style) | One scan path; keep live music/SFX status indicators as status, not the only docs. |
+| Key bindings               | Preserve current bindings exactly                                                           | This phase is discoverability, not remapping or hard drop.                         |
+
+**Tasks**
+
+- [x] Inventory the real control surface against visible help.
+  - Enumerated `InputController` bindings vs sidebar/audio/overlay copy; hard drop remains undocumented (parked).
+- [x] Define a shared controls-help copy contract.
+  - 2026-09-05: Added `src/config/controlsHelp.js` (`CONTROLS_HELP_LINES`); audio shortcuts live in Controls; `AudioIndicatorRenderer` keeps status-only.
+- [x] Implement consolidated persistent help in the sidebar UI boundary.
+  - 2026-09-05: `UIRenderer` consumes the shared contract (play + M/S + R game-over); tightened line spacing so the longer list clears action feedback/audio status.
+- [x] Align contextual overlay prompts with the shared vocabulary (without dumping the full legend).
+  - 2026-09-05: Existing start/pause/game-over action strings already matched; locked with a short-prompt regression test (no full manual dump).
+- [x] Protect the contract with focused tests and close the phase.
+  - 2026-09-05: Focused tests for `controlsHelp`, `UIRenderer`, `AudioIndicatorRenderer`, and `OverlayRenderer`; full `npm run lint`, `npm test` (86), `npm run format:check`, and `npm run build` pass.
+
+**Suggested implementation order (work units)**
+
+1. Inventory + shared copy contract (no visual change yet, or constants-only).
+2. Sidebar consolidated help rendering + layout/tests.
+3. Overlay wording alignment + tests.
+4. Phase status/progress-note closeout in this plan.
+
+**Out of scope for Phase 15**
+
+- Remappable keys, touch/pointer gameplay controls, or mobile control pads.
+- Hard drop, hold piece, or any new gameplay binding.
+- Screen-reader/ARIA canvas semantics or a settings/options scene.
+- Rewriting Phase 14 game-over score/best summary behavior.
+- Coverage thresholds or broader a11y work still listed under parked follow-ups.
+
+**Exit criteria**
+
+- [x] Every supported keyboard action is documented in the persistent help surface with wording that matches overlays where the same keys appear.
+- [x] Start/pause/game-over overlays remain short next-action prompts, not full manuals.
+- [x] Input bindings and Tetris rules are unchanged; help ownership stays in `src/scenes/components/` (+ shared copy constants as needed).
+- [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
+
 ## Parked follow-ups (not pursuing now)
 
-Phases 0–14 are complete. The items below are consciously parked — not open plan tasks and not next work unless explicitly reopened:
+Phases 0–15 are complete. The items below remain consciously parked — not open plan tasks unless explicitly reopened:
 
-| Item | Why it was a candidate | Decision |
-| --- | --- | --- |
-| Hard drop | Common Tetris control; ghost + unused hard-drop sound already exist. | Parked. Soft drop + Space=pause stay as-is. |
-| Coverage thresholds | CI could enforce a minimum coverage %. | Parked. Lint/test/build already gate CI; a global threshold would be noisy until scoped domain thresholds are justified. |
-| Deeper a11y | Screen reader/ARIA, touch gameplay, remappable keys, true mobile layout, accessibility settings. | Parked. Phase 13 polish stands; canvas-semantic a11y is a separate larger effort. |
+| Item                | Why it was a candidate                                                                           | Decision                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Hard drop           | Common Tetris control; ghost + unused hard-drop sound already exist.                             | Parked. Soft drop + Space=pause stay as-is.                                                                              |
+| Coverage thresholds | CI could enforce a minimum coverage %.                                                           | Parked. Lint/test/build already gate CI; a global threshold would be noisy until scoped domain thresholds are justified. |
+| Deeper a11y         | Screen reader/ARIA, touch gameplay, remappable keys, true mobile layout, accessibility settings. | Parked. Phase 13 polish stands; canvas-semantic a11y is a separate larger effort.                                        |
 
 ## Progress notes
 
@@ -530,8 +608,10 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date       | Update                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-05 | Parked hard drop, coverage thresholds, and deeper a11y as non-goals for now. PLAN phases 0–14 remain complete with no open tasks.                                                                                                                                                                                                                                                                                                                                            |
-| 2026-09-05 | SDD archived `game-over-outcome-clarity` → `openspec/changes/archive/2026-09-05-game-over-outcome-clarity/`; main specs created for `game-over-overlay` and `game-over-stats-contract`. Verify was pass_with_warnings (storage.js focused coverage only). |
+| 2026-09-05 | Phase 15 closed via SDD (`in-game-controls-help`): shared `controlsHelp` contract; sidebar Controls include M/S and R (game over); audio status-only; overlays stay short. Archived `openspec/changes/archive/2026-09-05-in-game-controls-help/`; main spec `openspec/specs/controls-help/`. Verified with `npm test` (86), lint, format:check, and build. |
+| 2026-09-05 | Added Phase 15 (In-game controls help): consolidate fragmented sidebar/audio/overlay control docs into one persistent help contract; keep short contextual overlay actions; no remaps, hard drop, or toggleable help modal.                                                                                                                                                                                                                                                  |
+| 2026-09-05 | Parked hard drop, coverage thresholds, and deeper a11y as non-goals for now. PLAN phases 0–15 remain complete with no open tasks.                                                                                                                                                                                                                                                                                                                        |
+| 2026-09-05 | SDD archived `game-over-outcome-clarity` → `openspec/changes/archive/2026-09-05-game-over-outcome-clarity/`; main specs created for `game-over-overlay` and `game-over-stats-contract`. Verify was pass_with_warnings (storage.js focused coverage only).                                                                                                                                                                                                                    |
 | 2026-09-05 | Phase 14 closed via SDD apply (`game-over-outcome-clarity`): snapshot/storage use `time`; overlay shows score + best-outcome (`New best` / `Best: N`) with R+click restart; GameScene captures previousBest before persist; pointer restart binds/clears on game-over only. Verified with `npm test`, `npm run lint`, `npm run format:check`, and `npm run build`.                                                                                                           |
 | 2026-09-05 | Added Phase 14 for game-over outcome clarity: overlay run summary, snapshot/storage time-field alignment, restart discoverability decision, and focused test coverage. Hard drop and broader accessibility work remain outside this phase.                                                                                                                                                                                                                                   |
 | 2026-09-05 | Corrected the phase overview so Phase 11 matches its closed detail section. Phase 9 discovery notes remain a historical baseline from before Phases 10–13; residual intentional gaps stay documented elsewhere (hard drop unwired in Phase 12; game-over overlay without score summary; Phase 13 accessibility limits).                                                                                                                                                      |

@@ -7,24 +7,24 @@
 
 ## Final-State Authority
 
-| Source | Role | Finding at close |
-|--------|------|------------------|
-| `tasks.md` | Highest (completion gate) | 16/16 implementation tasks `[x]`; 0 unchecked |
-| Orchestrator launch | Final-state facts | Verify passed `pass_with_warnings`; storage.js focused coverage warning non-blocking; all 16 tasks `[x]` |
-| `verify-report.md` | Intermediate snapshot (verification time) | verdict `pass_with_warnings`; CRITICAL 0; 8/8 requirements; 13/13 scenarios; 83 tests passed |
+| Source              | Role                                      | Finding at close                                                                                         |
+| ------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `tasks.md`          | Highest (completion gate)                 | 16/16 implementation tasks `[x]`; 0 unchecked                                                            |
+| Orchestrator launch | Final-state facts                         | Verify passed `pass_with_warnings`; storage.js focused coverage warning non-blocking; all 16 tasks `[x]` |
+| `verify-report.md`  | Intermediate snapshot (verification time) | verdict `pass_with_warnings`; CRITICAL 0; 8/8 requirements; 13/13 scenarios; 83 tests passed             |
 
 No contradictions requiring escalation. The verify warning remains a non-blocking coverage note at close (not fixed later; accepted as known).
 
 ## Artifacts Read (openspec paths)
 
-| Artifact | Path |
-|----------|------|
-| proposal | `openspec/changes/game-over-outcome-clarity/proposal.md` (pre-move) |
-| specs | `.../specs/game-over-overlay/spec.md`, `.../specs/game-over-stats-contract/spec.md` |
-| design | `.../design.md` |
-| tasks | `.../tasks.md` |
-| verify-report | `.../verify-report.md` |
-| state | `.../state.yaml` (`dependencies.archive: ready` → `done`) |
+| Artifact      | Path                                                                                |
+| ------------- | ----------------------------------------------------------------------------------- |
+| proposal      | `openspec/changes/game-over-outcome-clarity/proposal.md` (pre-move)                 |
+| specs         | `.../specs/game-over-overlay/spec.md`, `.../specs/game-over-stats-contract/spec.md` |
+| design        | `.../design.md`                                                                     |
+| tasks         | `.../tasks.md`                                                                      |
+| verify-report | `.../verify-report.md`                                                              |
+| state         | `.../state.yaml` (`dependencies.archive: ready` → `done`)                           |
 
 ## Archive Readiness
 
@@ -38,10 +38,10 @@ No contradictions requiring escalation. The verify warning remains a non-blockin
 
 Main specs did not exist. Delta specs treated as full specs and copied mechanically (`cp` + `diff -r`).
 
-| Domain | Action | Details |
-|--------|--------|---------|
-| `game-over-overlay` | Created | 5 requirements (final score/outcome, R restart, pointer restart, action copy, boundaries) |
-| `game-over-stats-contract` | Created | 3 requirements (snapshot `time`, storage accumulates `time`, pure domain ownership) |
+| Domain                     | Action  | Details                                                                                   |
+| -------------------------- | ------- | ----------------------------------------------------------------------------------------- |
+| `game-over-overlay`        | Created | 5 requirements (final score/outcome, R restart, pointer restart, action copy, boundaries) |
+| `game-over-stats-contract` | Created | 3 requirements (snapshot `time`, storage accumulates `time`, pure domain ownership)       |
 
 ### Mechanical copy `diff -r` (Step 2)
 
