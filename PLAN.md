@@ -514,12 +514,23 @@ Known accessibility limitations intentionally left out of this slice:
 - [x] Rendering ownership remains in `src/scenes/components/`; rules remain in `src/logic/`.
 - [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
 
+## Parked follow-ups (not pursuing now)
+
+Phases 0–14 are complete. The items below are consciously parked — not open plan tasks and not next work unless explicitly reopened:
+
+| Item | Why it was a candidate | Decision |
+| --- | --- | --- |
+| Hard drop | Common Tetris control; ghost + unused hard-drop sound already exist. | Parked. Soft drop + Space=pause stay as-is. |
+| Coverage thresholds | CI could enforce a minimum coverage %. | Parked. Lint/test/build already gate CI; a global threshold would be noisy until scoped domain thresholds are justified. |
+| Deeper a11y | Screen reader/ARIA, touch gameplay, remappable keys, true mobile layout, accessibility settings. | Parked. Phase 13 polish stands; canvas-semantic a11y is a separate larger effort. |
+
 ## Progress notes
 
 Use this section for short dated updates. Keep detailed implementation notes in the relevant PR or commit.
 
 | Date       | Update                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-05 | Parked hard drop, coverage thresholds, and deeper a11y as non-goals for now. PLAN phases 0–14 remain complete with no open tasks.                                                                                                                                                                                                                                                                                                                                            |
 | 2026-09-05 | SDD archived `game-over-outcome-clarity` → `openspec/changes/archive/2026-09-05-game-over-outcome-clarity/`; main specs created for `game-over-overlay` and `game-over-stats-contract`. Verify was pass_with_warnings (storage.js focused coverage only). |
 | 2026-09-05 | Phase 14 closed via SDD apply (`game-over-outcome-clarity`): snapshot/storage use `time`; overlay shows score + best-outcome (`New best` / `Best: N`) with R+click restart; GameScene captures previousBest before persist; pointer restart binds/clears on game-over only. Verified with `npm test`, `npm run lint`, `npm run format:check`, and `npm run build`.                                                                                                           |
 | 2026-09-05 | Added Phase 14 for game-over outcome clarity: overlay run summary, snapshot/storage time-field alignment, restart discoverability decision, and focused test coverage. Hard drop and broader accessibility work remain outside this phase.                                                                                                                                                                                                                                   |
