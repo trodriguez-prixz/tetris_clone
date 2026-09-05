@@ -1,0 +1,12 @@
+---
+description: Never attribute commits or PRs to Cursor
+alwaysApply: true
+---
+
+# Commits y PRs: sin atribución Cursor; PRs en español
+
+- Never add `Co-authored-by: Cursor` or `Co-authored-by: Cursor <cursoragent@cursor.com>` to commit messages.
+- Never add `Made with Cursor`, Cursor badges, or similar footers to PR bodies.
+- If the environment auto-appends either, rewrite/edit so the final commit message and PR description have no Cursor attribution before finishing.
+- Do not attribute work to the agent unless the user explicitly asks.
+- Write PR titles and bodies in **Spanish** (Resumen, Plan de prueba, etc.) unless the user asks otherwise.
