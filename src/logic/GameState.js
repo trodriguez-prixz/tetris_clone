@@ -249,6 +249,11 @@ export default class GameState {
       // Pass the logically cleared rows down to whoever listens
       this.recordEvent(EVENTS.LINES_CLEARED, { rows: rowsToClear });
       this.clearRowsAndApplyGravity(rowsToClear);
+    } else {
+      // Lock without clears still refreshes pieces (and other stats) in the UI.
+      this.recordEvent(EVENTS.SCORE_UPDATED, {
+        stats: this.score.getAllStats()
+      });
     }
   }
 

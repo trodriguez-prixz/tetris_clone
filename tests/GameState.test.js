@@ -246,7 +246,14 @@ describe('GameState', () => {
       spawned: true,
       gameOver: false
     });
-    expect(gameState.consumeEvents()).toEqual([]);
+    expect(gameState.consumeEvents()).toEqual([
+      {
+        type: EVENTS.SCORE_UPDATED,
+        payload: {
+          stats: expect.objectContaining({ pieces: 1 })
+        }
+      }
+    ]);
     expect(gameState.score.getAllStats().pieces).toBe(1);
     expect(gameState.currentTetramino.type).toBe('I');
     expect(gameState.fieldData[GRID_ROWS - 2][4]).not.toBeNull();
@@ -270,6 +277,12 @@ describe('GameState', () => {
       gameOver: true
     });
     expect(gameState.consumeEvents()).toEqual([
+      {
+        type: EVENTS.SCORE_UPDATED,
+        payload: {
+          stats: expect.objectContaining({ pieces: 1 })
+        }
+      },
       { type: EVENTS.GAME_OVER, payload: undefined }
     ]);
     expect(gameState.currentTetramino).toBeNull();
