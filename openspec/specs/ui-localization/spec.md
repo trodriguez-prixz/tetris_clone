@@ -47,3 +47,19 @@ The Spanish catalog MUST provide a localized `stats.title` distinct from the Eng
 - **GIVEN** locale is `en`
 - **WHEN** `t('stats.title')` is called
 - **THEN** the returned string is `STATS`
+
+### Requirement: Preview next label is localized
+
+The next-piece preview label MUST use catalog key `preview.next`. English MUST be `NEXT`. Spanish MUST be `SIGUIENTE`. Changing locale MUST refresh the visible preview label without requiring a run restart.
+
+#### Scenario: English preview next label
+
+- **GIVEN** locale is `en`
+- **WHEN** the preview label is rendered or refreshed
+- **THEN** the label text is `NEXT`
+
+#### Scenario: Spanish preview next label
+
+- **GIVEN** locale is `es`
+- **WHEN** the preview label is rendered or refreshed
+- **THEN** the label text is `SIGUIENTE`
