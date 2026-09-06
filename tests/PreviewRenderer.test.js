@@ -5,10 +5,12 @@ import {
   TETRAMINOS,
   VISUAL_SYSTEM
 } from '../src/config/settings.js';
+import { setLocale } from '../src/i18n/index.js';
 
 const createDisplayObject = () => ({
   setOrigin: jest.fn().mockReturnThis(),
   setStrokeStyle: jest.fn().mockReturnThis(),
+  setText: jest.fn().mockReturnThis(),
   destroy: jest.fn()
 });
 
@@ -24,10 +26,15 @@ describe('PreviewRenderer', () => {
   let renderer;
 
   beforeEach(() => {
+    setLocale('en');
     scene = buildScene();
     renderer = new PreviewRenderer(scene, {
       nextShapes: ['T', 'O', 'I']
     });
+  });
+
+  afterEach(() => {
+    setLocale('en');
   });
 
   test('labels the next-piece queue with visual-system typography', () => {
@@ -45,6 +52,11 @@ describe('PreviewRenderer', () => {
     );
   });
 
+  test('refreshes preview label when locale changes to Spanish', () => {
+    setLocale('es');
+    renderer.refreshLocalizedLabel();
+    expect(renderer.previewLabel.setText).toHaveBeenCalledWith('SIGUIENTE');
+  });
   test('renders the queued pieces larger and in separated preview slots', () => {
     renderer.renderPreview();
 

@@ -32,6 +32,7 @@ export const en = {
   'controls.sound': 'S Sound',
   'controls.language': 'L Language',
   'controls.restart': 'R Restart (game over)',
+  'preview.next': 'NEXT',
   'stats.title': 'STATS',
   'stats.currentRun': 'CURRENT RUN',
   'stats.score': 'Score: {value}',

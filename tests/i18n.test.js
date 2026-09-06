@@ -24,6 +24,13 @@ describe('i18n', () => {
     expect(t('stats.title')).toBe('STATS');
   });
 
+  test('localizes preview next label for Spanish and English', () => {
+    setLocale('es');
+    expect(t('preview.next')).toBe('SIGUIENTE');
+    setLocale('en');
+    expect(t('preview.next')).toBe('NEXT');
+  });
+
   test('unknown key falls back without throwing', () => {
     expect(() => t('missing.key')).not.toThrow();
     expect(t('missing.key')).toBe('missing.key');

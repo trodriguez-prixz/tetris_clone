@@ -9,9 +9,9 @@ import {
   RENDERED_BLOCK_INSET,
   VISUAL_SYSTEM
 } from '../../config/settings.js';
+import { t } from '../../i18n/index.js';
 
 const PREVIEW_SLOT_COUNT = 3;
-const PREVIEW_LABEL = 'NEXT';
 const PREVIEW_LABEL_TOP_OFFSET = VISUAL_SYSTEM.spacing.md;
 const PREVIEW_QUEUE_TOP_OFFSET = VISUAL_SYSTEM.spacing.xl;
 const PREVIEW_SLOT_GAP = VISUAL_SYSTEM.spacing.sm;
@@ -30,7 +30,7 @@ export default class PreviewRenderer {
       .text(
         SIDEBAR_X + SIDEBAR_WIDTH / 2,
         SIDEBAR_Y + PREVIEW_LABEL_TOP_OFFSET,
-        PREVIEW_LABEL,
+        t('preview.next'),
         {
           fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: VISUAL_SYSTEM.typography.size.caption,
@@ -40,6 +40,10 @@ export default class PreviewRenderer {
         }
       )
       .setOrigin(0.5, 0);
+  }
+
+  refreshLocalizedLabel() {
+    this.previewLabel?.setText(t('preview.next'));
   }
 
   renderPreview() {
