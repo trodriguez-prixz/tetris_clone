@@ -1,4 +1,11 @@
-import AudioIndicatorRenderer from '../src/scenes/components/AudioIndicatorRenderer.js';
+import AudioIndicatorRenderer, {
+  getAudioIndicatorYs
+} from '../src/scenes/components/AudioIndicatorRenderer.js';
+import {
+  GAMEPLAY_CONTROLS_LINE_HEIGHT,
+  GAMEPLAY_CONTROLS_START_Y
+} from '../src/scenes/components/UIRenderer.js';
+import { getControlsHelpLines } from '../src/config/controlsHelp.js';
 import { VISUAL_SYSTEM } from '../src/config/settings.js';
 import { setLocale } from '../src/i18n/index.js';
 
@@ -26,6 +33,20 @@ describe('AudioIndicatorRenderer', () => {
 
   afterEach(() => {
     setLocale('en');
+  });
+
+  test('keeps Controls last line clear of the music audio indicator', () => {
+    const lineCount = getControlsHelpLines().length;
+    const controlsLastY =
+      GAMEPLAY_CONTROLS_START_Y +
+      GAMEPLAY_CONTROLS_LINE_HEIGHT * (lineCount - 1);
+    const bodyFontPx = Number.parseInt(VISUAL_SYSTEM.typography.size.body, 10);
+    const { musicY, soundY } = getAudioIndicatorYs();
+
+    expect(
+      controlsLastY + bodyFontPx / 2 + VISUAL_SYSTEM.spacing.md
+    ).toBeLessThanOrEqual(musicY);
+    expect(soundY).toBeGreaterThan(musicY);
   });
 
   test('shows audio status indicators without duplicating Controls shortcuts', () => {

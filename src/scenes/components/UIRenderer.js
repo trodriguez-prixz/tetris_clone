@@ -14,14 +14,14 @@ import PreviewRenderer from './PreviewRenderer.js';
 import ScoreDisplayRenderer from './ScoreDisplayRenderer.js';
 
 const CENTER_ORIGIN = 0.5;
-const GAMEPLAY_CONTROLS_START_Y =
+export const GAMEPLAY_CONTROLS_START_Y =
   SIDEBAR_Y +
   PREVIEW_AREA_HEIGHT +
   PADDING +
   SCORE_AREA_HEIGHT +
   PADDING * 2 +
   VISUAL_SYSTEM.spacing.lg;
-const GAMEPLAY_CONTROLS_LINE_HEIGHT = 16;
+export const GAMEPLAY_CONTROLS_LINE_HEIGHT = 16;
 const ACTION_FEEDBACK_OFFSET_FROM_BOTTOM = 140;
 const ACTION_FEEDBACK_REPEAT_DELAY = 300;
 const ACTION_FEEDBACK_VISIBLE_DELAY = 450;
@@ -103,6 +103,7 @@ export default class UIRenderer {
 
   refreshLocalizedUI() {
     this.scoreDisplayRenderer.refreshLocalizedLabels?.();
+    this.previewRenderer.refreshLocalizedLabel?.();
     this.refreshControlsHelp();
     if (
       this.lastMusicMuted !== undefined &&

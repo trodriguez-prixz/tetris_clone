@@ -9,15 +9,23 @@ import { t } from '../../i18n/index.js';
 
 const CENTER_ORIGIN = 0.5;
 
-const AUDIO_TEXT_LAYOUT = {
+export const AUDIO_TEXT_LAYOUT = {
   soundEffects: {
-    offsetFromBottom: 50,
+    offsetFromBottom: 24,
     fontSize: VISUAL_SYSTEM.typography.size.body
   },
   music: {
-    offsetFromBottom: 75,
+    offsetFromBottom: 48,
     fontSize: VISUAL_SYSTEM.typography.size.body
   }
+};
+
+export const getAudioIndicatorYs = () => {
+  const sidebarBottom = CANVAS_HEIGHT - PADDING;
+  return {
+    musicY: sidebarBottom - AUDIO_TEXT_LAYOUT.music.offsetFromBottom,
+    soundY: sidebarBottom - AUDIO_TEXT_LAYOUT.soundEffects.offsetFromBottom
+  };
 };
 
 const AUDIO_TEXT_STYLE = {
