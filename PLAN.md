@@ -1,6 +1,6 @@
 # Project Improvement Plan
 
-Phases **0–18 are complete**. This file is the compact source of truth for what shipped, what ownership looks like, and what remains parked. Detailed task history lives in git and `openspec/changes/archive/`.
+Phases **0–19 are complete**. This file is the compact source of truth for what shipped, what ownership looks like, and what remains parked. Detailed task history lives in git and `openspec/changes/archive/`.
 
 ## Status legend
 
@@ -15,6 +15,7 @@ Phases **0–18 are complete**. This file is the compact source of truth for wha
 | ------------------ | ------ | ------------------------------------------------------------------------------ |
 | Architecture & ops | 0–8    | Testable domain, thin `GameScene`, tooling/CI, packaging, ownership docs       |
 | UX / UI            | 9–18   | Arcade visuals, readable play UI, feedback, a11y polish, prefs, overlays, i18n |
+| UX polish          | 19     | Locale-fit Stats panel + catalog completeness; lock refreshes pieces in Stats  |
 
 **Verification baseline:** `npm run lint`, `npm test`, `npm run format:check`, `npm run build`.
 
@@ -43,6 +44,7 @@ Phases **0–18 are complete**. This file is the compact source of truth for wha
 | 16. Player preferences (Settings)       | `[x]`  | Persist ghost/audio prefs; Settings from start/pause; G/M/S hotkeys sync.         |
 | 17. Overlay layout non-overlap          | `[x]`  | Fix pause/settings text collisions; modest Stats→Controls sidebar gap.            |
 | 18. UI localization (EN/ES)             | `[x]`  | Persist locale; choose English/Spanish from Settings; translate player-facing UI. |
+| 19. Locale-fit Stats polish             | `[x]`  | Keep Stats fully readable in EN/ES; finish obvious catalog gaps.                  |
 
 ## Outcomes by track
 
@@ -59,20 +61,21 @@ Phases **0–18 are complete**. This file is the compact source of truth for wha
 | 6     | Vite `base: './'`, Express `dist/`, Electron dev URL and packaged `dist/index.html` validated              |
 | 7–8   | Ownership recorded; Prettier baseline green                                                                |
 
-### UX / UI (9–18)
+### UX / UI (9–19)
 
-| Phase | Shipped                                                                         |
-| ----- | ------------------------------------------------------------------------------- |
-| 9     | Friction inventory for start / play / pause / game-over (historical baseline)   |
-| 10    | Shared `VISUAL_SYSTEM` palette, type, spacing                                   |
-| 11    | Clearer board, next, score, and status scanning                                 |
-| 12    | Line-clear / lock / level / unavailable-action feedback without rule changes    |
-| 13    | Control copy, caption contrast, fixed-canvas shell; deep a11y parked            |
-| 14    | Game-over score + best outcome; `time` snapshot aligned; R + click restart      |
-| 15    | Shared `controlsHelp` contract; sidebar Controls; short overlay prompts         |
-| 16    | Persisted ghost/music/SFX; Esc Settings on start; pause toggles; G/M/S          |
-| 17    | Non-overlapping pause/settings preference stack; Controls clearance under Stats |
-| 18    | EN/ES catalogs + `t()`; prefs `locale`; Settings/`L`; live UI refresh           |
+| Phase | Shipped                                                                          |
+| ----- | -------------------------------------------------------------------------------- |
+| 9     | Friction inventory for start / play / pause / game-over (historical baseline)    |
+| 10    | Shared `VISUAL_SYSTEM` palette, type, spacing                                    |
+| 11    | Clearer board, next, score, and status scanning                                  |
+| 12    | Line-clear / lock / level / unavailable-action feedback without rule changes     |
+| 13    | Control copy, caption contrast, fixed-canvas shell; deep a11y parked             |
+| 14    | Game-over score + best outcome; `time` snapshot aligned; R + click restart       |
+| 15    | Shared `controlsHelp` contract; sidebar Controls; short overlay prompts          |
+| 16    | Persisted ghost/music/SFX; Esc Settings on start; pause toggles; G/M/S           |
+| 17    | Non-overlapping pause/settings preference stack; Controls clearance under Stats  |
+| 18    | EN/ES catalogs + `t()`; prefs `locale`; Settings/`L`; live UI refresh            |
+| 19    | Stats panel height for ES; `ESTADÍSTICAS`; `SCORE_UPDATED` on lock-without-clear |
 
 ## Ownership (stable)
 
@@ -93,7 +96,8 @@ Phases **0–18 are complete**. This file is the compact source of truth for wha
 | Game-over overlay + stats contract    | `openspec/specs/game-over-overlay/`, `openspec/specs/game-over-stats-contract/` |
 | Player preferences + settings overlay | `openspec/specs/player-preferences/`, `openspec/specs/settings-overlay/`        |
 | UI localization                       | `openspec/specs/ui-localization/`                                               |
-| SDD archives (14–18)                  | `openspec/changes/archive/2026-09-05-*`                                         |
+| Stats panel locale-fit                | `openspec/specs/stats-panel-locale-fit/`                                        |
+| SDD archives (14–19)                  | `openspec/changes/archive/2026-09-05-*`                                         |
 
 ## Parked follow-ups
 
@@ -112,14 +116,14 @@ Not open plan tasks unless explicitly reopened:
 3. Keep implementation notes in PRs/commits — do not re-expand this file into a diary.
 4. Preserve boundaries in the ownership table and `AGENTS.md`.
 
-## Phase 18 — UI localization (EN/ES) `[x]`
+## Phase 19 — Locale-fit Stats polish `[x]`
 
-**Objective:** Let players pick English or Spanish from Settings, persist the choice, and show all player-facing UI in that locale without changing Tetris rules or hotkey bindings.
+**Objective:** After the ES screenshot review, keep every Stats line fully inside the panel in both locales, translate the remaining `STATS` title, and only chase a pieces/score anomaly if it reproduces.
 
 **Shipped (2026-09-05)**
 
-- `src/i18n/` catalogs + `t()`; preferences `locale` (default `en`)
-- Settings/pause language line; hotkey `L`; `refreshLocalizedUI` for live update
-- Overlays, Controls, Stats, audio status, feedback, game-over outcome localized
-- Archived `openspec/changes/archive/2026-09-05-ui-localization-en-es/`; main spec `ui-localization`
-- Verified: `npm test` (107), lint, format:check, build
+- `SCORE_AREA_HEIGHT` 280 → 304; best-score clearance test
+- ES `stats.title` → `ESTADÍSTICAS`
+- Lock without line clear emits `SCORE_UPDATED` (Piezas no longer stuck at 0)
+- Archived `openspec/changes/archive/2026-09-05-locale-fit-stats-polish/`; specs `stats-panel-locale-fit` + `ui-localization`
+- Verified: `npm test` (109), lint, format:check, build

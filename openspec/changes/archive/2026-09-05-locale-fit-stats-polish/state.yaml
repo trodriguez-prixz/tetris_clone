@@ -1,0 +1,40 @@
+schema: gentle-ai.sdd-state/v1
+changeName: locale-fit-stats-polish
+artifactStore: openspec
+createdAt: 2026-09-06T01:53:54Z
+updatedAt: 2026-09-06T02:05:00Z
+phase: archive
+dependencies:
+  proposal: done
+  specs: done
+  design: done
+  tasks: done
+  apply: done
+  verify: done
+  archive: done
+research:
+  selected: false
+  status: unselected
+decisions:
+  status: confirmed
+  items:
+    - id: overflow-fix
+      choice: grow-score-area-height
+      detail: Grow SCORE_AREA_HEIGHT so HIGH_SCORE_Y + half body height clears the panel in EN and ES.
+    - id: controls-clearance
+      choice: preserve-phase-17
+      detail: Keep Phase 17 Controls clearance; Controls Y follows SCORE_AREA_HEIGHT.
+    - id: stats-title-es
+      choice: estadisticas
+      detail: Spanish stats.title is ESTADÍSTICAS; English remains STATS.
+    - id: piezas-anomaly
+      choice: score-updated-on-lock-without-clear
+      detail: Emit SCORE_UPDATED when locking without line clears so pieces refresh in Stats.
+    - id: out-of-scope
+      choice: no-on-off-redesign
+      detail: Did not localize ON/OFF, redesign Stats, add locales, hard drop, remaps, or ARIA.
+proposalReady: true
+specsReady: true
+designReady: true
+tasksReady: true
+sourcePlan: PLAN.md Phase 19
