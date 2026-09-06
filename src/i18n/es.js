@@ -32,7 +32,7 @@ export const es = {
   'controls.sound': 'S Sonido',
   'controls.language': 'L Idioma',
   'controls.restart': 'R Reiniciar (fin de partida)',
-  'stats.title': 'STATS',
+  'stats.title': 'ESTADÍSTICAS',
   'stats.currentRun': 'PARTIDA ACTUAL',
   'stats.score': 'Puntos: {value}',
   'stats.level': 'Nivel: {value}',
