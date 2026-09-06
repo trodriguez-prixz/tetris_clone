@@ -60,3 +60,41 @@ describe('StorageManager.updateStatistics time contract', () => {
     expect(stats.totalTime).toBe(100);
   });
 });
+
+describe('StorageManager preferences', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  test('returns defaults when preferences are missing', () => {
+    expect(StorageManager.getPreferences()).toEqual({
+      ghostEnabled: true,
+      musicMuted: false,
+      soundEnabled: true
+    });
+  });
+
+  test('round-trips saved preferences', () => {
+    StorageManager.savePreferences({
+      ghostEnabled: false,
+      musicMuted: true,
+      soundEnabled: false
+    });
+
+    expect(StorageManager.getPreferences()).toEqual({
+      ghostEnabled: false,
+      musicMuted: true,
+      soundEnabled: false
+    });
+  });
+
+  test('falls back to defaults when preferences JSON is corrupt', () => {
+    localStorage.setItem('tetris_preferences', '{not-json');
+
+    expect(StorageManager.getPreferences()).toEqual({
+      ghostEnabled: true,
+      musicMuted: false,
+      soundEnabled: true
+    });
+  });
+});

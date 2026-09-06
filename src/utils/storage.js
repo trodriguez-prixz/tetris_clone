@@ -2,7 +2,14 @@
 
 const STORAGE_KEYS = {
   HIGH_SCORES: 'tetris_high_scores',
-  STATISTICS: 'tetris_statistics'
+  STATISTICS: 'tetris_statistics',
+  PREFERENCES: 'tetris_preferences'
+};
+
+const DEFAULT_PREFERENCES = {
+  ghostEnabled: true,
+  musicMuted: false,
+  soundEnabled: true
 };
 
 export class StorageManager {
@@ -92,10 +99,63 @@ export class StorageManager {
     }
   }
 
+  static getPreferences() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PREFERENCES);
+      if (!data) {
+        return { ...DEFAULT_PREFERENCES };
+      }
+
+      const parsed = JSON.parse(data);
+      return {
+        ghostEnabled:
+          typeof parsed.ghostEnabled === 'boolean'
+            ? parsed.ghostEnabled
+            : DEFAULT_PREFERENCES.ghostEnabled,
+        musicMuted:
+          typeof parsed.musicMuted === 'boolean'
+            ? parsed.musicMuted
+            : DEFAULT_PREFERENCES.musicMuted,
+        soundEnabled:
+          typeof parsed.soundEnabled === 'boolean'
+            ? parsed.soundEnabled
+            : DEFAULT_PREFERENCES.soundEnabled
+      };
+    } catch (error) {
+      console.warn('Error loading preferences:', error);
+      return { ...DEFAULT_PREFERENCES };
+    }
+  }
+
+  static savePreferences(preferences) {
+    try {
+      const next = {
+        ghostEnabled:
+          typeof preferences?.ghostEnabled === 'boolean'
+            ? preferences.ghostEnabled
+            : DEFAULT_PREFERENCES.ghostEnabled,
+        musicMuted:
+          typeof preferences?.musicMuted === 'boolean'
+            ? preferences.musicMuted
+            : DEFAULT_PREFERENCES.musicMuted,
+        soundEnabled:
+          typeof preferences?.soundEnabled === 'boolean'
+            ? preferences.soundEnabled
+            : DEFAULT_PREFERENCES.soundEnabled
+      };
+      localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(next));
+      return true;
+    } catch (error) {
+      console.warn('Error saving preferences:', error);
+      return false;
+    }
+  }
+
   static clearAllData() {
     try {
       localStorage.removeItem(STORAGE_KEYS.HIGH_SCORES);
       localStorage.removeItem(STORAGE_KEYS.STATISTICS);
+      localStorage.removeItem(STORAGE_KEYS.PREFERENCES);
       return true;
     } catch (error) {
       console.warn('Error clearing data:', error);
