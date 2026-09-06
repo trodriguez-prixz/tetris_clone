@@ -35,6 +35,9 @@ const TETRISES_Y = PIECES_Y + SCORE_TEXT_STAT_STEP;
 const RECORD_LABEL_Y = TETRISES_Y + SCORE_TEXT_GROUP_GAP;
 const HIGH_SCORE_Y = RECORD_LABEL_Y + SCORE_TEXT_SPACING.lg;
 
+/** Offset of best-score text from Stats panel top (for clearance tests). */
+export const SCORE_PANEL_HIGH_SCORE_OFFSET_Y = HIGH_SCORE_Y;
+
 const SCORE_TEXT_LAYOUT = {
   title: { offsetY: SCORE_TEXT_SPACING.md, hierarchy: 'title' },
   currentLabel: {

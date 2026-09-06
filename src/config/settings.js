@@ -17,7 +17,7 @@ export const SIDEBAR_X = GAME_AREA_WIDTH + PADDING * 2;
 export const SIDEBAR_Y = PADDING;
 
 export const PREVIEW_AREA_HEIGHT = 200;
-export const SCORE_AREA_HEIGHT = 280;
+export const SCORE_AREA_HEIGHT = 304;
 export const PREVIEW_CELL_SIZE = CELL_SIZE / 2;
 
 export const COLORS = {

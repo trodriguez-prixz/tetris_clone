@@ -1,5 +1,7 @@
-import ScoreDisplayRenderer from '../src/scenes/components/ScoreDisplayRenderer.js';
-import { VISUAL_SYSTEM } from '../src/config/settings.js';
+import ScoreDisplayRenderer, {
+  SCORE_PANEL_HIGH_SCORE_OFFSET_Y
+} from '../src/scenes/components/ScoreDisplayRenderer.js';
+import { SCORE_AREA_HEIGHT, VISUAL_SYSTEM } from '../src/config/settings.js';
 import EventBus, { EVENTS } from '../src/events/EventBus.js';
 import { setLocale } from '../src/i18n/index.js';
 
@@ -42,6 +44,16 @@ describe('ScoreDisplayRenderer', () => {
   afterEach(() => {
     renderer.destroy();
     setLocale('en');
+  });
+
+  test('keeps high-score line inside the Stats panel height', () => {
+    const bodyFontPx = Number.parseInt(VISUAL_SYSTEM.typography.size.body, 10);
+    const requiredHeight =
+      SCORE_PANEL_HIGH_SCORE_OFFSET_Y +
+      bodyFontPx / 2 +
+      VISUAL_SYSTEM.spacing.md;
+
+    expect(SCORE_AREA_HEIGHT).toBeGreaterThanOrEqual(requiredHeight);
   });
 
   test('groups stat display by gameplay priority', () => {
