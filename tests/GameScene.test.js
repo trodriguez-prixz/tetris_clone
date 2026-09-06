@@ -9,6 +9,7 @@ import UIRenderer from '../src/scenes/components/UIRenderer.js';
 import { RetroMusic } from '../src/utils/retroMusic.js';
 import { SoundEffects } from '../src/utils/soundEffects.js';
 import { StorageManager } from '../src/utils/storage.js';
+import { setLocale } from '../src/i18n/index.js';
 
 jest.mock('../src/scenes/components/BoardRenderer.js', () => jest.fn());
 jest.mock('../src/scenes/components/OverlayRenderer.js', () => jest.fn());
@@ -27,7 +28,8 @@ jest.mock('../src/utils/storage.js', () => ({
     getPreferences: jest.fn(() => ({
       ghostEnabled: true,
       musicMuted: false,
-      soundEnabled: true
+      soundEnabled: true,
+      locale: 'en'
     })),
     savePreferences: jest.fn()
   }
@@ -130,7 +132,8 @@ describe('GameScene orchestration', () => {
       updateTime: jest.fn(),
       onScoreUpdated: jest.fn(),
       onLevelUp: jest.fn(),
-      showUnavailableAction: jest.fn()
+      showUnavailableAction: jest.fn(),
+      refreshLocalizedUI: jest.fn()
     };
     retroMusic = {
       init: jest.fn(() => true),
@@ -163,6 +166,7 @@ describe('GameScene orchestration', () => {
 
   afterEach(() => {
     EventBus.removeAllListeners();
+    setLocale('en');
   });
 
   test('create wires game state, renderers, audio, inputs, and the start screen', () => {
@@ -594,5 +598,21 @@ describe('GameScene orchestration', () => {
     );
     expect(boardRenderer.setGhostEnabled).toHaveBeenCalledWith(false);
     expect(boardRenderer.update).toHaveBeenCalled();
+  });
+
+  test('L cycles locale preference and refreshes localized UI', () => {
+    scene.create();
+    overlayRenderer.renderStartScreen.mockClear();
+    uiRenderer.refreshLocalizedUI.mockClear();
+    const localeHandler = scene.inputController.localeKey.on.mock.calls[0][1];
+
+    localeHandler();
+
+    expect(scene.preferences.locale).toBe('es');
+    expect(StorageManager.savePreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: 'es' })
+    );
+    expect(uiRenderer.refreshLocalizedUI).toHaveBeenCalled();
+    expect(overlayRenderer.renderStartScreen).toHaveBeenCalled();
   });
 });

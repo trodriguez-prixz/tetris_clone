@@ -6,6 +6,7 @@ import {
   ELAPSED_TIME_UPDATE_INTERVAL
 } from '../config/settings.js';
 import { StorageManager } from '../utils/storage.js';
+import { setLocale, cycleLocale, t } from '../i18n/index.js';
 
 import EventBus, { EVENTS } from '../events/EventBus.js';
 import GameState from '../logic/GameState.js';
@@ -50,6 +51,7 @@ export default class GameScene extends Phaser.Scene {
 
   initializePreferences() {
     this.preferences = StorageManager.getPreferences();
+    setLocale(this.preferences.locale);
     this.settingsOpen = false;
   }
 
@@ -91,6 +93,7 @@ export default class GameScene extends Phaser.Scene {
       toggleMusic: () => this.toggleMusic(),
       toggleSoundEffects: () => this.toggleSoundEffects(),
       toggleGhost: () => this.toggleGhost(),
+      toggleLocale: () => this.toggleLocale(),
       toggleSettings: () => this.toggleSettings(),
       isSettingsOpen: () => this.settingsOpen,
       pause: () => this.pauseGame(),
@@ -119,6 +122,17 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  refreshLocalizedUI() {
+    this.refreshPreferenceSurfaces();
+    this.uiRenderer.refreshLocalizedUI?.();
+    if (
+      this.stateMachine.isState(GAME_STATES.START_SCREEN) &&
+      !this.settingsOpen
+    ) {
+      this.overlayRenderer.renderStartScreen();
+    }
+  }
+
   toggleMusic() {
     this.audioController.toggleMusic(
       this.stateMachine.isState(GAME_STATES.PLAYING)
@@ -135,6 +149,12 @@ export default class GameScene extends Phaser.Scene {
     if (this.stateMachine.isState(GAME_STATES.PLAYING)) {
       this.boardRenderer.update();
     }
+  }
+
+  toggleLocale() {
+    this.preferences.locale = cycleLocale();
+    StorageManager.savePreferences(this.preferences);
+    this.refreshLocalizedUI();
   }
 
   toggleSettings() {
@@ -329,7 +349,9 @@ export default class GameScene extends Phaser.Scene {
 
     return {
       score: stats.score,
-      outcomeLabel: isNewBest ? 'New best' : `Best: ${previousBest}`
+      outcomeLabel: isNewBest
+        ? t('overlay.gameOver.newBest')
+        : t('overlay.gameOver.best', { score: previousBest })
     };
   }
 
