@@ -1,4 +1,5 @@
 import EventBus, { EVENTS } from '../../events/EventBus.js';
+import { StorageManager } from '../../utils/storage.js';
 import { RetroMusic } from '../../utils/retroMusic.js';
 import { SoundEffects } from '../../utils/soundEffects.js';
 
@@ -10,16 +11,30 @@ export default class AudioController {
     this.musicStarted = false;
     this.retroMusic = null;
     this.soundEffects = null;
+    this.onPreferencesChanged = null;
   }
 
-  setup() {
+  setup(preferences = StorageManager.getPreferences()) {
     this.setupMusic();
     this.setupSoundEffects();
+    this.applyPreferences(preferences);
     this.updateIndicators();
 
     EventBus.on(EVENTS.LINES_CLEARED, this.onLinesCleared, this);
     EventBus.on(EVENTS.LEVEL_UP, this.onLevelUp, this);
     EventBus.on(EVENTS.GAME_OVER, this.onGameOver, this);
+  }
+
+  applyPreferences(preferences) {
+    this.musicMuted = Boolean(preferences?.musicMuted);
+    if (this.soundEffects) {
+      this.soundEffects.setEnabled(
+        preferences?.soundEnabled !== undefined
+          ? Boolean(preferences.soundEnabled)
+          : true
+      );
+    }
+    this.updateIndicators();
   }
 
   setupMusic() {
@@ -40,6 +55,16 @@ export default class AudioController {
     }
   }
 
+  persistAudioPreferences() {
+    const preferences = StorageManager.getPreferences();
+    preferences.musicMuted = this.musicMuted;
+    preferences.soundEnabled = this.soundEffects
+      ? this.soundEffects.isEnabled()
+      : preferences.soundEnabled;
+    StorageManager.savePreferences(preferences);
+    this.onPreferencesChanged?.(preferences);
+  }
+
   toggleMusic(isPlaying) {
     this.musicMuted = !this.musicMuted;
 
@@ -52,6 +77,7 @@ export default class AudioController {
     }
 
     this.updateIndicators();
+    this.persistAudioPreferences();
   }
 
   toggleSoundEffects() {
@@ -59,6 +85,7 @@ export default class AudioController {
 
     const enabled = this.soundEffects.toggle();
     this.updateIndicators(enabled);
+    this.persistAudioPreferences();
     if (enabled) this.playMove();
   }
 

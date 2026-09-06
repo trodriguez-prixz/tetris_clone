@@ -82,10 +82,15 @@ export default class BoardRenderer {
     this.visualBlocks = new Map();
     this.activeBlocks = [];
     this.ghostBlocks = [];
+    this.ghostEnabled = true;
 
     this.drawBackground();
 
     EventBus.on(EVENTS.LINES_CLEARED, this.handleLinesCleared, this);
+  }
+
+  setGhostEnabled(enabled) {
+    this.ghostEnabled = Boolean(enabled);
   }
 
   drawBackground() {
@@ -188,6 +193,8 @@ export default class BoardRenderer {
   }
 
   drawGhostBlocks(activeTetra) {
+    if (!this.ghostEnabled) return;
+
     const landingOffset = this.getLandingOffset(activeTetra);
     if (landingOffset === 0) return;
 

@@ -115,6 +115,29 @@ describe('BoardRenderer gameplay readability', () => {
     expect(activeBlock.y).toBe(0);
   });
 
+  test('skips ghost blocks when ghost rendering is disabled', () => {
+    const scene = buildScene();
+    const gameState = {
+      fieldData: createEmptyField(),
+      currentTetramino: {
+        blocks: [
+          { x: 4, y: 0, color: BLOCK_COLOR },
+          { x: 5, y: 0, color: BLOCK_COLOR },
+          { x: 4, y: 1, color: BLOCK_COLOR },
+          { x: 5, y: 1, color: BLOCK_COLOR }
+        ]
+      }
+    };
+    const renderer = new BoardRenderer(scene, gameState);
+    renderer.setGhostEnabled(false);
+    scene.add.rectangle.mockClear();
+
+    renderer.update();
+
+    expect(scene.add.rectangle).toHaveBeenCalledTimes(4);
+    expect(renderer.ghostBlocks).toHaveLength(0);
+  });
+
   test('keeps locked blocks visually quieter than the active piece', () => {
     const scene = buildScene();
     const fieldData = createEmptyField();
