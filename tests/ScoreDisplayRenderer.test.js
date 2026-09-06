@@ -131,7 +131,7 @@ describe('ScoreDisplayRenderer', () => {
     expect(scene.add.text).toHaveBeenCalledWith(
       expect.any(Number),
       expect.any(Number),
-      'Best Score: 0',
+      'Best: 0',
       expect.objectContaining({
         fontSize: VISUAL_SYSTEM.typography.size.body,
         fill: VISUAL_SYSTEM.palette.text.secondary,
@@ -150,7 +150,7 @@ describe('ScoreDisplayRenderer', () => {
     expect(renderer.piecesText.setText).toHaveBeenCalledWith('Pieces: 3');
     expect(renderer.tetrisesText.setText).toHaveBeenCalledWith('Tetrises: 0');
     expect(renderer.highScoreText.setText).toHaveBeenCalledWith(
-      'Best Score: 1,000'
+      'Best: 1,000'
     );
     expect(renderer.highScoreText.setFill).toHaveBeenCalledWith(
       VISUAL_SYSTEM.palette.accent.red

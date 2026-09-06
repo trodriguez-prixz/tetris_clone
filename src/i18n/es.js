@@ -43,7 +43,7 @@ export const es = {
   'stats.pieces': 'Piezas: {value}',
   'stats.tetrises': 'Tetris: {value}',
   'stats.record': 'RÉCORD',
-  'stats.bestScore': 'Mejor puntuación: {value}',
+  'stats.bestScore': 'Mejor: {value}',
   'audio.musicOn': '🔊 Música: ON',
   'audio.musicOff': '🔇 Música: OFF',
   'audio.soundOn': '🔊 Sonido: ON',

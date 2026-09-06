@@ -43,7 +43,7 @@ export const en = {
   'stats.pieces': 'Pieces: {value}',
   'stats.tetrises': 'Tetrises: {value}',
   'stats.record': 'RECORD',
-  'stats.bestScore': 'Best Score: {value}',
+  'stats.bestScore': 'Best: {value}',
   'audio.musicOn': '🔊 Music: ON',
   'audio.musicOff': '🔇 Music: OFF',
   'audio.soundOn': '🔊 Sound: ON',
