@@ -31,6 +31,15 @@ const OVERLAY_LAYOUT = {
   action: {
     offsetY: VISUAL_SYSTEM.spacing.xl + VISUAL_SYSTEM.spacing.lg,
     fontSize: VISUAL_SYSTEM.typography.size.metric
+  },
+  settingsHint: {
+    offsetY: VISUAL_SYSTEM.spacing.xl * 2 + VISUAL_SYSTEM.spacing.md,
+    fontSize: VISUAL_SYSTEM.typography.size.caption
+  },
+  preferenceStart: {
+    offsetY: VISUAL_SYSTEM.spacing.xl,
+    fontSize: VISUAL_SYSTEM.typography.size.caption,
+    lineHeight: VISUAL_SYSTEM.spacing.md
   }
 };
 
@@ -54,6 +63,14 @@ const OVERLAY_TEXT_STYLE = {
   action: {
     fill: VISUAL_SYSTEM.palette.accent.cyan,
     fontStyle: VISUAL_SYSTEM.typography.weight.regular
+  },
+  hint: {
+    fill: VISUAL_SYSTEM.palette.text.secondary,
+    fontStyle: VISUAL_SYSTEM.typography.weight.regular
+  },
+  preference: {
+    fill: VISUAL_SYSTEM.palette.text.secondary,
+    fontStyle: VISUAL_SYSTEM.typography.weight.regular
   }
 };
 
@@ -63,6 +80,7 @@ const OVERLAY_CONTENT = {
     title: 'TETRIS',
     status: 'Start screen',
     action: 'Press any key except P, or click',
+    settingsHint: 'Esc Settings',
     flashAction: true
   },
   pause: {
@@ -71,6 +89,12 @@ const OVERLAY_CONTENT = {
     status: 'Play is paused',
     action: 'Press P or Space to resume'
   },
+  settings: {
+    alpha: MODAL_OVERLAY_ALPHA,
+    title: 'SETTINGS',
+    status: 'Presentation preferences',
+    action: 'Esc to close'
+  },
   gameOver: {
     alpha: MODAL_OVERLAY_ALPHA,
     title: 'GAME OVER',
@@ -78,32 +102,70 @@ const OVERLAY_CONTENT = {
   }
 };
 
+const preferenceLines = (preferences = {}) => {
+  const ghostOn = preferences.ghostEnabled !== false;
+  const musicOn = !preferences.musicMuted;
+  const soundOn = preferences.soundEnabled !== false;
+  return [
+    `G Ghost: ${ghostOn ? 'ON' : 'OFF'}`,
+    `M Music: ${musicOn ? 'ON' : 'OFF'}`,
+    `S Sound: ${soundOn ? 'ON' : 'OFF'}`
+  ];
+};
+
 export default class OverlayRenderer {
   constructor(scene) {
     this.scene = scene;
     this.startElements = null;
     this.pauseElements = null;
+    this.settingsElements = null;
     this.gameOverElements = null;
   }
 
   renderStartScreen() {
     this.clearStartScreen();
 
-    this.startElements = this.renderOverlay(OVERLAY_CONTENT.start);
+    const content = OVERLAY_CONTENT.start;
+    const elements = this.renderOverlay(content);
+    const hint = this.createCenteredText(
+      OVERLAY_LAYOUT.settingsHint,
+      content.settingsHint,
+      OVERLAY_TEXT_STYLE.hint
+    );
+    this.startElements = [...elements, hint];
   }
 
   clearStartScreen() {
     this.startElements = this.destroyElements(this.startElements);
   }
 
-  renderPauseScreen() {
+  renderPauseScreen(preferences = {}) {
     this.clearPauseScreen();
 
-    this.pauseElements = this.renderOverlay(OVERLAY_CONTENT.pause);
+    const content = OVERLAY_CONTENT.pause;
+    const base = this.renderOverlay(content);
+    const prefs = this.createPreferenceTexts(preferences, 0);
+    this.pauseElements = [...base, ...prefs];
   }
 
   clearPauseScreen() {
     this.pauseElements = this.destroyElements(this.pauseElements);
+  }
+
+  renderSettingsScreen(preferences = {}) {
+    this.clearSettingsScreen();
+
+    const content = OVERLAY_CONTENT.settings;
+    const base = this.renderOverlay(content);
+    const prefs = this.createPreferenceTexts(
+      preferences,
+      VISUAL_SYSTEM.spacing.sm
+    );
+    this.settingsElements = [...base, ...prefs];
+  }
+
+  clearSettingsScreen() {
+    this.settingsElements = this.destroyElements(this.settingsElements);
   }
 
   renderGameOverScreen(summary) {
@@ -137,6 +199,22 @@ export default class OverlayRenderer {
 
   clearGameOverScreen() {
     this.gameOverElements = this.destroyElements(this.gameOverElements);
+  }
+
+  createPreferenceTexts(preferences, extraOffsetY = 0) {
+    return preferenceLines(preferences).map((line, index) =>
+      this.createCenteredText(
+        {
+          ...OVERLAY_LAYOUT.preferenceStart,
+          offsetY:
+            OVERLAY_LAYOUT.preferenceStart.offsetY +
+            extraOffsetY +
+            OVERLAY_LAYOUT.preferenceStart.lineHeight * index
+        },
+        line,
+        OVERLAY_TEXT_STYLE.preference
+      )
+    );
   }
 
   renderOverlay(content) {

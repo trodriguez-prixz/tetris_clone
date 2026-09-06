@@ -23,7 +23,13 @@ jest.mock('../src/utils/storage.js', () => ({
   StorageManager: {
     getBestScore: jest.fn(),
     saveHighScore: jest.fn(),
-    updateStatistics: jest.fn()
+    updateStatistics: jest.fn(),
+    getPreferences: jest.fn(() => ({
+      ghostEnabled: true,
+      musicMuted: false,
+      soundEnabled: true
+    })),
+    savePreferences: jest.fn()
   }
 }));
 
@@ -103,12 +109,18 @@ describe('GameScene orchestration', () => {
     Phaser.Input.Keyboard.JustDown.mockReturnValue(false);
     Phaser.Input.Keyboard.JustUp.mockReturnValue(false);
 
-    boardRenderer = { update: jest.fn(), destroy: jest.fn() };
+    boardRenderer = {
+      update: jest.fn(),
+      destroy: jest.fn(),
+      setGhostEnabled: jest.fn()
+    };
     overlayRenderer = {
       renderStartScreen: jest.fn(),
       clearStartScreen: jest.fn(),
       renderPauseScreen: jest.fn(),
       clearPauseScreen: jest.fn(),
+      renderSettingsScreen: jest.fn(),
+      clearSettingsScreen: jest.fn(),
       renderGameOverScreen: jest.fn(),
       clearGameOverScreen: jest.fn()
     };
@@ -130,6 +142,7 @@ describe('GameScene orchestration', () => {
     soundEffects = {
       init: jest.fn(() => true),
       isEnabled: jest.fn(() => true),
+      setEnabled: jest.fn(),
       toggle: jest.fn(() => false),
       playMove: jest.fn(),
       playRotate: jest.fn(),
@@ -542,5 +555,44 @@ describe('GameScene orchestration', () => {
     scene.stateMachine.pause();
     expect(scene.stateMachine.getState()).toBe(GAME_STATES.PAUSED);
     expect(scene.inputController.restartKey).toBeFalsy();
+  });
+
+  test('Esc opens and closes settings on start without starting the game', () => {
+    scene.create();
+    const escHandler = scene.inputController.escKey.on.mock.calls[0][1];
+
+    escHandler();
+
+    expect(scene.settingsOpen).toBe(true);
+    expect(overlayRenderer.renderSettingsScreen).toHaveBeenCalledWith(
+      scene.preferences
+    );
+    expect(scene.stateMachine.getState()).toBe(GAME_STATES.START_SCREEN);
+
+    const startTrigger = scene.input.keyboard.on.mock.calls.find(
+      ([eventName]) => eventName === 'keydown'
+    )[1];
+    startTrigger({ keyCode: Phaser.Input.Keyboard.KeyCodes.A || 65 });
+    expect(scene.stateMachine.getState()).toBe(GAME_STATES.START_SCREEN);
+
+    escHandler();
+    expect(scene.settingsOpen).toBe(false);
+    expect(overlayRenderer.renderStartScreen).toHaveBeenCalled();
+  });
+
+  test('G toggles ghost preference and updates the board renderer', () => {
+    scene.create();
+    scene.stateMachine.start();
+    scene.stateMachine.consumeEvents();
+    const ghostHandler = scene.inputController.ghostKey.on.mock.calls[0][1];
+
+    ghostHandler();
+
+    expect(scene.preferences.ghostEnabled).toBe(false);
+    expect(StorageManager.savePreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ ghostEnabled: false })
+    );
+    expect(boardRenderer.setGhostEnabled).toHaveBeenCalledWith(false);
+    expect(boardRenderer.update).toHaveBeenCalled();
   });
 });

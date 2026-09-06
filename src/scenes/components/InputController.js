@@ -31,12 +31,22 @@ export default class InputController {
     );
     this.soundEffectsKey.on('down', () => this.actions.toggleSoundEffects());
 
+    this.ghostKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.G
+    );
+    this.ghostKey.on('down', () => this.actions.toggleGhost?.());
+
     this.pauseKey = this.scene.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.P
     );
     this.spaceKey = this.scene.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.SPACE
     );
+
+    this.escKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC
+    );
+    this.escKey.on('down', () => this.actions.toggleSettings?.());
   }
 
   update({ isPlaying, isPaused }) {
@@ -56,7 +66,9 @@ export default class InputController {
 
   bindStartInput(onStart) {
     const startTrigger = (evt) => {
+      if (this.actions.isSettingsOpen?.()) return;
       if (evt && evt.keyCode === Phaser.Input.Keyboard.KeyCodes.P) return;
+      if (evt && evt.keyCode === Phaser.Input.Keyboard.KeyCodes.ESC) return;
       this.scene.input.keyboard.off('keydown', startTrigger);
       this.scene.input.off('pointerdown', startTrigger);
       this.pauseGuardUntil =
@@ -66,7 +78,16 @@ export default class InputController {
 
     this.scene.input.keyboard.on('keydown', startTrigger);
     this.scene.input.on('pointerdown', startTrigger);
+    this.startTrigger = startTrigger;
     return startTrigger;
+  }
+
+  clearStartInput() {
+    if (this.startTrigger) {
+      this.scene.input.keyboard.off('keydown', this.startTrigger);
+      this.scene.input.off('pointerdown', this.startTrigger);
+      this.startTrigger = null;
+    }
   }
 
   bindRestartInput(onRestart) {

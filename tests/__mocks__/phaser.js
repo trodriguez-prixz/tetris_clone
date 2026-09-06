@@ -81,8 +81,10 @@ export default {
         DOWN: 40,
         M: 77,
         S: 83,
+        G: 71,
         P: 80,
         R: 82,
+        ESC: 27,
         SPACE: 32
       },
       JustDown: jest.fn(() => false),

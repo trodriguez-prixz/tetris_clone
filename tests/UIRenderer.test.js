@@ -69,6 +69,7 @@ describe('UIRenderer action feedback', () => {
       '↑ Rotate',
       '↓ Soft drop',
       'P/Space Pause',
+      'G Ghost',
       'M Music',
       'S Sound',
       'R Restart (game over)'

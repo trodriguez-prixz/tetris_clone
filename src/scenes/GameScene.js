@@ -26,6 +26,7 @@ export default class GameScene extends Phaser.Scene {
   create() {
     this.drawBackground();
     this.initializeGameState();
+    this.initializePreferences();
     this.initializeSceneComponents();
     this.initializeGameTimeTracking();
     this.registerGameLifecycleEvents();
@@ -47,8 +48,14 @@ export default class GameScene extends Phaser.Scene {
     this.stateMachine = new GameStateMachine();
   }
 
+  initializePreferences() {
+    this.preferences = StorageManager.getPreferences();
+    this.settingsOpen = false;
+  }
+
   initializeSceneComponents() {
     this.boardRenderer = new BoardRenderer(this, this.gameState);
+    this.boardRenderer.setGhostEnabled(this.preferences.ghostEnabled);
     this.uiRenderer = new UIRenderer(this, this.gameState);
     this.overlayRenderer = new OverlayRenderer(this);
     this.dropLoopController = new DropLoopController(this, () =>
@@ -72,13 +79,20 @@ export default class GameScene extends Phaser.Scene {
 
   setupAudio() {
     this.audioController = new AudioController(this, this.uiRenderer);
-    this.audioController.setup();
+    this.audioController.onPreferencesChanged = (preferences) => {
+      this.preferences = { ...this.preferences, ...preferences };
+      this.refreshPreferenceSurfaces();
+    };
+    this.audioController.setup(this.preferences);
   }
 
   setupInputs() {
     this.inputController = new InputController(this, {
       toggleMusic: () => this.toggleMusic(),
       toggleSoundEffects: () => this.toggleSoundEffects(),
+      toggleGhost: () => this.toggleGhost(),
+      toggleSettings: () => this.toggleSettings(),
+      isSettingsOpen: () => this.settingsOpen,
       pause: () => this.pauseGame(),
       resume: () => this.resumeGame(),
       move: (direction) => this.tryMove(direction),
@@ -91,6 +105,20 @@ export default class GameScene extends Phaser.Scene {
     this.inputController.setup();
   }
 
+  persistPreferences() {
+    StorageManager.savePreferences(this.preferences);
+    this.refreshPreferenceSurfaces();
+  }
+
+  refreshPreferenceSurfaces() {
+    this.boardRenderer.setGhostEnabled(this.preferences.ghostEnabled);
+    if (this.settingsOpen) {
+      this.overlayRenderer.renderSettingsScreen(this.preferences);
+    } else if (this.stateMachine.isState(GAME_STATES.PAUSED)) {
+      this.overlayRenderer.renderPauseScreen(this.preferences);
+    }
+  }
+
   toggleMusic() {
     this.audioController.toggleMusic(
       this.stateMachine.isState(GAME_STATES.PLAYING)
@@ -99,6 +127,47 @@ export default class GameScene extends Phaser.Scene {
 
   toggleSoundEffects() {
     this.audioController.toggleSoundEffects();
+  }
+
+  toggleGhost() {
+    this.preferences.ghostEnabled = !this.preferences.ghostEnabled;
+    this.persistPreferences();
+    if (this.stateMachine.isState(GAME_STATES.PLAYING)) {
+      this.boardRenderer.update();
+    }
+  }
+
+  toggleSettings() {
+    const onStart = this.stateMachine.isState(GAME_STATES.START_SCREEN);
+    const onPause = this.stateMachine.isState(GAME_STATES.PAUSED);
+    if (!onStart && !onPause && !this.settingsOpen) return;
+
+    if (this.settingsOpen) {
+      this.closeSettings();
+      return;
+    }
+
+    this.openSettings();
+  }
+
+  openSettings() {
+    this.settingsOpen = true;
+    if (this.stateMachine.isState(GAME_STATES.START_SCREEN)) {
+      this.overlayRenderer.clearStartScreen();
+    } else if (this.stateMachine.isState(GAME_STATES.PAUSED)) {
+      this.overlayRenderer.clearPauseScreen();
+    }
+    this.overlayRenderer.renderSettingsScreen(this.preferences);
+  }
+
+  closeSettings() {
+    this.settingsOpen = false;
+    this.overlayRenderer.clearSettingsScreen();
+    if (this.stateMachine.isState(GAME_STATES.START_SCREEN)) {
+      this.overlayRenderer.renderStartScreen();
+    } else if (this.stateMachine.isState(GAME_STATES.PAUSED)) {
+      this.overlayRenderer.renderPauseScreen(this.preferences);
+    }
   }
 
   update() {
@@ -120,7 +189,8 @@ export default class GameScene extends Phaser.Scene {
   updateInputController() {
     this.inputController.update({
       isPlaying: this.stateMachine.isState(GAME_STATES.PLAYING),
-      isPaused: this.stateMachine.isState(GAME_STATES.PAUSED)
+      isPaused:
+        this.stateMachine.isState(GAME_STATES.PAUSED) && !this.settingsOpen
     });
   }
 
@@ -130,6 +200,9 @@ export default class GameScene extends Phaser.Scene {
   }
 
   resumeGame() {
+    if (this.settingsOpen) {
+      this.closeSettings();
+    }
     this.stateMachine.resume();
     this.emitDomainEvents(this.stateMachine.consumeEvents());
   }
@@ -200,12 +273,16 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showStartScreen() {
+    this.settingsOpen = false;
+    this.overlayRenderer.clearSettingsScreen();
     this.overlayRenderer.renderStartScreen();
 
     this.inputController.bindStartInput(() => this.handleStartInput());
   }
 
   handleStartInput() {
+    if (this.settingsOpen) return;
+    this.inputController.clearStartInput();
     this.overlayRenderer.clearStartScreen();
     this.stateMachine.start();
     this.emitDomainEvents(this.stateMachine.consumeEvents());
@@ -215,7 +292,7 @@ export default class GameScene extends Phaser.Scene {
     this.dropLoopController.pause();
     this.audioController.pauseMusic();
 
-    this.overlayRenderer.renderPauseScreen();
+    this.overlayRenderer.renderPauseScreen(this.preferences);
   }
 
   hidePauseScreen() {
@@ -227,6 +304,8 @@ export default class GameScene extends Phaser.Scene {
 
   clearPauseScreen() {
     this.overlayRenderer.clearPauseScreen();
+    this.overlayRenderer.clearSettingsScreen();
+    this.settingsOpen = false;
   }
 
   onGameOver() {

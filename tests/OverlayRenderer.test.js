@@ -70,12 +70,49 @@ describe('OverlayRenderer', () => {
         fill: VISUAL_SYSTEM.palette.accent.cyan
       })
     );
+    expect(scene.add.text).toHaveBeenCalledWith(
+      CANVAS_WIDTH / 2,
+      expect.any(Number),
+      'Esc Settings',
+      expect.objectContaining({
+        fontSize: VISUAL_SYSTEM.typography.size.caption
+      })
+    );
     expect(scene.tweens.add).toHaveBeenCalledWith(
       expect.objectContaining({
         targets: scene.add.text.mock.results[2].value,
         yoyo: true
       })
     );
+  });
+
+  test('renders pause preference lines from current preferences', () => {
+    renderer.renderPauseScreen({
+      ghostEnabled: false,
+      musicMuted: true,
+      soundEnabled: true
+    });
+
+    const labels = scene.add.text.mock.calls.map((call) => call[2]);
+    expect(labels).toContain('PAUSED');
+    expect(labels).toContain('G Ghost: OFF');
+    expect(labels).toContain('M Music: OFF');
+    expect(labels).toContain('S Sound: ON');
+  });
+
+  test('renders settings panel preference lines', () => {
+    renderer.renderSettingsScreen({
+      ghostEnabled: true,
+      musicMuted: false,
+      soundEnabled: false
+    });
+
+    const labels = scene.add.text.mock.calls.map((call) => call[2]);
+    expect(labels).toContain('SETTINGS');
+    expect(labels).toContain('Esc to close');
+    expect(labels).toContain('G Ghost: ON');
+    expect(labels).toContain('M Music: ON');
+    expect(labels).toContain('S Sound: OFF');
   });
 
   test('renders standardized pause presentation content', () => {

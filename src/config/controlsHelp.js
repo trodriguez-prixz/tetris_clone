@@ -8,6 +8,7 @@ export const CONTROLS_HELP_LINES = [
   { text: '↑ Rotate' },
   { text: '↓ Soft drop' },
   { text: 'P/Space Pause' },
+  { text: 'G Ghost' },
   { text: 'M Music' },
   { text: 'S Sound' },
   { text: 'R Restart (game over)' }
