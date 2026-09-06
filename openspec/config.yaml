@@ -38,7 +38,7 @@ rules:
   apply:
     guidelines:
       - Follow existing code patterns
-      - Update PLAN.md Phase 17 status notes with each completed task group
+      - Keep PLAN.md phase status aligned when closing a change (compact summary; no diary dump)
     tdd: true
     test_command: npm test
   verify:
@@ -47,4 +47,4 @@ rules:
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas
-    - Sync PLAN.md Phase 17 to done when archive succeeds
+    - Sync PLAN.md when archive succeeds (overview status + parked notes only as needed)

@@ -1,6 +1,6 @@
 # Project Improvement Plan
 
-This plan is the single source of truth for improving the project's architecture, maintainability, and UX/UI. Update the status markers as work progresses.
+Phases **0–17 are complete**. This file is the compact source of truth for what shipped, what ownership looks like, and what remains parked. Detailed task history lives in git and `openspec/changes/archive/`.
 
 ## Status legend
 
@@ -8,6 +8,17 @@ This plan is the single source of truth for improving the project's architecture
 - `[~]` In progress
 - `[x]` Done
 - `[!]` Blocked
+
+## Program status
+
+| Track              | Phases | Outcome                                                                  |
+| ------------------ | ------ | ------------------------------------------------------------------------ |
+| Architecture & ops | 0–8    | Testable domain, thin `GameScene`, tooling/CI, packaging, ownership docs |
+| UX / UI            | 9–17   | Arcade visuals, readable play UI, feedback, a11y polish, prefs, overlays |
+
+**Verification baseline:** `npm run lint`, `npm test`, `npm run format:check`, `npm run build`.
+
+**Agent guidance:** `AGENTS.md` (runtime layout, imports, test seams). **Behavior specs:** `openspec/specs/`.
 
 ## Phase overview
 
@@ -32,678 +43,67 @@ This plan is the single source of truth for improving the project's architecture
 | 16. Player preferences (Settings)       | `[x]`  | Persist ghost/audio prefs; Settings from start/pause; G/M/S hotkeys sync.    |
 | 17. Overlay layout non-overlap          | `[x]`  | Fix pause/settings text collisions; modest Stats→Controls sidebar gap.       |
 
-## Phase 0 — Refactor safety baseline
-
-**Objective:** Freeze important current behavior before moving responsibilities across files.
-
-**Tasks**
-
-- [x] Add or strengthen regression tests for `src/logic/GameState.js`.
-- [x] Add or strengthen regression tests for `src/logic/GameStateMachine.js`.
-- [x] Cover core behavior in `src/classes/Tetramino.js` and `src/classes/Score.js`.
-- [x] Add focused coverage for important `src/scenes/GameScene.js` behavior.
-- [x] Update `tests/__mocks__/phaser.js` or `tests/setup.js` if new test seams need browser or Phaser APIs.
-
-**Exit criteria**
-
-- [x] `npm test` passes.
-- [x] Focused scene tests can run with `npm test -- tests/GameScene.test.js`.
-- [x] Main gameplay behavior is protected before structural refactors begin.
-
-## Phase 1 — Game domain extraction
-
-**Objective:** Keep the Tetris rules in pure logic modules that can be tested without Phaser.
-
-**Tasks**
-
-- [x] Identify rule logic currently coupled to `GameScene`.
-- [x] Move board state, collision, rotation, line clearing, scoring, and falling behavior into `src/logic/` or existing domain classes.
-  - 2026-07-03: Extracted soft-drop mode and speed selection into `GameState`; `GameScene` still owns Phaser timer restart and input/rendering reactions. Remaining slices include fall tick result wrapping, start/restart transitions, and game-over stats snapshot.
-  - 2026-07-03: Added a `GameState.updateTick()` result wrapper for fall ticks (`moved`, `locked`, `spawned`, `gameOver`) and routed `GameScene` rendering through that result; task remains partial for start/restart transitions and game-over stats snapshot.
-  - 2026-07-03: Added `GameState.startGame()` for score-timer/start-spawn setup and `GameStateMachine.restart()`/`markGameOver()` so restart no longer mutates `currentState` directly; task remains partial for game-over stats snapshot.
-  - 2026-07-03: Added `GameState.getGameOverStatsSnapshot()` to finalize elapsed time and expose serializable game-over score stats while keeping storage persistence in `GameScene`; task 2 is complete.
-- [x] Keep Phaser-specific objects out of core rule modules.
-  - 2026-07-03: Removed direct dependency on the Phaser-backed `EventBus` from core rule modules. `GameState` and `GameStateMachine` now record plain domain event descriptors for the scene/infrastructure layer to emit, and a regression test locks the Phaser boundary.
-- [x] Ensure `GameState` and `GameStateMachine` expose clear state transitions.
-  - 2026-07-03: Made `GameStateMachine` state private, routed lifecycle changes through a named transition helper, returned explicit transition result objects, and kept `start()` limited to the start screen while `restart()` owns game-over restarts.
-- [x] Update tests alongside each extraction.
-
-**Rule-coupling inventory**
-
-| Area in `GameScene`            | Current coupling                                                                                                                           | Proposed extraction target/order                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| Input repeat gates             | Horizontal move and rotation throttles live in scene time checks (`horizontalMoveDelay`, `rotateDelay`, `lastMoveTime`, `lastRotateTime`). | 1. Extract input intent/rate decisions after preserving scene input behavior.                     |
-| Soft drop behavior             | Down key directly mutates `gameState.dropSpeed`, restarts the Phaser timer, and tracks `isFastDrop`.                                       | 2. Move drop-mode state and speed selection behind logic methods; scene keeps timer wiring.       |
-| Fall tick orchestration        | Scene timer callback decides when to call `gameState.updateTick()` and render.                                                             | 3. Keep Phaser timer in scene, but route falling intent through a clear logic transition/result.  |
-| Start/restart spawn flow       | Scene starts score timer, spawns the first tetramino, resets score/UI state, and manually sets machine state on restart.                   | 4. Add explicit start/restart transitions in logic/state machine; scene reacts to results.        |
-| Game-over persistence boundary | Scene reads score stats and decides high-score/statistics updates immediately after game over.                                             | 5. Keep storage in scene/platform layer, but expose a stable game-over stats snapshot from logic. |
-
-Existing pure-rule homes: board occupancy, collision, rotation, line clearing, scoring, level speed updates, and piece locking already primarily live in `GameState`, `Tetramino`, and `Score`. Future extraction should avoid moving Phaser rendering, keyboard APIs, audio, storage APIs, or timers into rule modules.
-
-**Exit criteria**
-
-- [x] Core game rules can be tested without constructing a Phaser scene.
-- [x] `GameScene` delegates rule decisions to logic/domain modules.
-- [x] `npm test` passes.
-
-## Phase 2 — Scene orchestration cleanup
-
-**Objective:** Reduce `GameScene` to a readable coordinator for lifecycle, rendering, input, audio, and events.
-
-**Tasks**
-
-- [x] Split input handling into a dedicated helper or scene component.
-- [x] Split timer/drop-loop coordination into a dedicated helper or scene component.
-- [x] Split audio coordination from gameplay decisions.
-- [x] Keep scene lifecycle methods short and intention-revealing.
-  - 2026-07-03: Extracted small orchestration helpers for `GameScene` create/update/start/pause/game-over/restart flows so lifecycle methods describe intent without moving responsibilities to new components.
-- [x] Remove duplicated state derivation from `GameScene` where domain state already exists.
-  - 2026-07-03: Moved the start-input pause guard into `InputController` and stopped mirroring the restart key on `GameScene`; verified overlay arrays remain scene-owned until rendering/UI boundaries are addressed in Phase 3.
-
-**Exit criteria**
-
-- [x] `GameScene` mostly wires collaborators together.
-- [x] Gameplay decisions remain in logic/domain modules.
-- [x] Scene behavior tests still pass.
-
-## Phase 3 — Rendering and UI design boundaries
-
-**Objective:** Make visual changes safe by isolating rendering and layout from game rules.
-
-**Tasks**
-
-- [x] Consolidate grid, canvas, color, scoring, and timing constants in `src/config/settings.js`.
-- [x] Remove or justify magic numbers in rendering components.
-  - 2026-07-03: Added shared rendered-block inset and panel-border width constants, named board particle/animation details locally, and grouped UI/overlay text and animation layout constants without moving overlay ownership.
-- [x] Keep board rendering, active piece rendering, score display, preview, and overlays separated in `src/scenes/components/`.
-  - 2026-07-03: Moved start/pause/game-over overlays into `OverlayRenderer` and split sidebar score, preview, and audio indicator rendering behind focused components while keeping `GameScene` as coordinator.
-- [x] Keep code comments in English and focused on intent or non-obvious behavior.
-  - 2026-07-03: Removed noisy rendering/settings comments and kept only intent-focused comments for non-obvious tetramino pivots and cleared-row animation behavior.
-
-**Exit criteria**
-
-- [x] Visual layout can change without editing core gameplay rules.
-- [x] Rendering components have clear ownership.
-- [x] `npm test` passes.
-
-## Phase 4 — Event communication cleanup
-
-**Objective:** Make communication between logic, scene, UI, and audio explicit.
-
-**Tasks**
-
-- [x] Review `src/events/EventBus.js` for event names and payload consistency.
-  - 2026-07-03: Removed unused `PIECE_PLACED` and `HARD_DROP` constants from `GameEvents`. Active events now match current producers/consumers: lifecycle events use no payload, preview/game-over use no payload, `LINES_CLEARED` uses row indexes, `TETRAMINO_LOCKED` uses locked block objects, `SCORE_UPDATED` uses score stats, and `LEVEL_UP` uses the new level number.
-- [x] Centralize any remaining ad hoc event names.
-  - 2026-07-03: Verified EventBus producers/consumers and domain `recordEvent` calls in `src/` and `tests/`; game-domain events already use `EVENTS` constants. Remaining string event names are Phaser input/API events or the explicit `GameEvents` inventory test.
-- [x] Define predictable payload shapes for important events.
-  - 2026-07-03: Non-empty gameplay event payloads now use named object fields: `LINES_CLEARED` emits `{ rows }`, `TETRAMINO_LOCKED` emits `{ blocks }`, `SCORE_UPDATED` emits `{ stats }`, and `LEVEL_UP` emits `{ level }`. Lifecycle, preview, and game-over events remain no-payload (`undefined`) because consumers do not need event data.
-- [x] Remove event flows that duplicate direct state reads without adding value.
-  - 2026-07-03: Removed `TETRAMINO_LOCKED` because its only EventBus consumer ignored `{ blocks }`, and removed `NEXT_SHAPE_UPDATED` because preview rendering already reads `gameState.nextShapes` directly from scene coordination after spawns. Retained lifecycle, line-clear, score, and level events because they decouple scene/audio/UI effects or carry payloads used by consumers.
-
-**Exit criteria**
-
-- [x] Event names are discoverable from one place.
-- [x] Event payloads are consistent enough for tests and future changes.
-- [x] No hidden gameplay rule decisions live only in event handlers.
-
-## Phase 5 — Quality tooling
-
-**Objective:** Add lightweight project checks without derailing the architecture work.
-
-**Tasks**
-
-- [x] Add a formatter configuration.
-- [x] Add a linter configuration.
-- [x] Add a simple CI workflow that runs install, tests, and build.
-- [x] Decide whether coverage thresholds are useful after the safety baseline exists.
-  - 2026-07-03: Deferred coverage thresholds for now. Coverage collection passes, but aggregate coverage is pulled down by intentionally untested renderer/platform utility modules, so a global threshold would be arbitrary and could block useful architecture work instead of protecting meaningful behavior. Revisit after those modules have focused tests or after stable per-scope thresholds are justified.
-
-**Exit criteria**
-
-- [x] Contributors have a documented verification path.
-- [x] CI catches broken tests or builds.
-- [x] Tooling does not conflict with Vite, Jest, Express, or Electron packaging.
-
-## Phase 6 — Platform and packaging verification
-
-**Objective:** Ensure architecture changes do not break delivery targets.
-
-**Tasks**
-
-- [x] Verify Vite still builds with `base: './'`.
-- [x] Verify Express still serves `dist/` through `server.js` and `Procfile`.
-- [x] Verify Electron dev still expects Vite at `http://localhost:3000`.
-- [x] Verify packaged Electron still loads `dist/index.html`.
-
-**Exit criteria**
-
-- [x] `npm run build` succeeds.
-- [x] Web production serving assumptions remain valid.
-- [x] Electron dev/package assumptions remain valid.
-
-## Phase 7 — Architecture documentation
-
-**Objective:** Preserve the final architecture decisions for future sessions and contributors.
-
-**Tasks**
-
-- [x] Document the final ownership of `src/logic/`, `src/classes/`, `src/scenes/`, `src/scenes/components/`, and `src/events/`.
-- [x] Update `AGENTS.md` if new repo-specific rules or gotchas were introduced.
-- [x] Keep documentation compact and focused on facts future agents would likely miss.
-
-**Final ownership**
-
-| Area                     | Owns                                                                                                                                                                                                                                         | Does not own                                                                                                             |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `src/logic/`             | Pure game flow and rule coordination: board state, spawning, movement/collision decisions, soft-drop speed state, line clearing, scoring triggers, game-over stats snapshots, state-machine transitions, and plain domain event descriptors. | Phaser scene objects, rendering, keyboard/input APIs, audio, timers, storage, or direct EventBus emission.               |
-| `src/classes/`           | Small domain models used by logic: `Block` logical coordinates/color, `Tetramino` shape movement/rotation/collision helpers, and `Score` scoring/stat/timer calculations.                                                                    | Scene orchestration, persistence, rendering, platform APIs, or global event wiring.                                      |
-| `src/scenes/`            | Phaser scene composition and runtime orchestration. `GameScene` wires game state, state machine, components, storage, audio, input, timers, rendering updates, and domain-event emission to the infrastructure EventBus.                     | Core gameplay rule ownership that belongs in `src/logic/` or domain classes.                                             |
-| `src/scenes/components/` | Focused scene collaborators for Phaser-facing concerns: board rendering/effects, sidebar UI, preview, score display, audio indicators/control, overlays, input handling, and drop-loop timer control.                                        | Pure Tetris rules, durable game state transitions, storage policy, or event-name definitions.                            |
-| `src/events/`            | Shared event contract and Phaser-backed infrastructure bus: `GameEvents.js` defines event names; `EventBus.js` exposes the singleton emitter for scene/component communication.                                                              | Business decisions, state mutation, payload derivation beyond the named event contract, or duplicate ad hoc event names. |
-
-**Exit criteria**
-
-- [x] Architecture notes match the implemented code.
-- [x] Future work can start from this plan and `AGENTS.md` without rediscovering core constraints.
-
-## Phase 8 — Formatting cleanup
-
-**Objective:** Bring the repository into a consistent Prettier baseline while keeping the change reviewable and behavior-neutral.
-
-**Tasks**
-
-- [x] Inventory the current formatting drift with `npm run format:check` and identify the affected files.
-- [x] Split formatting work into safe review slices if the diff is large.
-  - Suggested slices: docs/config first, tests second, source files last.
-  - Keep generated or intentionally ignored files out of scope, including `.atl/` and `package-lock.json`.
-- [x] Run Prettier on only the selected slice for each review unit.
-- [x] Verify each slice with `npm run format:check` or a focused Prettier check for the changed paths.
-- [x] Run `npm run lint`, `npm test`, and `npm run build` after the final formatting slice.
-- [x] Decide whether CI should add `npm run format:check` once the repository is fully formatted.
-
-**Exit criteria**
-
-- [x] `npm run format:check` passes for the full repository.
-- [x] Formatting-only commits do not include behavior, architecture, or dependency changes.
-- [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
-- [x] CI either includes `npm run format:check` or this plan records why it remains excluded.
-
-## Phase 9 — UX/UI discovery baseline
-
-**Objective:** Establish the current user experience problems, constraints, and success criteria before implementing visual changes.
-
-**Tasks**
-
-- [x] Play through the current web build and capture friction in start, active play, pause, game-over, and restart flows.
-- [x] Inventory current UI surfaces: board, score panel, next pieces, audio indicator, overlays, keyboard controls, and any persistent stats.
-- [x] Identify visual hierarchy issues such as unclear status, weak contrast, crowded panels, or hard-to-scan score information.
-- [x] Define target UX outcomes for the first improvement slice, prioritizing clarity during gameplay over decorative changes.
-- [x] Record implementation constraints that must stay stable: Phaser rendering boundaries, pure logic modules, Vite/Electron packaging, and existing tests.
-
-**Task 1 note — 2026-07-04**
-
-- Start: the start overlay only says “Presiona cualquier tecla”; `P` is ignored as a start key and pointer input also starts the game, but neither exception is visible.
-- Active play: movement, rotation, soft drop, pause, and audio keys exist in input code, but the visible UI only documents audio controls, so core gameplay controls rely on prior knowledge.
-- Pause: the pause overlay only says “PAUSED”; it does not explain that `P` or Space resumes play.
-- Game over: the overlay only shows “GAME OVER” and “Press R to Restart”; it omits final score, best-score outcome, and session stats even though those stats are persisted.
-- Restart: restart is keyboard-only through `R`; there is no pointer restart path and no visible confirmation that score, level, timer, and board state reset before play resumes.
-
-**Task 2 note — 2026-07-04**
-
-| Surface           | Current inventory                                                                                                                                                                                                                        |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Board             | `BoardRenderer` draws a 10×20 grid panel, active tetramino blocks, locked field blocks, and line-clear particles.                                                                                                                        |
-| Score panel       | `ScoreDisplayRenderer` shows `STATS`, score, level, lines, best score, time, pieces, and tetrises in the sidebar.                                                                                                                        |
-| Next pieces       | `PreviewRenderer` renders the next three tetramino shapes in the preview panel, without a visible label.                                                                                                                                 |
-| Audio indicator   | `AudioIndicatorRenderer` shows music and sound-effect status plus `M: Música` / `S: Sonidos` controls near the sidebar bottom.                                                                                                           |
-| Overlays          | `OverlayRenderer` owns start (`TETRIS`, "Presiona cualquier tecla"), pause (`PAUSED`), and game-over (`GAME OVER`, "Press R to Restart") overlays.                                                                                       |
-| Keyboard controls | `InputController` wires arrows for move/rotate/soft drop, `P` or Space for pause/resume, `M` for music, `S` for sound effects, and `R` for restart after game over; pointer input only starts the game.                                  |
-| Persistent stats  | `StorageManager` persists top-ten high scores and lifetime totals (`totalGames`, `totalScore`, `totalLines`, `totalPieces`, `totalTetrises`, `totalTime`, `bestLevel`); the visible UI only surfaces the current best score during play. |
-
-**Task 3 note — 2026-07-04**
-
-| Issue                          | Evidence                                                                                                                                                                                    | Priority                                                               |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Unclear game status            | Start, pause, and game-over overlays use short labels only; pause does not show resume controls, and game over does not summarize final score or best-score outcome.                        | High: clarify state and next action before decorative styling.         |
-| Contrast/readability risk      | Muted and secondary text (`#7f8c8d`, `#95a5a6`) sits on a dark panel, audio controls use the smallest text, and grid lines share the background hue at low alpha.                           | High: verify contrast before changing palette or adding effects.       |
-| Crowded sidebar panels         | The 200px sidebar stacks a three-piece preview, eight stat lines, and audio state/controls; the preview panel has no label, and audio controls compete with gameplay stats near the bottom. | Medium: separate information groups and reduce competition.            |
-| Hard-to-scan score information | Score, level, and lines share similar weight and centered labels; secondary stats and best score sit in the same dense column, making the primary gameplay metrics less dominant.           | High: establish score/stat hierarchy before Phase 11 readability work. |
-| Priority/order risk            | Visual polish could amplify existing ambiguity if status copy, stat priority, preview labeling, and contrast are not defined first.                                                         | High: use task 4 to define target UX outcomes before implementation.   |
-
-**Task 4 note — 2026-07-04**
-
-First improvement slice target: make gameplay state and high-priority information easier to understand while play is happening, without changing Tetris rules or adding decorative-only effects.
-
-| Outcome                            | Target for the first slice                                                                                                                   | Later verification                                                                                                                       |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| State and next action are obvious  | Start, pause, and game-over overlays should explain the current state and the next valid action in one short instruction.                    | During start, pause, and game-over, a reviewer can identify how to continue/restart without reading source code or guessing hidden keys. |
-| Primary gameplay metrics stand out | Score, level, and lines should be visually prioritized above secondary stats such as time, pieces, tetrises, and best score.                 | During active play, score, level, and lines are the fastest sidebar values to scan.                                                      |
-| Next pieces are identifiable       | The preview area should be labeled and spaced so the next pieces read as planning information, not decoration.                               | A reviewer can locate the next-piece queue immediately and distinguish it from score/audio panels.                                       |
-| Contrast supports fast reading     | Important overlay text, stat labels, stat values, preview labels, and audio status should meet readable contrast before palette polish.      | A contrast review can check the selected text/background pairs for important UI text.                                                    |
-| Decorative effects stay secondary  | Glow, particles, shadows, and palette polish should not reduce board readability, hide active/locked blocks, or compete with critical stats. | Gameplay remains readable when effects trigger, especially during movement, line clears, pause, and game over.                           |
-
-**Task 5 note — 2026-07-04**
-
-Phase 10+ visual and UX work must preserve these implementation constraints:
-
-- Phaser-facing rendering, effects, overlays, input, audio controls, and drop-loop timers stay in `src/scenes/` and `src/scenes/components/`; core rules do not move into renderers.
-- `src/logic/` and `src/classes/` remain pure gameplay/domain modules with no Phaser objects, rendering APIs, timers, audio, storage, browser APIs, or direct EventBus emission.
-- Vite/Electron packaging assumptions stay stable: Vite keeps `base: './'` and `dist/` output, Electron dev loads `http://localhost:3000`, packaged Electron loads `dist/index.html`, and Express serving continues to use `dist/`.
-- Existing behavior checks remain part of future visual slices: update Jest tests/mocks when scene behavior or rendering contracts change, and keep `npm run lint`, `npm test`, `npm run build`, and `npm run format:check` as the documented verification path.
-
-**Exit criteria**
-
-- [x] The main UX/UI problems are documented in this plan or a linked issue/PR.
-- [x] The first implementation slice is small enough to review safely.
-- [x] No visual work starts before the target outcomes are clear.
-
-## Phase 10 — Visual system refresh
-
-**Objective:** Create a consistent arcade visual language that improves polish without scattering style decisions across the codebase.
-
-**Tasks**
-
-- [x] Define the core palette, contrast targets, typography style, spacing, borders, and glow/shadow rules in `src/config/settings.js` or focused rendering constants.
-- [x] Refresh board, block, grid, and panel styling while keeping gameplay coordinates and rules unchanged.
-- [x] Standardize overlay presentation for start, pause, and game-over states.
-- [x] Ensure score, level, lines, timer, and high-score information follow the same visual hierarchy.
-- [x] Keep visual constants named and centralized enough for future theme changes.
-
-**Task 1 note — 2026-07-04**
-
-Defined `VISUAL_SYSTEM` in `src/config/settings.js` with the future arcade palette, contrast targets, typography tokens, spacing scale, border rules, and glow/shadow effect rules. Later Phase 10 tasks will apply these constants to board, block, panel, overlay, and UI rendering without changing gameplay rules.
-
-**Task 2 note — 2026-07-04**
-
-Refreshed board and sidebar panel surfaces, grid lines, gameplay/preview block strokes, and panel text colors by applying `VISUAL_SYSTEM` tokens in rendering components. Preserved board dimensions, cell size, gameplay coordinates, rules, scoring, timers, input behavior, event flows, overlay presentation, and score content/order.
-
-**Task 3 note — 2026-07-04**
-
-Standardized start, pause, and game-over overlays around shared layout/content helpers and `VISUAL_SYSTEM` typography, palette, and spacing tokens. Each overlay now names the current state and the next valid action; gameplay rules, start/pause/restart mechanics, scoring, timers, coordinates, and event flows were intentionally preserved.
-
-**Task 4 note — 2026-07-04**
-
-Standardized the score display hierarchy with shared `VISUAL_SYSTEM` typography and palette tokens: score, level, and lines remain the emphasized primary metrics, while timer and high-score use the same supporting tier so they stay readable without competing with active gameplay metrics. Score content, calculations, timer behavior, storage policy, input behavior, event flows, and board coordinates were intentionally preserved.
-
-**Task 5 note — 2026-07-04**
-
-Centralized remaining theme-facing visual values by keeping shared block inset and panel border aliases backed by `VISUAL_SYSTEM`, and by routing audio indicator font family, sizes, and text colors through visual-system tokens. Layout measurements, gameplay coordinates, scoring rules, timers, storage policy, input behavior, event flows, and line-clear effect tuning were intentionally left in their current homes because they are layout/gameplay or event-specific presentation constants, not broad theme tokens.
-
-**Exit criteria**
-
-- [x] The game has a cohesive visual style across board, sidebar, and overlays.
-- [x] Visual changes do not modify scoring, collision, timing, or state transitions.
-- [x] `npm test` passes after the visual refresh slice.
-
-## Phase 11 — Gameplay readability [x]
-
-**Objective:** Make important gameplay information easy to read quickly while the player is focused on the board.
-
-**Tasks**
-
-- [x] Improve active-piece, ghost/landing-position, locked-block, and line-clear readability if the current rendering makes decisions hard to anticipate.
-- [x] Improve next-piece preview spacing, scale, and labeling so upcoming pieces are scannable.
-- [x] Clarify score, level, lines, elapsed time, and high-score/stat display priority.
-- [x] Review start, pause, and game-over copy for concise instructions and state clarity.
-- [x] Add or update tests/mocks only where scene behavior or rendering contracts need protection.
-
-**Task 1 note — 2026-07-04**
-
-Added a non-mutating landing-position ghost in `BoardRenderer` and gave the active piece a stronger focus stroke while locked blocks keep the quieter secondary stroke.
-This improves drop anticipation and active/locked separation while preserving gameplay rules, scoring, timers, storage policy, input behavior, event flows, board dimensions, cell size, gameplay coordinates, and the existing line-clear animation behavior.
-
-**Task 2 note — 2026-07-04**
-
-Added a visible `NEXT` label to `PreviewRenderer`, increased preview block scale, and spaced the three queue slots with named visual-system-backed constants so upcoming pieces read as planning information.
-Preview data order, queue semantics, gameplay rules, scoring, timers, storage policy, input behavior, event flows, board dimensions, cell size, and gameplay coordinates were intentionally preserved.
-
-**Task 3 note — 2026-07-05**
-
-Grouped the score panel into current-run, session-stat, and record sections so score, level, and lines remain the fastest metrics to scan while elapsed time, pieces, tetrises, and best score stay readable as supporting information.
-Score calculations, level/line calculations, timer behavior, storage policy, input behavior, event flows, board dimensions, cell size, gameplay coordinates, and piece queue semantics were intentionally preserved.
-
-**Task 4 note — 2026-07-05**
-
-Tightened start, pause, and game-over overlay copy so each state reads clearly and the visible next action matches actual valid controls: start accepts any key except `P` or pointer click, pause resumes with `P` or Space, and game over restarts with `R`.
-Overlay layout, presentation tokens, start/pause/restart mechanics, input wiring, scoring, timers, storage policy, event flows, board dimensions, cell size, gameplay coordinates, and piece queue semantics were intentionally preserved.
-
-**Task 5 note — 2026-07-05**
-
-Audited the Phase 11 rendering contracts. `BoardRenderer`, `PreviewRenderer`, `ScoreDisplayRenderer`, and `OverlayRenderer` tests already protect landing ghost placement, preview label/scale/spacing, score grouping and elapsed/best labels, and overlay state/action copy; one focused `BoardRenderer` test was added to protect the active-versus-locked block styling contract. No Phaser mock changes were needed.
-
-**Exit criteria**
-
-- [x] A player can identify current state, next actions, and key stats without reading dense UI.
-- [x] Rendering ownership remains in `src/scenes/components/`.
-- [x] Focused scene tests pass when scene behavior changes.
-
-## Phase 12 — Interaction feedback and game feel [x]
-
-**Objective:** Improve responsiveness and feedback while preserving the existing Tetris rule model.
-
-**Tasks**
-
-- [x] Review movement, rotation, soft drop, hard drop, lock, line clear, level-up, pause, and game-over feedback moments.
-- [x] Tune visual effects and animations so they communicate events without hiding the board or delaying gameplay.
-- [x] Ensure audio feedback remains optional, understandable, and coordinated through existing audio boundaries.
-- [x] Add clear feedback for disabled or unavailable actions where applicable.
-- [x] Protect behavior with tests when feedback changes affect scene coordination or event emission.
-
-**Task 1 note — 2026-07-05**
-
-Feedback moment inventory, based on the current scene/component boundaries:
-
-| Moment     | Current feedback                                                                                                                          | Follow-up signal for later Phase 12 tasks                                                             |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Movement   | Successful horizontal movement plays the move sound and rerenders the board. Blocked movement has no explicit feedback.                   | Consider disabled-action feedback only if it stays subtle and does not change input behavior.         |
-| Rotation   | Successful rotation plays the rotate sound and rerenders the board. Blocked rotation has no explicit feedback.                            | Consider a small unavailable-action cue without changing wall-kick or rotation rules.                 |
-| Soft drop  | Pressing Down advances one fall tick immediately, switches to fast drop speed, and restarts the drop loop; release restores base speed.   | Feedback is mostly motion/timing; any added cue should preserve timer behavior.                       |
-| Hard drop  | No active hard-drop input or rule path is wired; `SoundEffects.playHardDrop()` exists but is not used by scene gameplay.                  | Treat as unavailable unless a later scoped task explicitly adds the behavior.                         |
-| Lock       | A locked piece updates the board, increments placed pieces, and spawns the next piece; there is no lock-specific EventBus event or sound. | Add only presentation feedback if needed; do not reintroduce duplicate event flow without a consumer. |
-| Line clear | `LINES_CLEARED` drives board particles, line-clear audio, score/stat updates, and cleared-row fade/shrink animation.                      | Tune intensity so particles communicate the clear without hiding the board.                           |
-| Level-up   | `LEVEL_UP` drives level-up audio and a score-panel scale/flash animation on the level text.                                               | Coordinate any visual/audio changes through existing score/audio components.                          |
-| Pause      | Pause stops the drop loop, pauses music, and shows the pause overlay; resume restarts the loop/music and clears it.                       | Existing state feedback is clear; avoid extra effects that obscure the paused board.                  |
-| Game-over  | Game over stops the drop loop, persists stats, plays game-over audio, stops music, and shows the restart overlay.                         | Any added effect should preserve persistence, restart input, and EventBus flow.                       |
-
-**Task 2 note — 2026-07-05**
-
-Line-clear effects now use fewer, smaller, shorter-lived particles plus a faster cleared-block fade so row clears read as feedback without covering the board. Level-up score-panel feedback now runs its scale and flash tweens immediately with shorter, lower-intensity values. Gameplay rules, timers, event flow, audio boundaries, overlays, board dimensions, and queue semantics were intentionally preserved.
-
-**Task 3 note — 2026-07-05**
-
-Audio feedback remains optional through the existing `M` music and `S` sound-effect toggles, understandable through clearer English audio indicator labels, and coordinated through the existing `AudioController`/`AudioIndicatorRenderer` scene-component boundary. Movement, rotation, line-clear, level-up, game-over, and music pause/resume audio flows were intentionally preserved, and the unused hard-drop sound remains unwired because hard-drop gameplay is not currently available.
-
-**Task 4 note — 2026-07-05**
-
-Blocked horizontal movement and blocked rotation now show a brief sidebar unavailable-action cue through the existing scene/UI component boundary. Gameplay rules, movement and rotation input timing, scoring, timers, event flow, audio toggles, and the unwired hard-drop behavior were intentionally preserved.
-
-**Task 5 note — 2026-07-05**
-
-Audited the Phase 12 feedback contracts. Existing focused tests protect bounded line-clear particles, cleared-block fade cleanup, immediate bounded level-up feedback, optional audio indicator labels/colors, and UI throttling for unavailable-action messages. One scene coordination assertion was added so blocked movement/rotation feedback remains UI-only and does not emit gameplay events or trigger movement/rotation sounds.
-
-**Exit criteria**
-
-- [x] Feedback makes player actions and game events feel clear and responsive.
-- [x] Effects remain Phaser-facing and do not move game rules out of `src/logic/`.
-- [x] `npm run lint` and `npm test` pass.
-
-## Phase 13 — Accessibility and responsive polish [x]
-
-**Objective:** Make the game easier to use across screens, input contexts, and accessibility needs.
-
-**Tasks**
-
-- [x] Verify keyboard instructions are visible and accurate for start, play, pause, restart, and audio controls.
-- [x] Review contrast and text size for important labels, stats, and overlays.
-- [x] Check browser viewport behavior and Electron window assumptions so the layout remains usable at expected sizes.
-- [x] Decide whether reduced-motion or lower-intensity effects are needed for visual comfort.
-- [x] Document any known accessibility limitations that are out of scope for the current slice.
-
-**Task 5 note — 2026-07-05**
-
-Known accessibility limitations intentionally left out of this slice:
-
-- The game is still a Phaser canvas experience without semantic DOM controls, ARIA announcements, or screen-reader-friendly board state.
-- Input remains keyboard-first; pointer/touch gameplay controls and remappable keys are not part of this phase.
-- The layout remains built around the fixed 660×840 game canvas, with scrollability for smaller browser viewports rather than a fully responsive/mobile layout.
-- Audio and visual cues are clearer and optional where supported, but there is no broad settings UI for reduced motion, high-contrast themes, text scaling, or custom feedback intensity.
-
-**Exit criteria**
-
-- [x] The game remains usable on the supported web and Electron targets.
-- [x] Important instructions and state changes are understandable without relying only on audio or subtle animation.
-- [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
-
-## Phase 14 — Game-over outcome clarity
-
-**Objective:** Close the remaining game-over UX gap: show the ended run’s result on the overlay, keep restart discoverable, and keep persistence/presentation boundaries intact. Do not change Tetris spawn/lock/scoring rules.
-
-**Problem snapshot (current)**
-
-| Area        | Current behavior                                                                             | Gap                                                                                                                                                                 |
-| ----------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Overlay     | Shows `GAME OVER`, `Run ended`, and `Press R to restart`.                                    | Omits final score and whether the run beat the best score.                                                                                                          |
-| Sidebar     | Score/level/lines/best remain visible behind the dim overlay.                                | Players must look past the modal instead of reading a run summary.                                                                                                  |
-| Persistence | `GameState.getGameOverStatsSnapshot()` feeds high-score and lifetime stats from `GameScene`. | Snapshot uses `gameTime` while `Score.getAllStats()` exposes `time` and `StorageManager.updateStatistics()` reads `time`, so elapsed-time totals can fail silently. |
-| Restart     | Keyboard `R` only.                                                                           | No pointer restart path; Phase 13 left broader pointer gameplay out of scope.                                                                                       |
-
-**Target outcomes**
-
-| Outcome                   | Target for this phase                                                                              | Verification                                                       |
-| ------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Run result is obvious     | Game-over overlay shows final score and a clear best-score outcome (`New best` or current best).   | A reviewer can read score + record outcome from the overlay alone. |
-| Next action stays clear   | Restart instruction remains visible and accurate (`R`, plus pointer if task 4 is included).        | Restart path is obvious without reading source.                    |
-| Persistence stays correct | Snapshot ↔ storage field names agree; lifetime `totalTime` accumulates real elapsed seconds.       | Focused logic/storage/scene tests cover the contract.              |
-| Boundaries stay stable    | Overlay remains in `OverlayRenderer`; rules stay in `src/logic/`; storage stays in scene/platform. | No Phaser/storage APIs move into `GameState`.                      |
-
-**Tasks**
-
-- [x] Audit the game-over presentation contract: overlay copy, sidebar visibility, snapshot fields, high-score save rule, and restart input.
-  - Decide the minimum overlay summary: final score + best-score outcome are required; lines/level/time are optional supporting lines if they stay scannable.
-  - Keep decorative effects secondary; do not hide the restart action.
-- [x] Align the game-over stats contract between `Score.getAllStats()`, `GameState.getGameOverStatsSnapshot()`, and `StorageManager.updateStatistics()`.
-  - Prefer one serializable elapsed-time field used by both overlay formatting and persistence.
-  - Update focused `GameState` / storage / scene tests so mocks match production field names.
-- [x] Extend `OverlayRenderer` game-over content to accept run-summary data and render it with existing `VISUAL_SYSTEM` tokens.
-  - Preserve title/status/action hierarchy; add summary lines without turning the overlay into a dense stats dump.
-  - Pass summary data from `GameScene` after `getGameOverStatsSnapshot()` / best-score comparison; do not make the renderer own storage policy.
-- [x] Decide and implement restart discoverability for this slice.
-  - Required: keep `R` restart and visible instruction text.
-  - Optional in this phase: add pointer/click restart on the game-over overlay only (not full touch gameplay controls).
-  - Record the decision in the task note; if pointer restart is deferred, keep it explicitly out of scope here.
-- [x] Protect the new behavior with focused tests and close the phase.
-  - Cover overlay summary rendering, scene wiring of snapshot → overlay, persistence field contract, and restart input for whatever path task 4 includes.
-  - Verify with `npm test` (focused files first) plus `npm run lint` and `npm run format:check` before marking exit criteria done.
-
-**Suggested implementation order (work units)**
-
-1. Persistence/snapshot field alignment + tests.
-2. Overlay summary API/rendering + `GameScene` wiring + tests.
-3. Optional pointer restart + tests, or a short note deferring it.
-4. Phase status/progress-note closeout in this plan.
-
-**Out of scope for Phase 14**
-
-- Hard drop gameplay or reclaiming Space from pause.
-- Full lifetime-stats screen or top-ten leaderboard UI.
-- Remappable keys, screen-reader/ARIA canvas semantics, or mobile-responsive redesign.
-- Changing spawn collision, scoring formulas, or high-score top-ten policy beyond fixing the time field contract.
-
-**Exit criteria**
-
-- [x] Game-over overlay communicates final score, best-score outcome, and restart action without requiring sidebar inspection.
-- [x] Snapshot/storage elapsed-time contract is consistent and tested.
-- [x] Rendering ownership remains in `src/scenes/components/`; rules remain in `src/logic/`.
-- [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
-
-## Phase 15 — In-game controls help
-
-**Objective:** Make every supported keyboard action discoverable from one coherent help surface, without changing input bindings, Tetris rules, or the Phase 13/14 overlay lifecycle copy already shipped.
-
-**Why this phase (after Phase 13)**
-
-Phase 13 already added a sidebar play-controls list and clearer start/pause/restart overlay prompts. Gaps remain:
-
-- Play controls, audio shortcuts, and restart live in separate UI fragments with different wording styles.
-- The always-visible sidebar omits audio (`M`/`S`) and does not clarify that `R` is game-over-only.
-- There is no single inventory of bindings that a first-time player can scan once and trust.
-
-**Problem snapshot (current)**
-
-| Surface               | Current help                                              | Gap                                                                               |
-| --------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Sidebar gameplay list | `Controls`, move, rotate, soft drop, `P`/`Space` pause    | Incomplete vs real `InputController` bindings; no audio; no restart note.         |
-| Audio indicator       | Status lines + `M: Music \| S: Sound` near sidebar bottom | Split from the Controls list; wording/`\|` style differs from play-control lines. |
-| Start overlay         | Title/status + `Press any key except P, or click`         | Correct for start exceptions, but not a full controls primer.                     |
-| Pause overlay         | `Press P or Space to resume`                              | Context action only; fine if the persistent legend is complete.                   |
-| Game-over overlay     | Score/outcome + `Press R or click to restart`             | Restart is discoverable here; not reflected in the always-visible legend.         |
-
-**Target outcomes**
-
-| Outcome                     | Target for this phase                                                                                                               | Verification                                                                      |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| One binding inventory       | A shared controls-help contract lists every supported action with the same labels the UI shows.                                     | Diffing `InputController` bindings vs help copy finds no missing supported key.   |
-| Scannable persistent help   | During play, the sidebar (or one dedicated help panel) shows gameplay + audio + restart-scope notes without crowding score/preview. | A reviewer can learn controls without reading source or relying only on overlays. |
-| Context overlays stay short | Start/pause/game-over keep a single next-action prompt; they do not become full manuals.                                            | Overlay line count stays comparable to Phase 13/14.                               |
-| Boundaries stay stable      | Help copy/rendering stays in scene components + settings tokens; input behavior unchanged.                                          | No binding remaps; `src/logic/` untouched for rules.                              |
-
-**Product decisions (locked for planning)**
-
-| Decision                   | Choice                                                                                      | Rationale                                                                          |
-| -------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Help model                 | Always-visible consolidated sidebar help + short contextual overlay actions                 | Matches current layout; avoids a new modal/settings system.                        |
-| Toggleable full help (`H`) | Out of scope for this phase                                                                 | Adds input + state without fixing fragmentation first.                             |
-| Language                   | English UI copy (match Phase 13/14 overlays and audio labels)                               | Avoid reintroducing mixed Spanish/English prompts.                                 |
-| Restart in persistent help | Show `R Restart` with an explicit game-over-only qualifier                                  | Prevents players from expecting `R` during play.                                   |
-| Audio in persistent help   | Include `M` / `S` in the same Controls group (or immediately under it with identical style) | One scan path; keep live music/SFX status indicators as status, not the only docs. |
-| Key bindings               | Preserve current bindings exactly                                                           | This phase is discoverability, not remapping or hard drop.                         |
-
-**Tasks**
-
-- [x] Inventory the real control surface against visible help.
-  - Enumerated `InputController` bindings vs sidebar/audio/overlay copy; hard drop remains undocumented (parked).
-- [x] Define a shared controls-help copy contract.
-  - 2026-09-05: Added `src/config/controlsHelp.js` (`CONTROLS_HELP_LINES`); audio shortcuts live in Controls; `AudioIndicatorRenderer` keeps status-only.
-- [x] Implement consolidated persistent help in the sidebar UI boundary.
-  - 2026-09-05: `UIRenderer` consumes the shared contract (play + M/S + R game-over); tightened line spacing so the longer list clears action feedback/audio status.
-- [x] Align contextual overlay prompts with the shared vocabulary (without dumping the full legend).
-  - 2026-09-05: Existing start/pause/game-over action strings already matched; locked with a short-prompt regression test (no full manual dump).
-- [x] Protect the contract with focused tests and close the phase.
-  - 2026-09-05: Focused tests for `controlsHelp`, `UIRenderer`, `AudioIndicatorRenderer`, and `OverlayRenderer`; full `npm run lint`, `npm test` (86), `npm run format:check`, and `npm run build` pass.
-
-**Suggested implementation order (work units)**
-
-1. Inventory + shared copy contract (no visual change yet, or constants-only).
-2. Sidebar consolidated help rendering + layout/tests.
-3. Overlay wording alignment + tests.
-4. Phase status/progress-note closeout in this plan.
-
-**Out of scope for Phase 15**
-
-- Remappable keys, touch/pointer gameplay controls, or mobile control pads.
-- Hard drop, hold piece, or any new gameplay binding.
-- Screen-reader/ARIA canvas semantics or a settings/options scene.
-- Rewriting Phase 14 game-over score/best summary behavior.
-- Coverage thresholds or broader a11y work still listed under parked follow-ups.
-
-**Exit criteria**
-
-- [x] Every supported keyboard action is documented in the persistent help surface with wording that matches overlays where the same keys appear.
-- [x] Start/pause/game-over overlays remain short next-action prompts, not full manuals.
-- [x] Input bindings and Tetris rules are unchanged; help ownership stays in `src/scenes/components/` (+ shared copy constants as needed).
-- [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
-
-## Phase 16 — Player preferences (Settings)
-
-**Objective:** Let players persist presentation preferences (ghost piece, music, SFX) via a Settings surface on start/pause and matching hotkeys, without changing Tetris rules or adding a new game state.
-
-**Locked decisions**
-
-| Decision      | Choice                                                                         |
-| ------------- | ------------------------------------------------------------------------------ |
-| Scope         | `ghostEnabled` (default true), `musicMuted`, `soundEnabled`                    |
-| Access        | Settings panel from start (Esc) and pause overlay; hotkeys `G`/`M`/`S` anytime |
-| During play   | No settings modal; hotkeys apply immediately                                   |
-| State machine | Overlay-only `settingsOpen`; no new `GAME_STATES`                              |
-| Out of scope  | Hard drop, remaps, reduced-motion, effects intensity, touch, ARIA              |
-
-**Tasks**
-
-- [x] Add preferences persistence (`getPreferences` / `savePreferences`) with defaults and corrupt-data fallback.
-  - 2026-09-05: `StorageManager` preferences API with defaults and corrupt JSON fallback.
-- [x] Gate ghost rendering from preferences; load/persist audio toggles through `AudioController`.
-  - 2026-09-05: `BoardRenderer.setGhostEnabled`; audio loads/saves prefs on setup/toggle.
-- [x] Settings UI on start (Esc open/close) and pause (visible toggles); wire `G` hotkey; update Controls copy.
-  - 2026-09-05: Settings panel + pause preference lines; `G`/`Esc` wired; Controls includes `G Ghost`.
-- [x] Focused tests + close phase after lint/test/format/build.
-  - 2026-09-05: 96 tests pass with lint/format/build.
-
-**Exit criteria**
-
-- [x] Preferences persist across reload with safe defaults.
-- [x] Ghost can be toggled; music/SFX persist; Settings discoverable on start/pause.
-- [x] Tetris rules and `GAME_STATES` set unchanged; high-score/statistics keys unchanged.
-- [x] `npm run lint`, `npm test`, and `npm run build` pass.
-
-## Phase 17 — Overlay layout non-overlap
-
-**Objective:** Make pause and settings overlay text readable by stacking preference lines and next-action prompts without shared Y positions; ease Stats→Controls sidebar pressure.
-
-**Locked decisions**
-
-| Decision        | Choice                                                               |
-| --------------- | -------------------------------------------------------------------- |
-| Pause prefs     | Keep inline G/M/S lines; stack title → status → prefs → resume       |
-| Settings layout | Same vertical stack contract                                         |
-| Sidebar         | Modest Controls gap only; no sidebar redesign                        |
-| Out of scope    | Audio footer dedupe, hard drop, remaps, ARIA, touch, new GAME_STATES |
-
-**Tasks**
-
-- [x] Stack pause/settings preference lines above the action prompt with non-overlapping Y.
-  - 2026-09-05: `OverlayRenderer.renderPreferenceOverlay` stacks prefs then action.
-- [x] Add focused Y-separation regression tests.
-  - 2026-09-05: Pause/settings Y-gap tests in `tests/OverlayRenderer.test.js`.
-- [x] Nudge Controls start Y for Stats Record clearance.
-  - 2026-09-05: `UIRenderer` Controls start includes extra `spacing.lg`.
-- [x] Close phase after lint/test/format/build.
-  - 2026-09-05: 99 tests; lint/format/build pass; SDD archived.
-
-**Exit criteria**
-
-- [x] Pause and settings preference lines do not collide with action prompts.
-- [x] Stats Record and Controls header have a readable gap.
-- [x] Tetris rules, prefs persistence, and hotkeys unchanged.
-- [x] `npm run lint`, `npm test`, and `npm run build` pass.
-
-## Parked follow-ups (not pursuing now)
-
-Phases 0–17 are complete. The items below remain consciously parked — not open plan tasks unless explicitly reopened:
-
-| Item                | Why it was a candidate                                                                           | Decision                                                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Hard drop           | Common Tetris control; ghost + unused hard-drop sound already exist.                             | Parked. Soft drop + Space=pause stay as-is.                                                                              |
-| Coverage thresholds | CI could enforce a minimum coverage %.                                                           | Parked. Lint/test/build already gate CI; a global threshold would be noisy until scoped domain thresholds are justified. |
-| Deeper a11y         | Screen reader/ARIA, touch gameplay, remappable keys, true mobile layout, accessibility settings. | Parked. Phase 13 polish stands; canvas-semantic a11y is a separate larger effort.                                        |
-
-## Progress notes
-
-Use this section for short dated updates. Keep detailed implementation notes in the relevant PR or commit.
-
-| Date       | Update                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-05 | Phase 17 closed via SDD (`overlay-layout-nonoverlap`): pause/settings preference stack clears action prompts; Controls sidebar gap; archived `openspec/changes/archive/2026-09-05-overlay-layout-nonoverlap/`; main spec `settings-overlay` updated. Verified with `npm test` (99), lint, format:check, and build.                                                                                                                                                           |
-| 2026-09-05 | Phase 17 opened via SDD (`overlay-layout-nonoverlap`): pause/settings preference lines collide with action prompts; stack layout + modest Controls gap. Change under `openspec/changes/overlay-layout-nonoverlap/`.                                                                                                                                                                                                                                                          |
-| 2026-09-05 | Phase 16 closed via SDD (`player-preferences-settings`): persisted ghost/music/SFX; Esc Settings on start; pause shows toggles; G/M/S hotkeys sync. Archived under `openspec/changes/archive/`; main specs `player-preferences` and `settings-overlay`. Verified with `npm test` (96), lint, format:check, and build.                                                                                                                                                        |
-| 2026-09-05 | Phase 15 closed via SDD (`in-game-controls-help`): shared `controlsHelp` contract; sidebar Controls include M/S and R (game over); audio status-only; overlays stay short. Archived `openspec/changes/archive/2026-09-05-in-game-controls-help/`; main spec `openspec/specs/controls-help/`. Verified with `npm test` (86), lint, format:check, and build.                                                                                                                   |
-| 2026-09-05 | Added Phase 15 (In-game controls help): consolidate fragmented sidebar/audio/overlay control docs into one persistent help contract; keep short contextual overlay actions; no remaps, hard drop, or toggleable help modal.                                                                                                                                                                                                                                                  |
-| 2026-09-05 | Parked hard drop, coverage thresholds, and deeper a11y as non-goals for now. PLAN phases 0–15 remain complete with no open tasks.                                                                                                                                                                                                                                                                                                                                            |
-| 2026-09-05 | SDD archived `game-over-outcome-clarity` → `openspec/changes/archive/2026-09-05-game-over-outcome-clarity/`; main specs created for `game-over-overlay` and `game-over-stats-contract`. Verify was pass_with_warnings (storage.js focused coverage only).                                                                                                                                                                                                                    |
-| 2026-09-05 | Phase 14 closed via SDD apply (`game-over-outcome-clarity`): snapshot/storage use `time`; overlay shows score + best-outcome (`New best` / `Best: N`) with R+click restart; GameScene captures previousBest before persist; pointer restart binds/clears on game-over only. Verified with `npm test`, `npm run lint`, `npm run format:check`, and `npm run build`.                                                                                                           |
-| 2026-09-05 | Added Phase 14 for game-over outcome clarity: overlay run summary, snapshot/storage time-field alignment, restart discoverability decision, and focused test coverage. Hard drop and broader accessibility work remain outside this phase.                                                                                                                                                                                                                                   |
-| 2026-09-05 | Corrected the phase overview so Phase 11 matches its closed detail section. Phase 9 discovery notes remain a historical baseline from before Phases 10–13; residual intentional gaps stay documented elsewhere (hard drop unwired in Phase 12; game-over overlay without score summary; Phase 13 accessibility limits).                                                                                                                                                      |
-| 2026-07-05 | Phase 13 task 1 completed by auditing keyboard copy for start, pause/resume, restart, and audio controls, adding visible sidebar play controls for movement, rotation, soft drop, and pause, and preserving existing input behavior/audio toggle semantics.                                                                                                                                                                                                                  |
-| 2026-07-05 | Phase 13 task 2 completed by auditing important label, stat, and overlay styles against the visual-system palette/typography tokens. Caption text was raised from 12px to 14px for readability; existing high-contrast text colors, overlay sizing, layout, gameplay behavior, and event/audio flows were preserved.                                                                                                                                                         |
-| 2026-07-05 | Phase 13 task 3 completed by aligning browser and Electron shell assumptions with the fixed 660×840 game canvas: browser pages now keep the canvas scrollable at smaller viewports, and Electron now sizes the content area to the canvas while detaching devtools so development inspection does not squeeze the game. Gameplay geometry, board dimensions, rendering boundaries, input behavior, timers, and audio semantics were preserved.                               |
-| 2026-07-05 | Phase 13 task 4 completed by deciding not to add a reduced-motion hook or additional lower-intensity effect path in this slice. Phase 12 already bounded line-clear particles, cleared-block fade, level-up feedback, start-prompt flashing, and unavailable-action fade through existing scene/component tests, so gameplay rules, event flow, timers, storage, input behavior, audio toggles, board geometry, and user-facing settings scope were intentionally preserved. |
-| 2026-07-05 | Phase 13 task 5 completed by documenting the current out-of-scope accessibility limitations: canvas semantics/screen reader support, pointer/touch gameplay controls, remappable keys, fully responsive/mobile layout, and broad accessibility settings UI. Phase 13 is closed after verification.                                                                                                                                                                           |
-| 2026-07-04 | Added Phases 9–13 for UX/UI improvement planning: discovery baseline, visual system refresh, gameplay readability, interaction feedback/game feel, and accessibility/responsive polish.                                                                                                                                                                                                                                                                                      |
-| 2026-07-03 | Phase 8 completed by applying Prettier in docs/config, tests, and source slices, verifying `npm run format:check`, `npm run lint`, `npm test`, `npm run build`, and `git diff --check`, and adding `npm run format:check` to CI after the baseline passed.                                                                                                                                                                                                                   |
-| 2026-07-03 | Phase 7 task 3 completed by reviewing `PLAN.md` and `AGENTS.md` for compactness, preserving high-signal ownership/tooling notes, and closing Phase 7 exit criteria.                                                                                                                                                                                                                                                                                                          |
-| 2026-07-03 | Phase 6 task 4 completed by statically verifying packaged Electron resolves `electron/main.cjs` to `dist/index.html`, electron-builder includes both `electron/**/*` and `dist/**/*`, and `npm run build` produces the expected relative asset paths; Phase 6 exit criteria are now closed.                                                                                                                                                                                  |
-| 2026-07-03 | Phase 6 task 3 completed by statically verifying Electron development mode loads `http://localhost:3000`, Vite dev server is configured for port 3000, and package scripts support `npm run dev` before `NODE_ENV=development npm run electron`.                                                                                                                                                                                                                             |
-| 2026-07-03 | Phase 6 task 2 completed by verifying `Procfile` runs `node server.js`, Express serves `dist/` statically, SPA fallback returns `dist/index.html`, and a local smoke test passes for `/`, a built asset, and a fallback route.                                                                                                                                                                                                                                               |
-| 2026-07-03 | Phase 6 task 1 completed by verifying Vite keeps `base: './'`, outputs to `dist/` with `assets/`, manually chunks Phaser, and `npm run build` succeeds.                                                                                                                                                                                                                                                                                                                      |
-| 2026-07-03 | Phase 5 task 4 completed by collecting coverage and deferring thresholds until coverage is stable and meaningful; Phase 5 exit criteria are now closed.                                                                                                                                                                                                                                                                                                                      |
-| 2026-07-03 | Phase 3 task 4 completed by pruning stale/noisy rendering comments; focused scene tests and full `npm test` pass, closing Phase 3 exit criteria.                                                                                                                                                                                                                                                                                                                             |
-| 2026-07-03 | Phase 3 task 3 completed by moving overlays out of `GameScene` and separating sidebar score, preview, and audio indicator rendering into focused scene components; Phase 3 task 4 and exit criteria remain open.                                                                                                                                                                                                                                                             |
-| 2026-07-03 | Phase 3 task 2 completed by naming shared rendering measurements and local visual-effect/layout details in `GameScene`, `BoardRenderer`, and `UIRenderer`; Phase 3 task 3/4 and exit criteria remain open.                                                                                                                                                                                                                                                                   |
-| 2026-07-03 | Phase 3 task 1 completed by consolidating shared color, preview-cell, elapsed-time, and input timing constants into `src/config/settings.js`; Phase 3 task 2/3/4 and exit criteria remain open.                                                                                                                                                                                                                                                                              |
-| 2026-07-03 | Phase 2 task 5 completed by removing duplicated start/restart input state from `GameScene`; focused scene tests and full `npm test` pass, closing Phase 2 exit criteria.                                                                                                                                                                                                                                                                                                     |
-| 2026-07-03 | Phase 1 task 5 completed by verifying updated `GameState`, `GameStateMachine`, `GameScene`, and Phaser boundary tests; focused Phase 1 tests and full `npm test` pass, closing Phase 1 exit criteria.                                                                                                                                                                                                                                                                        |
-| 2026-07-03 | Phase 1 task 4 completed by making lifecycle transitions explicit through `GameStateMachine` result objects and removing external direct state mutation seams from production/tests.                                                                                                                                                                                                                                                                                         |
-| 2026-07-03 | Phase 1 task 3 completed by moving core rule modules off the Phaser-backed `EventBus`; `EventBus` remains an infrastructure boundary used by scene/rendering code.                                                                                                                                                                                                                                                                                                           |
-| 2026-07-03 | Phase 1 task 2 completed with a stable game-over stats snapshot exposed from `GameState`; Phase 1 task 3/4/5 remain not started.                                                                                                                                                                                                                                                                                                                                             |
-| 2026-07-03 | Phase 1 task 2 started with a safe soft-drop extraction into `GameState`; task remains partially complete.                                                                                                                                                                                                                                                                                                                                                                   |
-| 2026-07-02 | Initial plan created from the latest architecture improvement plan.                                                                                                                                                                                                                                                                                                                                                                                                          |
+## Outcomes by track
+
+### Architecture & ops (0–8)
+
+| Phase | Shipped                                                                                                    |
+| ----- | ---------------------------------------------------------------------------------------------------------- |
+| 0     | Regression coverage for `GameState`, `GameStateMachine`, domain classes, and focused `GameScene` tests     |
+| 1     | Pure rules in `src/logic/` + classes; Phaser/`EventBus` kept out of domain; explicit lifecycle transitions |
+| 2     | Input, drop-loop, and audio as scene components; `GameScene` as coordinator                                |
+| 3     | Layout/constants in `settings.js`; board/UI/overlays in `src/scenes/components/`                           |
+| 4     | Central `GameEvents` names; named object payloads where needed                                             |
+| 5     | ESLint, Prettier, CI (`lint` / `test` / `build` / `format:check`)                                          |
+| 6     | Vite `base: './'`, Express `dist/`, Electron dev URL and packaged `dist/index.html` validated              |
+| 7–8   | Ownership recorded; Prettier baseline green                                                                |
+
+### UX / UI (9–17)
+
+| Phase | Shipped                                                                         |
+| ----- | ------------------------------------------------------------------------------- |
+| 9     | Friction inventory for start / play / pause / game-over (historical baseline)   |
+| 10    | Shared `VISUAL_SYSTEM` palette, type, spacing                                   |
+| 11    | Clearer board, next, score, and status scanning                                 |
+| 12    | Line-clear / lock / level / unavailable-action feedback without rule changes    |
+| 13    | Control copy, caption contrast, fixed-canvas shell; deep a11y parked            |
+| 14    | Game-over score + best outcome; `time` snapshot aligned; R + click restart      |
+| 15    | Shared `controlsHelp` contract; sidebar Controls; short overlay prompts         |
+| 16    | Persisted ghost/music/SFX; Esc Settings on start; pause toggles; G/M/S          |
+| 17    | Non-overlapping pause/settings preference stack; Controls clearance under Stats |
+
+## Ownership (stable)
+
+| Area                     | Owns                                                                                                                                                  | Does not own                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/logic/`             | Board, spawn, move/collision, soft-drop, line clear, scoring triggers, game-over snapshots, state-machine transitions, plain domain event descriptors | Phaser, rendering, input APIs, audio, timers, storage, direct EventBus emission |
+| `src/classes/`           | `Block`, `Tetramino`, `Score`                                                                                                                         | Scene orchestration, persistence, platform APIs                                 |
+| `src/scenes/`            | Phaser composition; `GameScene` wires state, machine, components, storage, audio, input, timers, rendering, EventBus emission                         | Core Tetris rule ownership                                                      |
+| `src/scenes/components/` | Board/effects, sidebar UI, preview, score, audio indicators, overlays, input, drop-loop                                                               | Pure rules, durable transitions, storage policy, event-name definitions         |
+| `src/events/`            | `GameEvents.js` names; Phaser-backed `EventBus` singleton                                                                                             | Business decisions or ad hoc event names                                        |
+
+## Specs & archives
+
+| Spec / change                         | Path                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| Controls help                         | `openspec/specs/controls-help/`                                                 |
+| Game-over overlay + stats contract    | `openspec/specs/game-over-overlay/`, `openspec/specs/game-over-stats-contract/` |
+| Player preferences + settings overlay | `openspec/specs/player-preferences/`, `openspec/specs/settings-overlay/`        |
+| SDD archives (14–17)                  | `openspec/changes/archive/2026-09-05-*`                                         |
+
+## Parked follow-ups
+
+Not open plan tasks unless explicitly reopened:
+
+| Item                | Why it was a candidate                                      | Decision                                                                          |
+| ------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Hard drop           | Common control; ghost + unused hard-drop sound exist        | Parked. Soft drop + Space=pause stay as-is.                                       |
+| Coverage thresholds | CI could enforce a coverage %                               | Parked until scoped domain thresholds are justified.                              |
+| Deeper a11y         | ARIA, touch play, remaps, true mobile layout, a11y settings | Parked. Phase 13 polish stands; canvas-semantic a11y is a larger separate effort. |
+
+## Starting new work
+
+1. Add a new phase row (or reopen a parked item) with objective, locked decisions, tasks, and exit criteria.
+2. Prefer SDD under `openspec/changes/{change}/` when behavior needs specs; archive when done.
+3. Keep implementation notes in PRs/commits — do not re-expand this file into a diary.
+4. Preserve boundaries in the ownership table and `AGENTS.md`.
