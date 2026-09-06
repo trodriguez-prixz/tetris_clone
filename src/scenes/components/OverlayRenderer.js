@@ -3,6 +3,7 @@ import {
   CANVAS_HEIGHT,
   VISUAL_SYSTEM
 } from '../../config/settings.js';
+import { t, getLocale } from '../../i18n/index.js';
 
 const CENTER_ORIGIN = 0.5;
 const START_OVERLAY_ALPHA = 0.82;
@@ -76,42 +77,48 @@ const OVERLAY_TEXT_STYLE = {
   }
 };
 
-const OVERLAY_CONTENT = {
+const overlayContent = () => ({
   start: {
     alpha: START_OVERLAY_ALPHA,
-    title: 'TETRIS',
-    status: 'Start screen',
-    action: 'Press any key except P, or click',
-    settingsHint: 'Esc Settings',
+    title: t('overlay.start.title'),
+    status: t('overlay.start.status'),
+    action: t('overlay.start.action'),
+    settingsHint: t('overlay.start.settingsHint'),
     flashAction: true
   },
   pause: {
     alpha: MODAL_OVERLAY_ALPHA,
-    title: 'PAUSED',
-    status: 'Play is paused',
-    action: 'Press P or Space to resume'
+    title: t('overlay.pause.title'),
+    status: t('overlay.pause.status'),
+    action: t('overlay.pause.action')
   },
   settings: {
     alpha: MODAL_OVERLAY_ALPHA,
-    title: 'SETTINGS',
-    status: 'Presentation preferences',
-    action: 'Esc to close'
+    title: t('overlay.settings.title'),
+    status: t('overlay.settings.status'),
+    action: t('overlay.settings.action')
   },
   gameOver: {
     alpha: MODAL_OVERLAY_ALPHA,
-    title: 'GAME OVER',
-    action: 'Press R or click to restart'
+    title: t('overlay.gameOver.title'),
+    action: t('overlay.gameOver.action')
   }
-};
+});
 
 const preferenceLines = (preferences = {}) => {
   const ghostOn = preferences.ghostEnabled !== false;
   const musicOn = !preferences.musicMuted;
   const soundOn = preferences.soundEnabled !== false;
+  const locale = preferences.locale || getLocale();
+  const on = t('pref.on');
+  const off = t('pref.off');
   return [
-    `G Ghost: ${ghostOn ? 'ON' : 'OFF'}`,
-    `M Music: ${musicOn ? 'ON' : 'OFF'}`,
-    `S Sound: ${soundOn ? 'ON' : 'OFF'}`
+    t('pref.ghost', { state: ghostOn ? on : off }),
+    t('pref.music', { state: musicOn ? on : off }),
+    t('pref.sound', { state: soundOn ? on : off }),
+    t('pref.language', {
+      language: t(locale === 'es' ? 'pref.lang.es' : 'pref.lang.en')
+    })
   ];
 };
 
@@ -127,7 +134,7 @@ export default class OverlayRenderer {
   renderStartScreen() {
     this.clearStartScreen();
 
-    const content = OVERLAY_CONTENT.start;
+    const content = overlayContent().start;
     const elements = this.renderOverlay(content);
     const hint = this.createCenteredText(
       OVERLAY_LAYOUT.settingsHint,
@@ -144,7 +151,7 @@ export default class OverlayRenderer {
   renderPauseScreen(preferences = {}) {
     this.clearPauseScreen();
     this.pauseElements = this.renderPreferenceOverlay(
-      OVERLAY_CONTENT.pause,
+      overlayContent().pause,
       preferences
     );
   }
@@ -156,7 +163,7 @@ export default class OverlayRenderer {
   renderSettingsScreen(preferences = {}) {
     this.clearSettingsScreen();
     this.settingsElements = this.renderPreferenceOverlay(
-      OVERLAY_CONTENT.settings,
+      overlayContent().settings,
       preferences
     );
   }
@@ -168,7 +175,7 @@ export default class OverlayRenderer {
   renderGameOverScreen(summary) {
     this.clearGameOverScreen();
 
-    const content = OVERLAY_CONTENT.gameOver;
+    const content = overlayContent().gameOver;
     const overlay = this.createOverlay(content.alpha);
     const title = this.createCenteredText(
       OVERLAY_LAYOUT.title,
@@ -177,7 +184,7 @@ export default class OverlayRenderer {
     );
     const score = this.createCenteredText(
       OVERLAY_LAYOUT.score,
-      `Score: ${summary.score}`,
+      t('overlay.gameOver.score', { score: summary.score }),
       OVERLAY_TEXT_STYLE.score
     );
     const outcome = this.createCenteredText(

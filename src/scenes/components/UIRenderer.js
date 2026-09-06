@@ -8,7 +8,7 @@ import {
   PANEL_BORDER_WIDTH,
   VISUAL_SYSTEM
 } from '../../config/settings.js';
-import { CONTROLS_HELP_LINES } from '../../config/controlsHelp.js';
+import { getControlsHelpLines } from '../../config/controlsHelp.js';
 import AudioIndicatorRenderer from './AudioIndicatorRenderer.js';
 import PreviewRenderer from './PreviewRenderer.js';
 import ScoreDisplayRenderer from './ScoreDisplayRenderer.js';
@@ -91,7 +91,28 @@ export default class UIRenderer {
   }
 
   updateAudioIndicators(musicMuted, soundEnabled) {
+    this.lastMusicMuted = musicMuted;
+    this.lastSoundEnabled = soundEnabled;
     this.audioIndicatorRenderer.updateAudioIndicators(musicMuted, soundEnabled);
+  }
+
+  refreshControlsHelp() {
+    this.gameplayControlTexts?.forEach((controlText) => controlText.destroy());
+    this.createGameplayControlsText();
+  }
+
+  refreshLocalizedUI() {
+    this.scoreDisplayRenderer.refreshLocalizedLabels?.();
+    this.refreshControlsHelp();
+    if (
+      this.lastMusicMuted !== undefined &&
+      this.lastSoundEnabled !== undefined
+    ) {
+      this.audioIndicatorRenderer.updateAudioIndicators(
+        this.lastMusicMuted,
+        this.lastSoundEnabled
+      );
+    }
   }
 
   renderPreview() {
@@ -100,8 +121,9 @@ export default class UIRenderer {
 
   createGameplayControlsText() {
     const controlsX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
+    const lines = getControlsHelpLines();
 
-    this.gameplayControlTexts = CONTROLS_HELP_LINES.map((control, index) =>
+    this.gameplayControlTexts = lines.map((control, index) =>
       this.scene.add
         .text(
           controlsX,

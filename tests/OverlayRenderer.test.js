@@ -4,6 +4,7 @@ import {
   CANVAS_WIDTH,
   VISUAL_SYSTEM
 } from '../src/config/settings.js';
+import { setLocale } from '../src/i18n/index.js';
 
 const createDisplayObject = () => ({
   setOrigin: jest.fn().mockReturnThis(),
@@ -25,8 +26,13 @@ describe('OverlayRenderer', () => {
   let renderer;
 
   beforeEach(() => {
+    setLocale('en');
     scene = buildScene();
     renderer = new OverlayRenderer(scene);
+  });
+
+  afterEach(() => {
+    setLocale('en');
   });
 
   test('renders standardized start overlay with current state and valid start action', () => {
@@ -97,7 +103,8 @@ describe('OverlayRenderer', () => {
     renderer.renderPauseScreen({
       ghostEnabled: false,
       musicMuted: true,
-      soundEnabled: true
+      soundEnabled: true,
+      locale: 'en'
     });
 
     const labels = scene.add.text.mock.calls.map((call) => call[2]);
@@ -105,32 +112,37 @@ describe('OverlayRenderer', () => {
     expect(labels).toContain('G Ghost: OFF');
     expect(labels).toContain('M Music: OFF');
     expect(labels).toContain('S Sound: ON');
+    expect(labels).toContain('L Language: English');
   });
 
   test('stacks pause preference lines below status and above resume without Y collision', () => {
     renderer.renderPauseScreen({
       ghostEnabled: false,
       musicMuted: true,
-      soundEnabled: true
+      soundEnabled: true,
+      locale: 'en'
     });
 
     const statusY = textYByLabel('Play is paused');
     const ghostY = textYByLabel('G Ghost: OFF');
     const musicY = textYByLabel('M Music: OFF');
     const soundY = textYByLabel('S Sound: ON');
+    const languageY = textYByLabel('L Language: English');
     const resumeY = textYByLabel('Press P or Space to resume');
 
     expect(ghostY - statusY).toBeGreaterThanOrEqual(preferenceLineStep);
     expect(musicY - ghostY).toBeGreaterThanOrEqual(preferenceLineStep);
     expect(soundY - musicY).toBeGreaterThanOrEqual(preferenceLineStep);
-    expect(resumeY - soundY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(languageY - soundY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(resumeY - languageY).toBeGreaterThanOrEqual(preferenceLineStep);
   });
 
   test('renders settings panel preference lines', () => {
     renderer.renderSettingsScreen({
       ghostEnabled: true,
       musicMuted: false,
-      soundEnabled: false
+      soundEnabled: false,
+      locale: 'en'
     });
 
     const labels = scene.add.text.mock.calls.map((call) => call[2]);
@@ -139,25 +151,29 @@ describe('OverlayRenderer', () => {
     expect(labels).toContain('G Ghost: ON');
     expect(labels).toContain('M Music: ON');
     expect(labels).toContain('S Sound: OFF');
+    expect(labels).toContain('L Language: English');
   });
 
   test('stacks settings preference lines above close action without Y collision', () => {
     renderer.renderSettingsScreen({
       ghostEnabled: true,
       musicMuted: false,
-      soundEnabled: false
+      soundEnabled: false,
+      locale: 'en'
     });
 
     const statusY = textYByLabel('Presentation preferences');
     const ghostY = textYByLabel('G Ghost: ON');
     const musicY = textYByLabel('M Music: ON');
     const soundY = textYByLabel('S Sound: OFF');
+    const languageY = textYByLabel('L Language: English');
     const closeY = textYByLabel('Esc to close');
 
     expect(ghostY - statusY).toBeGreaterThanOrEqual(preferenceLineStep);
     expect(musicY - ghostY).toBeGreaterThanOrEqual(preferenceLineStep);
     expect(soundY - musicY).toBeGreaterThanOrEqual(preferenceLineStep);
-    expect(closeY - soundY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(languageY - soundY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(closeY - languageY).toBeGreaterThanOrEqual(preferenceLineStep);
   });
 
   test('renders standardized pause presentation content', () => {
@@ -191,6 +207,22 @@ describe('OverlayRenderer', () => {
       })
     );
     expect(scene.tweens.add).not.toHaveBeenCalled();
+  });
+
+  test('renders Spanish pause copy when locale is es', () => {
+    setLocale('es');
+    renderer.renderPauseScreen({
+      ghostEnabled: true,
+      musicMuted: false,
+      soundEnabled: true,
+      locale: 'es'
+    });
+
+    const labels = scene.add.text.mock.calls.map((call) => call[2]);
+    expect(labels).toContain('PAUSA');
+    expect(labels).toContain('Partida en pausa');
+    expect(labels).toContain('Pulsa P o Espacio para continuar');
+    expect(labels).toContain('L Idioma: Español');
   });
 
   test('renders game-over summary with final score and new-best outcome', () => {

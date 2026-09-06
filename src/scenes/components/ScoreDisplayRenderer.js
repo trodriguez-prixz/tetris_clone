@@ -8,6 +8,7 @@ import {
 } from '../../config/settings.js';
 import EventBus, { EVENTS } from '../../events/EventBus.js';
 import { StorageManager } from '../../utils/storage.js';
+import { t } from '../../i18n/index.js';
 
 const CENTER_ORIGIN = 0.5;
 const TEXT_UPDATE_SCALE = 1.15;
@@ -88,11 +89,21 @@ const SCORE_TEXT_HIERARCHY = {
   }
 };
 
+const DEFAULT_STATS = {
+  score: 0,
+  level: 1,
+  lines: 0,
+  pieces: 0,
+  tetrises: 0
+};
+
 export default class ScoreDisplayRenderer {
   constructor(scene, gameState) {
     this.scene = scene;
     this.gameState = gameState;
     this.formatNumberCache = new Map();
+    this.lastStats = { ...DEFAULT_STATS };
+    this.lastTime = 0;
 
     this.createUI();
 
@@ -104,54 +115,74 @@ export default class ScoreDisplayRenderer {
     const uiX = SIDEBAR_X + SIDEBAR_WIDTH / 2;
     const scoreAreaTop = SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING;
 
-    this.createScoreText(uiX, scoreAreaTop, 'title', 'STATS');
-    this.createScoreText(uiX, scoreAreaTop, 'currentLabel', 'CURRENT RUN');
+    this.titleText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'title',
+      t('stats.title')
+    );
+    this.currentLabelText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'currentLabel',
+      t('stats.currentRun')
+    );
     this.scoreText = this.createScoreText(
       uiX,
       scoreAreaTop,
       'score',
-      'Score: 0'
+      t('stats.score', { value: this.formatNumber(0) })
     );
     this.levelText = this.createScoreText(
       uiX,
       scoreAreaTop,
       'level',
-      'Level: 1'
+      t('stats.level', { value: 1 })
     );
     this.linesText = this.createScoreText(
       uiX,
       scoreAreaTop,
       'lines',
-      'Lines: 0'
+      t('stats.lines', { value: this.formatNumber(0) })
     );
 
-    this.createScoreText(uiX, scoreAreaTop, 'sessionLabel', 'SESSION STATS');
+    this.sessionLabelText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'sessionLabel',
+      t('stats.session')
+    );
     this.timeText = this.createScoreText(
       uiX,
       scoreAreaTop,
       'time',
-      'Elapsed: 0:00'
+      t('stats.elapsed', { value: '0:00' })
     );
     this.piecesText = this.createScoreText(
       uiX,
       scoreAreaTop,
       'pieces',
-      'Pieces: 0'
+      t('stats.pieces', { value: 0 })
     );
     this.tetrisesText = this.createScoreText(
       uiX,
       scoreAreaTop,
       'tetrises',
-      'Tetrises: 0'
+      t('stats.tetrises', { value: 0 })
     );
 
     const bestScore = StorageManager.getBestScore();
-    this.createScoreText(uiX, scoreAreaTop, 'recordLabel', 'RECORD');
+    this.recordLabelText = this.createScoreText(
+      uiX,
+      scoreAreaTop,
+      'recordLabel',
+      t('stats.record')
+    );
     this.highScoreText = this.createScoreText(
       uiX,
       scoreAreaTop,
       'highScore',
-      `Best Score: ${this.formatNumber(bestScore)}`
+      t('stats.bestScore', { value: this.formatNumber(bestScore) })
     );
   }
 
@@ -176,24 +207,36 @@ export default class ScoreDisplayRenderer {
   }
 
   updateTime(time) {
-    this.timeText.setText(`Elapsed: ${this.gameState.score.formatTime(time)}`);
+    this.lastTime = time;
+    this.timeText.setText(
+      t('stats.elapsed', {
+        value: this.gameState.score.formatTime(time)
+      })
+    );
   }
 
   onScoreUpdated({ stats } = {}) {
     if (!stats) return;
 
-    if (this.scoreText.text !== `Score: ${this.formatNumber(stats.score)}`) {
-      this.scoreText.setText(`Score: ${this.formatNumber(stats.score)}`);
+    this.lastStats = { ...this.lastStats, ...stats };
+
+    const scoreLabel = t('stats.score', {
+      value: this.formatNumber(stats.score)
+    });
+    if (this.scoreText.text !== scoreLabel) {
+      this.scoreText.setText(scoreLabel);
       this.animateTextUpdate(this.scoreText);
     }
-    this.linesText.setText(`Lines: ${this.formatNumber(stats.lines)}`);
-    this.piecesText.setText(`Pieces: ${stats.pieces}`);
-    this.tetrisesText.setText(`Tetrises: ${stats.tetrises}`);
+    this.linesText.setText(
+      t('stats.lines', { value: this.formatNumber(stats.lines) })
+    );
+    this.piecesText.setText(t('stats.pieces', { value: stats.pieces }));
+    this.tetrisesText.setText(t('stats.tetrises', { value: stats.tetrises }));
 
     const bestScore = StorageManager.getBestScore();
     if (stats.score > bestScore) {
       this.highScoreText.setText(
-        `Best Score: ${this.formatNumber(stats.score)}`
+        t('stats.bestScore', { value: this.formatNumber(stats.score) })
       );
       this.highScoreText.setFill(VISUAL_SYSTEM.palette.accent.red);
     }
@@ -202,8 +245,40 @@ export default class ScoreDisplayRenderer {
   onLevelUp({ level } = {}) {
     if (level === undefined) return;
 
-    this.levelText.setText(`Level: ${level}`);
+    this.lastStats = { ...this.lastStats, level };
+    this.levelText.setText(t('stats.level', { value: level }));
     this.animateLevelUp(this.levelText);
+  }
+
+  refreshLocalizedLabels() {
+    const stats = this.lastStats || { ...DEFAULT_STATS };
+    const time = this.lastTime ?? 0;
+    const bestScore = StorageManager.getBestScore();
+    const displayBest = Math.max(bestScore, stats.score ?? 0);
+
+    this.titleText.setText(t('stats.title'));
+    this.currentLabelText.setText(t('stats.currentRun'));
+    this.sessionLabelText.setText(t('stats.session'));
+    this.recordLabelText.setText(t('stats.record'));
+    this.scoreText.setText(
+      t('stats.score', { value: this.formatNumber(stats.score ?? 0) })
+    );
+    this.levelText.setText(t('stats.level', { value: stats.level ?? 1 }));
+    this.linesText.setText(
+      t('stats.lines', { value: this.formatNumber(stats.lines ?? 0) })
+    );
+    this.piecesText.setText(t('stats.pieces', { value: stats.pieces ?? 0 }));
+    this.tetrisesText.setText(
+      t('stats.tetrises', { value: stats.tetrises ?? 0 })
+    );
+    this.timeText.setText(
+      t('stats.elapsed', {
+        value: this.gameState.score.formatTime(time)
+      })
+    );
+    this.highScoreText.setText(
+      t('stats.bestScore', { value: this.formatNumber(displayBest) })
+    );
   }
 
   animateTextUpdate(textObject) {

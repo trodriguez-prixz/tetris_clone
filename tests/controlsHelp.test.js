@@ -1,10 +1,15 @@
-import { CONTROLS_HELP_LINES } from '../src/config/controlsHelp.js';
+import { getControlsHelpLines } from '../src/config/controlsHelp.js';
+import { setLocale } from '../src/i18n/index.js';
 
 describe('controlsHelp contract', () => {
-  const texts = () => CONTROLS_HELP_LINES.map((line) => line.text);
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  const texts = () => getControlsHelpLines().map((line) => line.text);
 
   test('lists every supported keyboard help line and excludes hard drop', () => {
-    expect(CONTROLS_HELP_LINES[0]).toEqual({
+    expect(getControlsHelpLines()[0]).toEqual({
       text: 'Controls',
       emphasis: true
     });
@@ -18,6 +23,7 @@ describe('controlsHelp contract', () => {
         'G Ghost',
         'M Music',
         'S Sound',
+        'L Language',
         'R Restart (game over)'
       ])
     );
@@ -26,9 +32,11 @@ describe('controlsHelp contract', () => {
   });
 
   test('keeps non-header lines caption-style (no emphasis flag)', () => {
-    CONTROLS_HELP_LINES.slice(1).forEach((line) => {
-      expect(line.emphasis).toBeFalsy();
-      expect(line.text.length).toBeGreaterThan(0);
-    });
+    getControlsHelpLines()
+      .slice(1)
+      .forEach((line) => {
+        expect(line.emphasis).toBeFalsy();
+        expect(line.text.length).toBeGreaterThan(0);
+      });
   });
 });

@@ -9,6 +9,7 @@ import {
   SIDEBAR_Y,
   VISUAL_SYSTEM
 } from '../src/config/settings.js';
+import { setLocale } from '../src/i18n/index.js';
 
 jest.mock('../src/scenes/components/AudioIndicatorRenderer.js', () =>
   jest.fn()
@@ -48,6 +49,7 @@ describe('UIRenderer action feedback', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    setLocale('en');
     scene = buildScene();
     previewRenderer = { destroy: jest.fn(), renderPreview: jest.fn() };
     scoreDisplayRenderer = { destroy: jest.fn() };
@@ -78,6 +80,7 @@ describe('UIRenderer action feedback', () => {
       'G Ghost',
       'M Music',
       'S Sound',
+      'L Language',
       'R Restart (game over)'
     ].forEach((instruction) => {
       expect(scene.add.text).toHaveBeenCalledWith(

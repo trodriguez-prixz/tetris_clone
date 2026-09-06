@@ -1,6 +1,7 @@
 import ScoreDisplayRenderer from '../src/scenes/components/ScoreDisplayRenderer.js';
 import { VISUAL_SYSTEM } from '../src/config/settings.js';
 import EventBus, { EVENTS } from '../src/events/EventBus.js';
+import { setLocale } from '../src/i18n/index.js';
 
 const createTextObject = (text) => ({
   text,
@@ -33,12 +34,14 @@ describe('ScoreDisplayRenderer', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    setLocale('en');
     scene = buildScene();
     renderer = new ScoreDisplayRenderer(scene, gameState);
   });
 
   afterEach(() => {
     renderer.destroy();
+    setLocale('en');
   });
 
   test('groups stat display by gameplay priority', () => {

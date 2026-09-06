@@ -1,5 +1,6 @@
 import AudioIndicatorRenderer from '../src/scenes/components/AudioIndicatorRenderer.js';
 import { VISUAL_SYSTEM } from '../src/config/settings.js';
+import { setLocale } from '../src/i18n/index.js';
 
 const createTextObject = () => ({
   setOrigin: jest.fn().mockReturnThis(),
@@ -18,8 +19,13 @@ describe('AudioIndicatorRenderer', () => {
   let renderer;
 
   beforeEach(() => {
+    setLocale('en');
     scene = buildScene();
     renderer = new AudioIndicatorRenderer(scene);
+  });
+
+  afterEach(() => {
+    setLocale('en');
   });
 
   test('shows audio status indicators without duplicating Controls shortcuts', () => {

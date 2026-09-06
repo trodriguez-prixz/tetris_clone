@@ -82,6 +82,7 @@ export default {
         M: 77,
         S: 83,
         G: 71,
+        L: 76,
         P: 80,
         R: 82,
         ESC: 27,

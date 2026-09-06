@@ -5,6 +5,7 @@ import {
   PADDING,
   VISUAL_SYSTEM
 } from '../../config/settings.js';
+import { t } from '../../i18n/index.js';
 
 const CENTER_ORIGIN = 0.5;
 
@@ -39,7 +40,7 @@ export default class AudioIndicatorRenderer {
       .text(
         uiX,
         sidebarBottom - AUDIO_TEXT_LAYOUT.soundEffects.offsetFromBottom,
-        '🔊 Sound: ON',
+        t('audio.soundOn'),
         {
           fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: AUDIO_TEXT_LAYOUT.soundEffects.fontSize,
@@ -51,7 +52,7 @@ export default class AudioIndicatorRenderer {
       .text(
         uiX,
         sidebarBottom - AUDIO_TEXT_LAYOUT.music.offsetFromBottom,
-        '🔊 Music: ON',
+        t('audio.musicOn'),
         {
           fontFamily: VISUAL_SYSTEM.typography.fontFamily,
           fontSize: AUDIO_TEXT_LAYOUT.music.fontSize,
@@ -64,7 +65,7 @@ export default class AudioIndicatorRenderer {
   updateAudioIndicators(musicMuted, soundEnabled) {
     if (this.musicIndicator) {
       this.musicIndicator.setText(
-        musicMuted ? '🔇 Music: OFF' : '🔊 Music: ON'
+        musicMuted ? t('audio.musicOff') : t('audio.musicOn')
       );
       this.musicIndicator.setFill(
         musicMuted
@@ -74,7 +75,7 @@ export default class AudioIndicatorRenderer {
     }
     if (this.soundEffectsIndicator) {
       this.soundEffectsIndicator.setText(
-        !soundEnabled ? '🔇 Sound: OFF' : '🔊 Sound: ON'
+        !soundEnabled ? t('audio.soundOff') : t('audio.soundOn')
       );
       this.soundEffectsIndicator.setFill(
         !soundEnabled

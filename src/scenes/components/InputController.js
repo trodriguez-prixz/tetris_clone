@@ -4,10 +4,11 @@ import {
   ROTATE_DELAY,
   START_INPUT_PAUSE_GUARD_DURATION
 } from '../../config/settings.js';
+import { t } from '../../i18n/index.js';
 
 const UNAVAILABLE_ACTION_MESSAGES = {
-  move: 'Move blocked',
-  rotate: 'Rotation blocked'
+  move: () => t('feedback.moveBlocked'),
+  rotate: () => t('feedback.rotateBlocked')
 };
 
 export default class InputController {
@@ -35,6 +36,11 @@ export default class InputController {
       Phaser.Input.Keyboard.KeyCodes.G
     );
     this.ghostKey.on('down', () => this.actions.toggleGhost?.());
+
+    this.localeKey = this.scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.L
+    );
+    this.localeKey.on('down', () => this.actions.toggleLocale?.());
 
     this.pauseKey = this.scene.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.P
@@ -129,7 +135,9 @@ export default class InputController {
     if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && this.canRotate()) {
       const rotated = this.actions.rotate();
       if (!rotated) {
-        this.actions.showUnavailableAction(UNAVAILABLE_ACTION_MESSAGES.rotate);
+        this.actions.showUnavailableAction(
+          UNAVAILABLE_ACTION_MESSAGES.rotate()
+        );
       }
       if (rotated) this.lastRotateTime = this.scene.time.now;
     }
@@ -147,7 +155,7 @@ export default class InputController {
       return;
     }
 
-    this.actions.showUnavailableAction(UNAVAILABLE_ACTION_MESSAGES.move);
+    this.actions.showUnavailableAction(UNAVAILABLE_ACTION_MESSAGES.move());
   }
 
   isPausePressed() {

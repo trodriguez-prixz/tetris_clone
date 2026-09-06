@@ -1,15 +1,18 @@
+import { t } from '../i18n/index.js';
+
 /**
  * Shared controls-help copy for the persistent sidebar legend.
  * Keep aligned with InputController bindings; do not document unwired actions.
  */
-export const CONTROLS_HELP_LINES = [
-  { text: 'Controls', emphasis: true },
-  { text: '←/→ Move' },
-  { text: '↑ Rotate' },
-  { text: '↓ Soft drop' },
-  { text: 'P/Space Pause' },
-  { text: 'G Ghost' },
-  { text: 'M Music' },
-  { text: 'S Sound' },
-  { text: 'R Restart (game over)' }
+export const getControlsHelpLines = () => [
+  { text: t('controls.title'), emphasis: true },
+  { text: t('controls.move') },
+  { text: t('controls.rotate') },
+  { text: t('controls.softDrop') },
+  { text: t('controls.pause') },
+  { text: t('controls.ghost') },
+  { text: t('controls.music') },
+  { text: t('controls.sound') },
+  { text: t('controls.language') },
+  { text: t('controls.restart') }
 ];
