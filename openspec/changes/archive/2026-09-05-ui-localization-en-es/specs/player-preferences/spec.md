@@ -1,0 +1,23 @@
+## MODIFIED Requirements
+
+### Requirement: Preferences persistence contract
+
+The system MUST persist `{ ghostEnabled, musicMuted, soundEnabled, locale }` with defaults `{ true, false, true, 'en' }`. Corrupt or missing storage MUST fall back to defaults without throwing. `locale` MUST be `'en'` or `'es'`; any other value MUST coerce to `'en'`.
+
+#### Scenario: Defaults when empty
+
+- **GIVEN** no preferences key in storage
+- **WHEN** preferences are loaded
+- **THEN** ghostEnabled is true, musicMuted is false, soundEnabled is true, locale is `en`
+
+#### Scenario: Round-trip save and load including locale
+
+- **GIVEN** saved preferences with locale `es` and ghostEnabled false
+- **WHEN** preferences are loaded
+- **THEN** locale is `es` and ghostEnabled is false
+
+#### Scenario: Invalid locale coerces to en
+
+- **GIVEN** preferences storage has locale `fr`
+- **WHEN** preferences are loaded
+- **THEN** locale is `en`

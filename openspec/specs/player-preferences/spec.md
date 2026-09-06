@@ -2,31 +2,37 @@
 
 ## Purpose
 
-Persist presentation preferences for ghost piece and audio across sessions.
+Persist presentation preferences for ghost piece, audio, and UI locale across sessions.
 
 ## Requirements
 
 ### Requirement: Preferences persistence contract
 
-The system MUST persist `{ ghostEnabled, musicMuted, soundEnabled }` with defaults `{ true, false, true }`. Corrupt or missing storage MUST fall back to defaults without throwing.
+The system MUST persist `{ ghostEnabled, musicMuted, soundEnabled, locale }` with defaults `{ true, false, true, 'en' }`. Corrupt or missing storage MUST fall back to defaults without throwing. `locale` MUST be `'en'` or `'es'`; any other value MUST coerce to `'en'`.
 
 #### Scenario: Defaults when empty
 
 - **GIVEN** no preferences key in storage
 - **WHEN** preferences are loaded
-- **THEN** ghostEnabled is true, musicMuted is false, soundEnabled is true
+- **THEN** ghostEnabled is true, musicMuted is false, soundEnabled is true, locale is `en`
 
-#### Scenario: Round-trip save and load
+#### Scenario: Round-trip save and load including locale
 
-- **GIVEN** saved preferences with ghostEnabled false and musicMuted true
+- **GIVEN** saved preferences with locale `es` and ghostEnabled false
 - **WHEN** preferences are loaded
-- **THEN** the same values are returned
+- **THEN** locale is `es` and ghostEnabled is false
 
 #### Scenario: Corrupt JSON falls back
 
 - **GIVEN** preferences storage contains invalid JSON
 - **WHEN** preferences are loaded
 - **THEN** defaults are returned
+
+#### Scenario: Invalid locale coerces to en
+
+- **GIVEN** preferences storage has locale `fr`
+- **WHEN** preferences are loaded
+- **THEN** locale is `en`
 
 ### Requirement: Ghost rendering follows preference
 

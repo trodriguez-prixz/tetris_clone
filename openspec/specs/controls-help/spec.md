@@ -8,18 +8,18 @@ Make every supported keyboard control discoverable from one persistent sidebar h
 
 ### Requirement: Shared controls-help copy contract
 
-The system MUST expose a shared English controls-help copy contract listing every supported player-facing keyboard action currently wired in `InputController`, including move, rotate, soft drop, pause (P and Space), music (M), sound (S), and restart (R) with an explicit game-over-only qualifier.
+The system MUST expose a shared controls-help copy contract (localized via `t()`) listing every supported player-facing keyboard action currently wired in `InputController`, including move, rotate, soft drop, pause (P and Space), music (M), sound (S), language (L), and restart (R) with an explicit game-over-only qualifier.
 
 #### Scenario: Contract covers supported bindings
 
 - **GIVEN** the shared controls-help module
 - **WHEN** a reviewer inspects its exported help lines
-- **THEN** the lines MUST include move, rotate, soft drop, pause with P/Space, music with M, sound with S, and restart with R scoped to game over
+- **THEN** the lines MUST include move, rotate, soft drop, pause with P/Space, music with M, sound with S, language with L, and restart with R scoped to game over
 - **AND** the contract MUST NOT document hard drop or other unwired bindings
 
 ### Requirement: Persistent sidebar Controls help
 
-During play UI construction, the sidebar MUST render one scannable Controls help block driven by the shared copy contract (not a partial hardcoded subset).
+During play UI construction, the sidebar MUST render one scannable Controls help block driven by the shared copy contract (not a partial hardcoded subset). Language (`L`) MUST appear in that block.
 
 #### Scenario: Sidebar shows consolidated help
 
@@ -27,6 +27,13 @@ During play UI construction, the sidebar MUST render one scannable Controls help
 - **WHEN** the sidebar Controls texts are created
 - **THEN** each non-header line from the shared contract MUST appear as caption text in the sidebar
 - **AND** a Controls emphasis header MUST remain visible
+
+#### Scenario: Controls include language hint
+
+- **GIVEN** the sidebar Controls help is rendered
+- **WHEN** lines are taken from the shared contract
+- **THEN** a language line documenting `L` is present
+- **AND** move/rotate/soft-drop/pause/audio/restart lines remain present
 
 ### Requirement: Audio shortcut docs are not duplicated
 

@@ -11,6 +11,7 @@
 ## High-value paths
 
 - `src/config/settings.js` — grid, canvas, tetraminos, colors, scoring, timing constants.
+- `src/i18n/` — EN/ES catalogs and `t()` / `setLocale` / `cycleLocale`; player-facing copy only.
 - `src/classes/` — small pure domain models: `Block`, `Tetramino`, and `Score`.
 - `src/logic/` — pure gameplay flow/rules, state transitions, and plain domain event descriptors; no Phaser, rendering, timers, audio, storage, or EventBus emission.
 - `src/events/` — shared event contract (`GameEvents.js`) and Phaser-backed singleton bus (`EventBus.js`).
@@ -46,10 +47,11 @@
 
 - Use relative ES module imports with explicit `.js` extensions in `src/`.
 - Keep game constants and layout numbers in `src/config/settings.js`; avoid scattering magic numbers.
+- Keep player-facing UI copy in `src/i18n/` catalogs and resolve via `t()`; do not hardcode EN/ES strings in scene components.
 - Keep EventBus names centralized in `src/events/GameEvents.js`; non-empty gameplay payloads use named object fields such as `{ rows }`, `{ stats }`, or `{ level }`.
 - Keep code comments in English and focused on intent or non-obvious behavior.
 - Preserve CommonJS in `electron/main.cjs`; do not convert it to ESM.
-- Add or update Jest tests when changing `src/classes/`, `src/logic/`, `src/utils/`, or scene behavior.
+- Add or update Jest tests when changing `src/classes/`, `src/logic/`, `src/utils/`, `src/i18n/`, or scene behavior.
 - Keep documentation edits out of scope unless explicitly requested; this file is the repo instruction exception.
 
 ## Testing focus
