@@ -29,6 +29,7 @@ This plan is the single source of truth for improving the project's architecture
 | 13. Accessibility and responsive polish | `[x]`  | Make the game more usable across devices and player needs.                   |
 | 14. Game-over outcome clarity           | `[x]`  | Make the ended run’s result and restart path obvious without changing rules. |
 | 15. In-game controls help               | `[x]`  | Make keyboard controls discoverable from one coherent UI help surface.       |
+| 16. Player preferences (Settings)       | `[x]`  | Persist ghost/audio prefs; Settings from start/pause; G/M/S hotkeys sync.    |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -592,9 +593,41 @@ Phase 13 already added a sidebar play-controls list and clearer start/pause/rest
 - [x] Input bindings and Tetris rules are unchanged; help ownership stays in `src/scenes/components/` (+ shared copy constants as needed).
 - [x] Final verification passes: `npm run lint`, `npm test`, and `npm run build`.
 
+## Phase 16 — Player preferences (Settings)
+
+**Objective:** Let players persist presentation preferences (ghost piece, music, SFX) via a Settings surface on start/pause and matching hotkeys, without changing Tetris rules or adding a new game state.
+
+**Locked decisions**
+
+| Decision      | Choice                                                                         |
+| ------------- | ------------------------------------------------------------------------------ |
+| Scope         | `ghostEnabled` (default true), `musicMuted`, `soundEnabled`                    |
+| Access        | Settings panel from start (Esc) and pause overlay; hotkeys `G`/`M`/`S` anytime |
+| During play   | No settings modal; hotkeys apply immediately                                   |
+| State machine | Overlay-only `settingsOpen`; no new `GAME_STATES`                              |
+| Out of scope  | Hard drop, remaps, reduced-motion, effects intensity, touch, ARIA              |
+
+**Tasks**
+
+- [x] Add preferences persistence (`getPreferences` / `savePreferences`) with defaults and corrupt-data fallback.
+  - 2026-09-05: `StorageManager` preferences API with defaults and corrupt JSON fallback.
+- [x] Gate ghost rendering from preferences; load/persist audio toggles through `AudioController`.
+  - 2026-09-05: `BoardRenderer.setGhostEnabled`; audio loads/saves prefs on setup/toggle.
+- [x] Settings UI on start (Esc open/close) and pause (visible toggles); wire `G` hotkey; update Controls copy.
+  - 2026-09-05: Settings panel + pause preference lines; `G`/`Esc` wired; Controls includes `G Ghost`.
+- [x] Focused tests + close phase after lint/test/format/build.
+  - 2026-09-05: 96 tests pass with lint/format/build.
+
+**Exit criteria**
+
+- [x] Preferences persist across reload with safe defaults.
+- [x] Ghost can be toggled; music/SFX persist; Settings discoverable on start/pause.
+- [x] Tetris rules and `GAME_STATES` set unchanged; high-score/statistics keys unchanged.
+- [x] `npm run lint`, `npm test`, and `npm run build` pass.
+
 ## Parked follow-ups (not pursuing now)
 
-Phases 0–15 are complete. The items below remain consciously parked — not open plan tasks unless explicitly reopened:
+Phases 0–16 are complete. The items below remain consciously parked — not open plan tasks unless explicitly reopened:
 
 | Item                | Why it was a candidate                                                                           | Decision                                                                                                                 |
 | ------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
@@ -608,9 +641,10 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date       | Update                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-05 | Phase 15 closed via SDD (`in-game-controls-help`): shared `controlsHelp` contract; sidebar Controls include M/S and R (game over); audio status-only; overlays stay short. Archived `openspec/changes/archive/2026-09-05-in-game-controls-help/`; main spec `openspec/specs/controls-help/`. Verified with `npm test` (86), lint, format:check, and build. |
+| 2026-09-05 | Phase 16 closed via SDD (`player-preferences-settings`): persisted ghost/music/SFX; Esc Settings on start; pause shows toggles; G/M/S hotkeys sync. Archived under `openspec/changes/archive/`; main specs `player-preferences` and `settings-overlay`. Verified with `npm test` (96), lint, format:check, and build.                                                                                                                                                        |
+| 2026-09-05 | Phase 15 closed via SDD (`in-game-controls-help`): shared `controlsHelp` contract; sidebar Controls include M/S and R (game over); audio status-only; overlays stay short. Archived `openspec/changes/archive/2026-09-05-in-game-controls-help/`; main spec `openspec/specs/controls-help/`. Verified with `npm test` (86), lint, format:check, and build.                                                                                                                   |
 | 2026-09-05 | Added Phase 15 (In-game controls help): consolidate fragmented sidebar/audio/overlay control docs into one persistent help contract; keep short contextual overlay actions; no remaps, hard drop, or toggleable help modal.                                                                                                                                                                                                                                                  |
-| 2026-09-05 | Parked hard drop, coverage thresholds, and deeper a11y as non-goals for now. PLAN phases 0–15 remain complete with no open tasks.                                                                                                                                                                                                                                                                                                                        |
+| 2026-09-05 | Parked hard drop, coverage thresholds, and deeper a11y as non-goals for now. PLAN phases 0–15 remain complete with no open tasks.                                                                                                                                                                                                                                                                                                                                            |
 | 2026-09-05 | SDD archived `game-over-outcome-clarity` → `openspec/changes/archive/2026-09-05-game-over-outcome-clarity/`; main specs created for `game-over-overlay` and `game-over-stats-contract`. Verify was pass_with_warnings (storage.js focused coverage only).                                                                                                                                                                                                                    |
 | 2026-09-05 | Phase 14 closed via SDD apply (`game-over-outcome-clarity`): snapshot/storage use `time`; overlay shows score + best-outcome (`New best` / `Best: N`) with R+click restart; GameScene captures previousBest before persist; pointer restart binds/clears on game-over only. Verified with `npm test`, `npm run lint`, `npm run format:check`, and `npm run build`.                                                                                                           |
 | 2026-09-05 | Added Phase 14 for game-over outcome clarity: overlay run summary, snapshot/storage time-field alignment, restart discoverability decision, and focused test coverage. Hard drop and broader accessibility work remain outside this phase.                                                                                                                                                                                                                                   |

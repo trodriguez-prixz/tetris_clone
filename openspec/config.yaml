@@ -25,7 +25,7 @@ testing:
 rules:
   proposal:
     - Include rollback plan for risky changes
-    - Keep PLAN.md Phase 15 aligned with change intent
+    - Keep PLAN.md aligned with change intent
   specs:
     - Use Given/When/Then for scenarios
     - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
@@ -38,7 +38,7 @@ rules:
   apply:
     guidelines:
       - Follow existing code patterns
-      - Update PLAN.md Phase 15 status notes with each completed task group
+      - Update PLAN.md Phase 16 status notes with each completed task group
     tdd: true
     test_command: npm test
   verify:
@@ -47,4 +47,4 @@ rules:
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas
-    - Sync PLAN.md Phase 15 to done when archive succeeds
+    - Sync PLAN.md Phase 16 to done when archive succeeds

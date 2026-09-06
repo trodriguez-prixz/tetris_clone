@@ -22,11 +22,11 @@ build_output_hash: sha256:bc570dc02370572da058d245618b12da99ec17938844fa6c2db78d
 
 ### Completeness
 
-| Metric | Value |
-| --- | --- |
-| Tasks total | 13 |
-| Tasks complete | 13 |
-| Tasks incomplete | 0 |
+| Metric           | Value |
+| ---------------- | ----- |
+| Tasks total      | 13    |
+| Tasks complete   | 13    |
+| Tasks incomplete | 0     |
 
 ### Build & Tests Execution
 
@@ -45,11 +45,11 @@ Format: `npm run format:check` exit 0
 
 ### Spec Compliance Matrix
 
-| Requirement | Scenario | Test | Result |
-| --- | --- | --- | --- |
-| Shared controls-help copy contract | Contract covers supported bindings | `tests/controlsHelp.test.js` | COMPLIANT |
-| Persistent sidebar Controls help | Sidebar shows consolidated help | `tests/UIRenderer.test.js` > consolidated Controls help | COMPLIANT |
-| Audio shortcut docs are not duplicated | Status without shortcut duplicate | `tests/AudioIndicatorRenderer.test.js` > status without duplicating Controls shortcuts | COMPLIANT |
+| Requirement                                           | Scenario                             | Test                                                                                                        | Result    |
+| ----------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------- | --------- |
+| Shared controls-help copy contract                    | Contract covers supported bindings   | `tests/controlsHelp.test.js`                                                                                | COMPLIANT |
+| Persistent sidebar Controls help                      | Sidebar shows consolidated help      | `tests/UIRenderer.test.js` > consolidated Controls help                                                     | COMPLIANT |
+| Audio shortcut docs are not duplicated                | Status without shortcut duplicate    | `tests/AudioIndicatorRenderer.test.js` > status without duplicating Controls shortcuts                      | COMPLIANT |
 | Contextual overlays stay short and vocabulary-aligned | Overlay actions remain short prompts | `tests/OverlayRenderer.test.js` > short next-action prompts (+ existing start/pause/game-over action tests) | COMPLIANT |
 
 ### Design Coherence
