@@ -2,7 +2,13 @@ import UIRenderer from '../src/scenes/components/UIRenderer.js';
 import AudioIndicatorRenderer from '../src/scenes/components/AudioIndicatorRenderer.js';
 import PreviewRenderer from '../src/scenes/components/PreviewRenderer.js';
 import ScoreDisplayRenderer from '../src/scenes/components/ScoreDisplayRenderer.js';
-import { VISUAL_SYSTEM } from '../src/config/settings.js';
+import {
+  PADDING,
+  PREVIEW_AREA_HEIGHT,
+  SCORE_AREA_HEIGHT,
+  SIDEBAR_Y,
+  VISUAL_SYSTEM
+} from '../src/config/settings.js';
 
 jest.mock('../src/scenes/components/AudioIndicatorRenderer.js', () =>
   jest.fn()
@@ -85,6 +91,22 @@ describe('UIRenderer action feedback', () => {
         })
       );
     });
+  });
+
+  test('places Controls below the Stats panel with a modest clearance gap', () => {
+    new UIRenderer(scene, {});
+
+    const controlsCall = scene.add.text.mock.calls.find(
+      (call) => call[2] === 'Controls'
+    );
+    expect(controlsCall).toBeDefined();
+
+    const scoreAreaBottom =
+      SIDEBAR_Y + PREVIEW_AREA_HEIGHT + PADDING + SCORE_AREA_HEIGHT;
+    const expectedMinY =
+      scoreAreaBottom + PADDING * 2 + VISUAL_SYSTEM.spacing.lg;
+
+    expect(controlsCall[1]).toBeGreaterThanOrEqual(expectedMinY);
   });
 
   test('shows and fades unavailable-action text in the sidebar', () => {
