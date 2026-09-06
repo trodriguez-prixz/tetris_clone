@@ -1,0 +1,37 @@
+schema: gentle-ai.sdd-state/v1
+changeName: overlay-layout-nonoverlap
+artifactStore: openspec
+createdAt: 2026-09-06T01:13:09Z
+updatedAt: 2026-09-06T01:30:00Z
+phase: archive
+dependencies:
+  proposal: done
+  specs: done
+  design: done
+  tasks: done
+  apply: done
+  verify: done
+  archive: done
+research:
+  selected: false
+  status: unselected
+decisions:
+  status: confirmed
+  items:
+    - id: pause-prefs
+      choice: keep-inline-stacked
+      detail: Keep G/M/S preference lines on pause; stack title→status→prefs→resume with non-overlapping Y.
+    - id: settings-layout
+      choice: same-stack-contract
+      detail: Settings panel uses the same vertical stack so prefs and Esc-to-close do not collide.
+    - id: sidebar-gap
+      choice: modest-controls-gap
+      detail: Add modest vertical gap between Stats Record and Controls header; no full sidebar redesign.
+    - id: out-of-scope
+      choice: no-dedupe-audio-footer
+      detail: Do not remove footer Music/Sound status duplication in this change.
+proposalReady: true
+specsReady: true
+designReady: true
+tasksReady: true
+sourcePlan: PLAN.md Phase 17

@@ -30,6 +30,7 @@ This plan is the single source of truth for improving the project's architecture
 | 14. Game-over outcome clarity           | `[x]`  | Make the ended run’s result and restart path obvious without changing rules. |
 | 15. In-game controls help               | `[x]`  | Make keyboard controls discoverable from one coherent UI help surface.       |
 | 16. Player preferences (Settings)       | `[x]`  | Persist ghost/audio prefs; Settings from start/pause; G/M/S hotkeys sync.    |
+| 17. Overlay layout non-overlap          | `[x]`  | Fix pause/settings text collisions; modest Stats→Controls sidebar gap.       |
 
 ## Phase 0 — Refactor safety baseline
 
@@ -625,9 +626,40 @@ Phase 13 already added a sidebar play-controls list and clearer start/pause/rest
 - [x] Tetris rules and `GAME_STATES` set unchanged; high-score/statistics keys unchanged.
 - [x] `npm run lint`, `npm test`, and `npm run build` pass.
 
+## Phase 17 — Overlay layout non-overlap
+
+**Objective:** Make pause and settings overlay text readable by stacking preference lines and next-action prompts without shared Y positions; ease Stats→Controls sidebar pressure.
+
+**Locked decisions**
+
+| Decision        | Choice                                                               |
+| --------------- | -------------------------------------------------------------------- |
+| Pause prefs     | Keep inline G/M/S lines; stack title → status → prefs → resume       |
+| Settings layout | Same vertical stack contract                                         |
+| Sidebar         | Modest Controls gap only; no sidebar redesign                        |
+| Out of scope    | Audio footer dedupe, hard drop, remaps, ARIA, touch, new GAME_STATES |
+
+**Tasks**
+
+- [x] Stack pause/settings preference lines above the action prompt with non-overlapping Y.
+  - 2026-09-05: `OverlayRenderer.renderPreferenceOverlay` stacks prefs then action.
+- [x] Add focused Y-separation regression tests.
+  - 2026-09-05: Pause/settings Y-gap tests in `tests/OverlayRenderer.test.js`.
+- [x] Nudge Controls start Y for Stats Record clearance.
+  - 2026-09-05: `UIRenderer` Controls start includes extra `spacing.lg`.
+- [x] Close phase after lint/test/format/build.
+  - 2026-09-05: 99 tests; lint/format/build pass; SDD archived.
+
+**Exit criteria**
+
+- [x] Pause and settings preference lines do not collide with action prompts.
+- [x] Stats Record and Controls header have a readable gap.
+- [x] Tetris rules, prefs persistence, and hotkeys unchanged.
+- [x] `npm run lint`, `npm test`, and `npm run build` pass.
+
 ## Parked follow-ups (not pursuing now)
 
-Phases 0–16 are complete. The items below remain consciously parked — not open plan tasks unless explicitly reopened:
+Phases 0–17 are complete. The items below remain consciously parked — not open plan tasks unless explicitly reopened:
 
 | Item                | Why it was a candidate                                                                           | Decision                                                                                                                 |
 | ------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
@@ -641,6 +673,8 @@ Use this section for short dated updates. Keep detailed implementation notes in 
 
 | Date       | Update                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-05 | Phase 17 closed via SDD (`overlay-layout-nonoverlap`): pause/settings preference stack clears action prompts; Controls sidebar gap; archived `openspec/changes/archive/2026-09-05-overlay-layout-nonoverlap/`; main spec `settings-overlay` updated. Verified with `npm test` (99), lint, format:check, and build.                                                                                                                                                           |
+| 2026-09-05 | Phase 17 opened via SDD (`overlay-layout-nonoverlap`): pause/settings preference lines collide with action prompts; stack layout + modest Controls gap. Change under `openspec/changes/overlay-layout-nonoverlap/`.                                                                                                                                                                                                                                                          |
 | 2026-09-05 | Phase 16 closed via SDD (`player-preferences-settings`): persisted ghost/music/SFX; Esc Settings on start; pause shows toggles; G/M/S hotkeys sync. Archived under `openspec/changes/archive/`; main specs `player-preferences` and `settings-overlay`. Verified with `npm test` (96), lint, format:check, and build.                                                                                                                                                        |
 | 2026-09-05 | Phase 15 closed via SDD (`in-game-controls-help`): shared `controlsHelp` contract; sidebar Controls include M/S and R (game over); audio status-only; overlays stay short. Archived `openspec/changes/archive/2026-09-05-in-game-controls-help/`; main spec `openspec/specs/controls-help/`. Verified with `npm test` (86), lint, format:check, and build.                                                                                                                   |
 | 2026-09-05 | Added Phase 15 (In-game controls help): consolidate fragmented sidebar/audio/overlay control docs into one persistent help contract; keep short contextual overlay actions; no remaps, hard drop, or toggleable help modal.                                                                                                                                                                                                                                                  |
