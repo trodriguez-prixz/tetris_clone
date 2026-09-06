@@ -86,6 +86,13 @@ describe('OverlayRenderer', () => {
     );
   });
 
+  const preferenceLineStep = VISUAL_SYSTEM.spacing.lg;
+  const textYByLabel = (label) => {
+    const call = scene.add.text.mock.calls.find((entry) => entry[2] === label);
+    expect(call).toBeDefined();
+    return call[1];
+  };
+
   test('renders pause preference lines from current preferences', () => {
     renderer.renderPauseScreen({
       ghostEnabled: false,
@@ -98,6 +105,25 @@ describe('OverlayRenderer', () => {
     expect(labels).toContain('G Ghost: OFF');
     expect(labels).toContain('M Music: OFF');
     expect(labels).toContain('S Sound: ON');
+  });
+
+  test('stacks pause preference lines below status and above resume without Y collision', () => {
+    renderer.renderPauseScreen({
+      ghostEnabled: false,
+      musicMuted: true,
+      soundEnabled: true
+    });
+
+    const statusY = textYByLabel('Play is paused');
+    const ghostY = textYByLabel('G Ghost: OFF');
+    const musicY = textYByLabel('M Music: OFF');
+    const soundY = textYByLabel('S Sound: ON');
+    const resumeY = textYByLabel('Press P or Space to resume');
+
+    expect(ghostY - statusY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(musicY - ghostY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(soundY - musicY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(resumeY - soundY).toBeGreaterThanOrEqual(preferenceLineStep);
   });
 
   test('renders settings panel preference lines', () => {
@@ -113,6 +139,25 @@ describe('OverlayRenderer', () => {
     expect(labels).toContain('G Ghost: ON');
     expect(labels).toContain('M Music: ON');
     expect(labels).toContain('S Sound: OFF');
+  });
+
+  test('stacks settings preference lines above close action without Y collision', () => {
+    renderer.renderSettingsScreen({
+      ghostEnabled: true,
+      musicMuted: false,
+      soundEnabled: false
+    });
+
+    const statusY = textYByLabel('Presentation preferences');
+    const ghostY = textYByLabel('G Ghost: ON');
+    const musicY = textYByLabel('M Music: ON');
+    const soundY = textYByLabel('S Sound: OFF');
+    const closeY = textYByLabel('Esc to close');
+
+    expect(ghostY - statusY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(musicY - ghostY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(soundY - musicY).toBeGreaterThanOrEqual(preferenceLineStep);
+    expect(closeY - soundY).toBeGreaterThanOrEqual(preferenceLineStep);
   });
 
   test('renders standardized pause presentation content', () => {

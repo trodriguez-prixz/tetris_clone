@@ -37,10 +37,12 @@ const OVERLAY_LAYOUT = {
     fontSize: VISUAL_SYSTEM.typography.size.caption
   },
   preferenceStart: {
-    offsetY: VISUAL_SYSTEM.spacing.xl,
+    // Below status (md); line step matches spacing.lg so rows stay readable.
+    offsetY: VISUAL_SYSTEM.spacing.md + VISUAL_SYSTEM.spacing.lg,
     fontSize: VISUAL_SYSTEM.typography.size.caption,
-    lineHeight: VISUAL_SYSTEM.spacing.md
-  }
+    lineHeight: VISUAL_SYSTEM.spacing.lg
+  },
+  preferenceActionGap: VISUAL_SYSTEM.spacing.md
 };
 
 const OVERLAY_TEXT_STYLE = {
@@ -141,11 +143,10 @@ export default class OverlayRenderer {
 
   renderPauseScreen(preferences = {}) {
     this.clearPauseScreen();
-
-    const content = OVERLAY_CONTENT.pause;
-    const base = this.renderOverlay(content);
-    const prefs = this.createPreferenceTexts(preferences, 0);
-    this.pauseElements = [...base, ...prefs];
+    this.pauseElements = this.renderPreferenceOverlay(
+      OVERLAY_CONTENT.pause,
+      preferences
+    );
   }
 
   clearPauseScreen() {
@@ -154,14 +155,10 @@ export default class OverlayRenderer {
 
   renderSettingsScreen(preferences = {}) {
     this.clearSettingsScreen();
-
-    const content = OVERLAY_CONTENT.settings;
-    const base = this.renderOverlay(content);
-    const prefs = this.createPreferenceTexts(
-      preferences,
-      VISUAL_SYSTEM.spacing.sm
+    this.settingsElements = this.renderPreferenceOverlay(
+      OVERLAY_CONTENT.settings,
+      preferences
     );
-    this.settingsElements = [...base, ...prefs];
   }
 
   clearSettingsScreen() {
@@ -201,14 +198,46 @@ export default class OverlayRenderer {
     this.gameOverElements = this.destroyElements(this.gameOverElements);
   }
 
-  createPreferenceTexts(preferences, extraOffsetY = 0) {
-    return preferenceLines(preferences).map((line, index) =>
+  renderPreferenceOverlay(content, preferences = {}) {
+    const lines = preferenceLines(preferences);
+    const prefs = this.createPreferenceTexts(lines);
+    const actionOffsetY =
+      OVERLAY_LAYOUT.preferenceStart.offsetY +
+      OVERLAY_LAYOUT.preferenceStart.lineHeight *
+        Math.max(lines.length - 1, 0) +
+      OVERLAY_LAYOUT.preferenceActionGap +
+      OVERLAY_LAYOUT.preferenceStart.lineHeight;
+
+    const overlay = this.createOverlay(content.alpha);
+    const title = this.createCenteredText(
+      OVERLAY_LAYOUT.title,
+      content.title,
+      OVERLAY_TEXT_STYLE.title
+    );
+    const status = this.createCenteredText(
+      OVERLAY_LAYOUT.status,
+      content.status,
+      OVERLAY_TEXT_STYLE.status
+    );
+    const action = this.createCenteredText(
+      {
+        ...OVERLAY_LAYOUT.action,
+        offsetY: actionOffsetY
+      },
+      content.action,
+      OVERLAY_TEXT_STYLE.action
+    );
+
+    return [overlay, title, status, ...prefs, action];
+  }
+
+  createPreferenceTexts(lines) {
+    return lines.map((line, index) =>
       this.createCenteredText(
         {
           ...OVERLAY_LAYOUT.preferenceStart,
           offsetY:
             OVERLAY_LAYOUT.preferenceStart.offsetY +
-            extraOffsetY +
             OVERLAY_LAYOUT.preferenceStart.lineHeight * index
         },
         line,
