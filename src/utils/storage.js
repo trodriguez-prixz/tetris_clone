@@ -1,4 +1,4 @@
-// LocalStorage utility for saving/loading game data
+import { normalizeLocale, DEFAULT_LOCALE } from '../i18n/index.js';
 
 const STORAGE_KEYS = {
   HIGH_SCORES: 'tetris_high_scores',
@@ -9,7 +9,8 @@ const STORAGE_KEYS = {
 const DEFAULT_PREFERENCES = {
   ghostEnabled: true,
   musicMuted: false,
-  soundEnabled: true
+  soundEnabled: true,
+  locale: DEFAULT_LOCALE
 };
 
 export class StorageManager {
@@ -119,7 +120,8 @@ export class StorageManager {
         soundEnabled:
           typeof parsed.soundEnabled === 'boolean'
             ? parsed.soundEnabled
-            : DEFAULT_PREFERENCES.soundEnabled
+            : DEFAULT_PREFERENCES.soundEnabled,
+        locale: normalizeLocale(parsed.locale)
       };
     } catch (error) {
       console.warn('Error loading preferences:', error);
@@ -141,7 +143,8 @@ export class StorageManager {
         soundEnabled:
           typeof preferences?.soundEnabled === 'boolean'
             ? preferences.soundEnabled
-            : DEFAULT_PREFERENCES.soundEnabled
+            : DEFAULT_PREFERENCES.soundEnabled,
+        locale: normalizeLocale(preferences?.locale)
       };
       localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(next));
       return true;

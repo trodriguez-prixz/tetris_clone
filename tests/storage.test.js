@@ -70,7 +70,8 @@ describe('StorageManager preferences', () => {
     expect(StorageManager.getPreferences()).toEqual({
       ghostEnabled: true,
       musicMuted: false,
-      soundEnabled: true
+      soundEnabled: true,
+      locale: 'en'
     });
   });
 
@@ -78,13 +79,31 @@ describe('StorageManager preferences', () => {
     StorageManager.savePreferences({
       ghostEnabled: false,
       musicMuted: true,
-      soundEnabled: false
+      soundEnabled: false,
+      locale: 'es'
     });
 
     expect(StorageManager.getPreferences()).toEqual({
       ghostEnabled: false,
       musicMuted: true,
-      soundEnabled: false
+      soundEnabled: false,
+      locale: 'es'
+    });
+  });
+
+  test('normalizes invalid locale to en', () => {
+    StorageManager.savePreferences({
+      ghostEnabled: true,
+      musicMuted: false,
+      soundEnabled: true,
+      locale: 'fr'
+    });
+
+    expect(StorageManager.getPreferences()).toEqual({
+      ghostEnabled: true,
+      musicMuted: false,
+      soundEnabled: true,
+      locale: 'en'
     });
   });
 
@@ -94,7 +113,8 @@ describe('StorageManager preferences', () => {
     expect(StorageManager.getPreferences()).toEqual({
       ghostEnabled: true,
       musicMuted: false,
-      soundEnabled: true
+      soundEnabled: true,
+      locale: 'en'
     });
   });
 });
